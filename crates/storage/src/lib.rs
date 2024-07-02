@@ -32,5 +32,8 @@ pub enum ReadError {
 
 #[async_trait::async_trait]
 pub trait StorageClient {
-  async fn read(&self, path: &Path) -> Result<Box<dyn AsyncRead>, ReadError>;
+  async fn read(
+    &self,
+    path: &Path,
+  ) -> Result<Box<dyn AsyncRead + Unpin>, ReadError>;
 }

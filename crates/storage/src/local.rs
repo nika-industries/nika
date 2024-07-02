@@ -12,7 +12,10 @@ impl LocalStorageClient {
 
 #[async_trait::async_trait]
 impl StorageClient for LocalStorageClient {
-  async fn read(&self, path: &Path) -> Result<Box<dyn AsyncRead>, ReadError> {
+  async fn read(
+    &self,
+    path: &Path,
+  ) -> Result<Box<dyn AsyncRead + Unpin>, ReadError> {
     let path = self.0.as_path().join(path);
 
     // make sure it exists
