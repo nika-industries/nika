@@ -4,3 +4,4 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.dependencies]
+serde = { version = "1", features = [ "derive" ] }

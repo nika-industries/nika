@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
 pub type DynStorageClient = Box<dyn StorageClient + Send + Sync + 'static>;
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum StorageCredentials {
   LocalTmp(PathBuf),
 }
