@@ -1,7 +1,11 @@
+pub mod local;
+
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncRead;
+
+use self::local::LocalStorageClient;
 
 pub type DynStorageClient = Box<dyn StorageClient + Send + Sync + 'static>;
 
@@ -13,12 +17,10 @@ pub enum StorageCredentials {
 impl StorageCredentials {
   pub async fn client(&self) -> DynStorageClient {
     match self {
-      Self::Local(path) => Box::new(LocalStorageClient(path.clone())),
+      Self::Local(path) => Box::new(LocalStorageClient::new(path.clone())),
     }
   }
 }
-
-pub struct LocalStorageClient(PathBuf);
 
 #[derive(thiserror::Error, Debug)]
 pub enum ReadError {
@@ -31,19 +33,4 @@ pub enum ReadError {
 #[async_trait::async_trait]
 pub trait StorageClient {
   async fn read(&self, path: &Path) -> Result<Box<dyn AsyncRead>, ReadError>;
-}
-
-#[async_trait::async_trait]
-impl StorageClient for LocalStorageClient {
-  async fn read(&self, path: &Path) -> Result<Box<dyn AsyncRead>, ReadError> {
-    let path = self.0.as_path().join(path);
-
-    if !std::fs::exists(&path)? {
-      return Err(ReadError::NotFound(path));
-    }
-
-    let file = tokio::fs::File::open(&path).await?;
-
-    Ok(Box::new(file))
-  }
 }
