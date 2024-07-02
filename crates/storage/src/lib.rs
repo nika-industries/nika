@@ -7,18 +7,18 @@ pub type DynStorageClient = Box<dyn StorageClient + Send + Sync + 'static>;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum StorageCredentials {
-  LocalTmp(PathBuf),
+  Local(PathBuf),
 }
 
 impl StorageCredentials {
   pub async fn client(&self) -> DynStorageClient {
     match self {
-      Self::LocalTmp(path) => Box::new(LocalTmpStorageClient(path.clone())),
+      Self::Local(path) => Box::new(LocalStorageClient(path.clone())),
     }
   }
 }
 
-pub struct LocalTmpStorageClient(PathBuf);
+pub struct LocalStorageClient(PathBuf);
 
 #[derive(thiserror::Error, Debug)]
 pub enum ReadError {
@@ -34,7 +34,7 @@ pub trait StorageClient {
 }
 
 #[async_trait::async_trait]
-impl StorageClient for LocalTmpStorageClient {
+impl StorageClient for LocalStorageClient {
   async fn read(&self, path: &Path) -> Result<Box<dyn AsyncRead>, ReadError> {
     let path = self.0.as_path().join(path);
 
