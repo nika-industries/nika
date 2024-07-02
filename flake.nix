@@ -19,8 +19,8 @@
         });
       in {
         devShell = pkgs.mkShell {
-          nativeBuildInputs = [
-            pkgs.pkg-config pkgs.openssl
+          nativeBuildInputs = with pkgs; [
+            pkg-config openssl bacon
             toolchain
           ];
         };
