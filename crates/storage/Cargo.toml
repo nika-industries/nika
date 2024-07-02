@@ -8,3 +8,7 @@ async-trait.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = [ "fs" ] }
+
+[dev-dependencies]
+temp-dir = { version = "0.1" }
+tokio = { workspace = true, features = [ "fs", "rt", "macros", "io-util" ] }
