@@ -26,6 +26,7 @@
             "crates"
             "Cargo.toml"
             "Cargo.lock"
+            (filter.matchExt "toml")
             ".cargo"
           ];
         };
@@ -58,12 +59,37 @@
       in {
         devShell = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
-            pkg-config openssl bacon cargo-nextest
             dev-toolchain
+            bacon # change detection
+            cargo-nextest # testing
+            cargo-deny # package auditing
           ];
         };
         packages = {
           inherit fetcher;
+        };
+        checks = {
+          clippy = craneLib.cargoClippy (fetcher-crane-args // {
+            cargoArtifacts = fetcher-deps-only;
+            cargoClippyExtraArgs = "-- --deny warnings";
+          });
+          docs = craneLib.cargoDoc (fetcher-crane-args // {
+            cargoArtifacts = fetcher-deps-only;
+          });
+          site-server-nextest = craneLib.cargoNextest (fetcher-crane-args // {
+            cargoArtifacts = fetcher-deps-only;
+            partitions = 1;
+            partitionType = "count";
+          });
+          fmt = craneLib.cargoFmt {
+            inherit (fetcher-crane-args) pname version;
+            inherit src;
+          };
+          deny = craneLib.cargoDeny {
+            inherit (fetcher-crane-args) pname version;
+            inherit src;
+          };
+          build-succeeds = fetcher;
         };
       });
 }
