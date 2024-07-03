@@ -3,9 +3,9 @@
 ## Cycle Roadmap
 1. [ ] Proof-Of-Concept Cycle
 	1. [ ] Fetching archives
-		1. [ ] DB exists and has basic config about a store
-		2. [ ] Fetcher exists and can query the DB and fetch from a store
-		3. [ ] Fetcher does absolutely the bare minimum
+		1. [ ] Fetcher exists and can fetch from a hardcoded store
+		2. [ ] DB exists and has basic config about a store
+		3. [ ] Fetcher can query the DB for store info
 	2. [ ] Pushing archives
 		1. [ ] API layer and daemon now exist
 		2. [ ] API layer can use temp storage and create jobs
