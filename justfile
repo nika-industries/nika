@@ -1,4 +1,7 @@
 
+run:
+    cargo run -p fetcher
+
 build:
     cargo build
 
