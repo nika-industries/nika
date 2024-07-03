@@ -39,7 +39,7 @@ mod tests {
   use super::*;
 
   #[tokio::test]
-  async fn it_works() {
+  async fn read_works() {
     let temp = TempDir::new().unwrap();
 
     let f = temp.child("file1");
