@@ -1,11 +1,75 @@
-use axum::{routing::get, Router};
+use std::{path::PathBuf, str::FromStr, sync::Arc};
 
-async fn hello_world_handler() -> &'static str { "Hello, World!" }
+use axum::{
+  body::Body,
+  extract::{FromRef, Path, State},
+  http::StatusCode,
+  response::{IntoResponse, Response},
+  routing::get,
+  Router,
+};
+use storage::ReadError;
+
+#[tracing::instrument(skip(client))]
+async fn fetch_handler(
+  State(client): State<Arc<storage::DynStorageClient>>,
+  Path(path): Path<String>,
+) -> Response {
+  let Ok(path) = PathBuf::from_str(&path) else {
+    return (
+      StatusCode::BAD_REQUEST,
+      "Your requested path could not be parsed as a path.",
+    )
+      .into_response();
+  };
+
+  let reader = match client.read(&path).await {
+    Ok(r) => r,
+    Err(ReadError::NotFound(_)) => {
+      return (
+        StatusCode::NOT_FOUND,
+        format!("The resource at the path {path:?} doesn't exist",),
+      )
+        .into_response()
+    }
+    Err(ReadError::IoError(e)) => {
+      return (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        format!("An internal error occurred: {e}"),
+      )
+        .into_response()
+    }
+  };
+
+  let stream = tokio_util::io::ReaderStream::new(reader);
+  Body::from_stream(stream).into_response()
+}
+
+#[derive(Clone, FromRef)]
+struct AppState {
+  storage_client: Arc<storage::DynStorageClient>,
+}
 
 #[tokio::main]
 async fn main() {
-  let app = Router::new().route("/", get(hello_world_handler));
+  tracing_subscriber::fmt::init();
 
-  let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+  let app_state = AppState {
+    storage_client: Arc::new(
+      storage::StorageCredentials::Local(
+        PathBuf::from_str("/tmp/nika").unwrap(),
+      )
+      .client()
+      .await,
+    ),
+  };
+  let app = Router::new()
+    .route("/*path", get(fetch_handler))
+    .with_state(app_state);
+
+  let bind_address = "0.0.0.0:3000";
+  let listener = tokio::net::TcpListener::bind(bind_address).await.unwrap();
+
+  tracing::info!("listening on `{bind_address}`");
   axum::serve(listener, app).await.unwrap();
 }

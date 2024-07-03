@@ -12,6 +12,7 @@ thiserror = { version = "1" }
 # mainline application
 axum = { version = "0.7" }
 tokio = { version = "1" }
+tokio-util = { version = "0.7" }
 
 # tracing
 tracing = { version = "0.1" }

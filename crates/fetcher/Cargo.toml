@@ -6,8 +6,9 @@ edition = "2021"
 [dependencies]
 storage = { path = "../storage" }
 
-axum.workspace = true
+axum = { workspace = true, features = [ "macros" ] }
 tokio = { workspace = true, features = [ "rt", "rt-multi-thread" ] }
+tokio-util = { workspace = true, features = [ "io" ] }
 
 tracing.workspace = true
 tracing-subscriber.workspace = true
