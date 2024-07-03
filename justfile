@@ -1,6 +1,6 @@
 
-_:
-    @just -l
+build:
+    cargo build
 
 test:
     cargo nextest run
