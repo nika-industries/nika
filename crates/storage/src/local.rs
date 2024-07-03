@@ -34,10 +34,7 @@ mod tests {
   use std::str::FromStr;
 
   use temp_dir::TempDir;
-  use tokio::{
-    io::{AsyncRead, AsyncReadExt},
-    pin,
-  };
+  use tokio::io::AsyncReadExt;
 
   use super::*;
 
