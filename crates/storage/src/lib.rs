@@ -8,6 +8,7 @@ use tokio::io::AsyncRead;
 use self::local::LocalStorageClient;
 
 pub type DynStorageClient = Box<dyn StorageClient + Send + Sync + 'static>;
+pub type DynAsyncReader = Box<dyn AsyncRead + Send + Sync + Unpin + 'static>;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum StorageCredentials {
@@ -32,8 +33,5 @@ pub enum ReadError {
 
 #[async_trait::async_trait]
 pub trait StorageClient {
-  async fn read(
-    &self,
-    path: &Path,
-  ) -> Result<Box<dyn AsyncRead + Send + Sync + Unpin + 'static>, ReadError>;
+  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError>;
 }

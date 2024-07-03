@@ -1,8 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use tokio::io::AsyncRead;
-
-use super::{ReadError, StorageClient};
+use super::{DynAsyncReader, ReadError, StorageClient};
 
 pub struct LocalStorageClient(PathBuf);
 
@@ -12,10 +10,7 @@ impl LocalStorageClient {
 
 #[async_trait::async_trait]
 impl StorageClient for LocalStorageClient {
-  async fn read(
-    &self,
-    path: &Path,
-  ) -> Result<Box<dyn AsyncRead + Send + Sync + Unpin + 'static>, ReadError> {
+  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError> {
     let path = self.0.as_path().join(path);
 
     // make sure it exists
