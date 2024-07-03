@@ -35,5 +35,5 @@ pub trait StorageClient {
   async fn read(
     &self,
     path: &Path,
-  ) -> Result<Box<dyn AsyncRead + Unpin>, ReadError>;
+  ) -> Result<Box<dyn AsyncRead + Send + Sync + Unpin + 'static>, ReadError>;
 }
