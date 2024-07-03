@@ -23,7 +23,7 @@
       in {
         devShell = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
-            pkg-config openssl bacon
+            pkg-config openssl bacon cargo-nextest
             toolchain
           ];
         };
