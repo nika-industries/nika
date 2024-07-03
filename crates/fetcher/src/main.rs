@@ -16,6 +16,7 @@ async fn fetch_handler(
   Path(path): Path<String>,
 ) -> Response {
   let Ok(path) = PathBuf::from_str(&path) else {
+    tracing::warn!("asked to fetch invalid path");
     return (
       StatusCode::BAD_REQUEST,
       "Your requested path could not be parsed as a path.",
@@ -26,22 +27,25 @@ async fn fetch_handler(
   let reader = match client.read(&path).await {
     Ok(r) => r,
     Err(ReadError::NotFound(_)) => {
+      tracing::warn!("asked to fetch missing path");
       return (
         StatusCode::NOT_FOUND,
         format!("The resource at the path {path:?} doesn't exist",),
       )
-        .into_response()
+        .into_response();
     }
     Err(ReadError::IoError(e)) => {
+      tracing::error!("failed to fetch path: {e}");
       return (
         StatusCode::INTERNAL_SERVER_ERROR,
         format!("An internal error occurred: {e}"),
       )
-        .into_response()
+        .into_response();
     }
   };
 
   let stream = tokio_util::io::ReaderStream::new(reader);
+  tracing::info!("fetching path");
   Body::from_stream(stream).into_response()
 }
 
@@ -54,14 +58,12 @@ struct AppState {
 async fn main() {
   tracing_subscriber::fmt::init();
 
-  let app_state = AppState {
-    storage_client: Arc::new(
-      storage::StorageCredentials::Local(
-        PathBuf::from_str("/tmp/nika").unwrap(),
-      )
+  let client =
+    storage::StorageCredentials::Local(PathBuf::from_str("/tmp/nika").unwrap())
       .client()
-      .await,
-    ),
+      .await;
+  let app_state = AppState {
+    storage_client: Arc::new(client),
   };
   let app = Router::new()
     .route("/*path", get(fetch_handler))
