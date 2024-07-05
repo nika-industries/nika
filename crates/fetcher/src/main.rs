@@ -30,7 +30,15 @@ async fn fetch_handler(
       tracing::warn!("asked to fetch missing path");
       return (
         StatusCode::NOT_FOUND,
-        format!("The resource at the path {path:?} doesn't exist",),
+        format!("The resource at the path {path:?} doesn't exist"),
+      )
+        .into_response();
+    }
+    Err(ReadError::InvalidPath(_)) => {
+      tracing::warn!("asked to fetch invalid path");
+      return (
+        StatusCode::BAD_REQUEST,
+        format!("Your requested path is invalid"),
       )
         .into_response();
     }

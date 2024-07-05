@@ -27,6 +27,8 @@ impl StorageCredentials {
 pub enum ReadError {
   #[error("the file was not available in storage: {0}")]
   NotFound(PathBuf),
+  #[error("the supplied path was invalid: {0}")]
+  InvalidPath(PathBuf),
   #[error("a local filesystem error occurred: {0}")]
   IoError(#[from] std::io::Error),
 }
