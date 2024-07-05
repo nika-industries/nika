@@ -57,7 +57,7 @@
         });
         
       in {
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             dev-toolchain
             bacon # change detection
