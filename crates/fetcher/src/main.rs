@@ -36,10 +36,7 @@ async fn fetch_handler(
     }
     Err(ReadError::InvalidPath(_)) => {
       tracing::warn!("asked to fetch invalid path");
-      return (
-        StatusCode::BAD_REQUEST,
-        format!("Your requested path is invalid"),
-      )
+      return (StatusCode::BAD_REQUEST, "Your requested path is invalid")
         .into_response();
     }
     Err(ReadError::IoError(e)) => {
