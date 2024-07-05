@@ -1,0 +1,14 @@
+[package]
+name = "core_types"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ulid.workspace = true
+serde.workspace = true
+
+surrealdb = { workspace = true, optional = true }
+
+[features]
+default = [ ]
+ssr = [ "dep:surrealdb" ]
