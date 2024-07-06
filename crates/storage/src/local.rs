@@ -26,14 +26,16 @@ impl StorageClient for LocalStorageClient {
     }
 
     // canonicalize to remove relative segments and symlinks
-    let path = path
-      .canonicalize()
-      .map_err(|_| ReadError::InvalidPath(input_path.to_path_buf()))?;
+    let path = path.canonicalize().map_err(|_| {
+      ReadError::InvalidPath(input_path.to_string_lossy().to_string())
+    })?;
 
     // make sure that it doesn't escape the store path
     //   we assume it has no relative segments because of the `canonicalize()`
     if !path.starts_with(&self.0) {
-      return Err(ReadError::InvalidPath(input_path.to_path_buf()));
+      return Err(ReadError::InvalidPath(
+        input_path.to_string_lossy().to_string(),
+      ));
     }
 
     let file = tokio::fs::File::open(&path).await?;
