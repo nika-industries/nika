@@ -22,7 +22,7 @@ impl StorageClient for LocalStorageClient {
 
     // make sure it exists
     if !std::fs::exists(&path)? {
-      return Err(ReadError::NotFound(path));
+      return Err(ReadError::NotFound(input_path.to_path_buf()));
     }
 
     // canonicalize to remove relative segments and symlinks
