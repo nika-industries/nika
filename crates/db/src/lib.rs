@@ -1,13 +1,15 @@
+mod store;
+
 use std::sync::Arc;
 
 use include_dir::{include_dir, Dir};
 use miette::{miette, IntoDiagnostic, Result, WrapErr};
 use serde::Deserialize;
-pub use surrealdb::{
-  engine::remote::ws::Client as WsClient, Error as SurrealError,
-  Result as SurrealResult,
+use surrealdb::{
+  engine::remote::ws::{Client as WsClient, Ws},
+  opt::auth::Root,
+  Result as SurrealResult, Surreal,
 };
-use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
 use tracing::instrument;
 
 const MIGRATIONS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/migrations");
