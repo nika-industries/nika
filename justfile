@@ -8,6 +8,9 @@ build:
 test:
     cargo nextest run
 
+check:
+	nix flake check -L
+
 # run surrealdb
 surreal:
 	surreal start file:/tmp/nika_surreal_data --log=info --auth
