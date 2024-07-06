@@ -1,0 +1,10 @@
+[core]
+    path = "./crates/db/migrations"
+    schema = "less"
+
+[db]
+    address = "ws://localhost:8000"
+    username = "root"
+    password = "pass"
+    ns = "main"
+    db = "main"

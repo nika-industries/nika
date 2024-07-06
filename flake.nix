@@ -17,6 +17,9 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
+          config.allowUnfreePredicate = pkg: builtins.elem (pkgs.lib.getName pkg) [
+            "surrealdb"
+          ];
         };
         filter = nix-filter.lib;
 
@@ -60,9 +63,12 @@
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             dev-toolchain
+
             bacon # change detection
             cargo-nextest # testing
             cargo-deny # package auditing
+            surrealdb
+            surrealdb-migrations
           ];
         };
         packages = {
