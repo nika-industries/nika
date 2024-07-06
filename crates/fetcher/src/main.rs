@@ -8,6 +8,7 @@ use axum::{
   routing::get,
   Router,
 };
+use miette::IntoDiagnostic;
 use storage::ReadError;
 
 #[tracing::instrument(skip(client))]
@@ -72,19 +73,22 @@ impl IntoResponse for FetcherError {
 
 #[derive(Clone, FromRef)]
 struct AppState {
+  db:             db::DbConnection,
   storage_client: Arc<storage::DynStorageClient>,
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> miette::Result<()> {
   tracing_subscriber::fmt::init();
 
-  let client =
-    storage::StorageCredentials::Local(PathBuf::from_str("/tmp/nika").unwrap())
-      .client()
-      .await;
+  let client = storage::StorageCredentials::Local(
+    PathBuf::from_str("/tmp/nika").into_diagnostic()?,
+  )
+  .client()
+  .await;
   let app_state = AppState {
     storage_client: Arc::new(client),
+    db:             db::DbConnection::new().await?,
   };
   let app = Router::new()
     .route("/*path", get(fetch_handler))
@@ -95,4 +99,6 @@ async fn main() {
 
   tracing::info!("listening on `{bind_address}`");
   axum::serve(listener, app).await.unwrap();
+
+  Ok(())
 }
