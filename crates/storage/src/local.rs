@@ -65,7 +65,7 @@ mod tests {
       .unwrap();
 
     let mut result = String::new();
-    (&mut reader).read_to_string(&mut result).await.unwrap();
+    reader.read_to_string(&mut result).await.unwrap();
 
     assert_eq!(&result, "abc");
   }
