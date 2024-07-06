@@ -4,6 +4,7 @@ use surrealdb::Result as SurrealResult;
 use super::DbConnection;
 
 impl DbConnection {
+  /// Fetches the [`core_types::Store`] matching the given name from the DB.
   pub async fn fetch_store_by_name(
     &self,
     name: &str,

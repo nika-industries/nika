@@ -1,10 +1,13 @@
+//! Provides access to the SurrealDB database.
+
+#![warn(missing_docs)]
+
 mod store;
 
 use std::sync::Arc;
 
 use include_dir::{include_dir, Dir};
 use miette::{miette, IntoDiagnostic, Result, WrapErr};
-use serde::Deserialize;
 use surrealdb::{
   engine::remote::ws::{Client as WsClient, Ws},
   opt::auth::Root,
@@ -14,15 +17,12 @@ use tracing::instrument;
 
 const MIGRATIONS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/migrations");
 
-#[derive(Deserialize)]
-pub struct Count {
-  pub count: usize,
-}
-
+/// The shared database type.
 #[derive(Clone, Debug)]
 pub struct DbConnection(Arc<Surreal<WsClient>>);
 
 impl DbConnection {
+  /// Constructs a new [`DbConnection`].
   #[instrument]
   pub async fn new() -> Result<Self> {
     let client = Surreal::new::<Ws>(
@@ -57,6 +57,7 @@ impl DbConnection {
     Ok(Self(Arc::new(client)))
   }
 
+  /// Consumes the [`DbConnection`] and returns the inner [`Surreal`] instance.
   #[instrument(skip(self))]
   pub async fn into_inner(self) -> SurrealResult<Surreal<WsClient>> {
     let client = self.use_main().await?;
@@ -69,6 +70,7 @@ impl DbConnection {
     Ok(&self.0)
   }
 
+  /// Runs the database migrations defined in `crates/db/migrations` on the DB.
   #[instrument(skip(self))]
   pub async fn run_migrations(&self) -> Result<()> {
     let db = self.use_main().await.into_diagnostic()?;
