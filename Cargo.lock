@@ -810,6 +810,7 @@ dependencies = [
  "core_types",
  "db",
  "storage",
+ "thiserror",
  "tokio",
  "tokio-util",
  "tracing",

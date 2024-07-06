@@ -9,6 +9,8 @@ storage = { path = "../storage" }
 core_types = { path = "../core_types", default-features = false }
 db = { path = "../db" }
 
+thiserror.workspace = true
+
 axum = { workspace = true, features = [ "macros" ] }
 tokio = { workspace = true, features = [ "rt", "rt-multi-thread" ] }
 tokio-util = { workspace = true, features = [ "io" ] }
