@@ -81,6 +81,12 @@ struct AppState {
 async fn main() -> miette::Result<()> {
   tracing_subscriber::fmt::init();
 
+  println!("");
+  for line in art::ascii_art!("../../media/ascii_logo.png").lines() {
+    println!("{}", line);
+  }
+  println!("");
+
   let client = storage::StorageCredentials::Local(
     PathBuf::from_str("/tmp/nika").into_diagnostic()?,
   )
@@ -91,7 +97,7 @@ async fn main() -> miette::Result<()> {
     db:             db::DbConnection::new().await?,
   };
   let app = Router::new()
-    .route("/*path", get(fetch_handler))
+    .route("/:name/*path", get(fetch_handler))
     .with_state(app_state);
 
   let bind_address = "0.0.0.0:3000";

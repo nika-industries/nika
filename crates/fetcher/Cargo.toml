@@ -5,9 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-storage = { path = "../storage" }
+art = { path = "../art" }
 core_types = { path = "../core_types", default-features = false }
 db = { path = "../db" }
+storage = { path = "../storage" }
 
 thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }

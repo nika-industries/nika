@@ -1,0 +1,16 @@
+[package]
+name = "art"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+artem = { version = "3" }
+image = { version = "0.25", features = ["rayon", "png"], default-features = false }
+
+syn = { version = "1", features = [ "full" ] }
+quote = { version = "1" }
+proc-macro2 = { version = "1" }
+
+[lib]
+proc-macro = true
