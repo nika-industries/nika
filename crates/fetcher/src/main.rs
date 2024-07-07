@@ -9,7 +9,7 @@ use axum::{
   Router,
 };
 use miette::IntoDiagnostic;
-use storage::ReadError;
+use storage::{ReadError, StorageClientGenerator};
 
 #[tracing::instrument(skip(client))]
 async fn fetch_handler(
@@ -87,7 +87,7 @@ async fn main() -> miette::Result<()> {
   }
   println!();
 
-  let client = storage::StorageCredentials::Local(
+  let client = core_types::StorageCredentials::Local(
     PathBuf::from_str("/tmp/nika").into_diagnostic()?,
   )
   .client()
