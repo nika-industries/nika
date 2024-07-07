@@ -1,4 +1,4 @@
-use std::{ops::Deref, path::PathBuf, str::FromStr, sync::Arc};
+use std::{ops::Deref, path::PathBuf, str::FromStr};
 
 use axum::{
   body::Body,
@@ -8,20 +8,34 @@ use axum::{
   routing::get,
   Router,
 };
-use miette::IntoDiagnostic;
 use storage::{ReadError, StorageClientGenerator};
 
-#[tracing::instrument(skip(client))]
+#[tracing::instrument(skip(db))]
 async fn fetch_handler(
-  State(client): State<Arc<storage::DynStorageClient>>,
-  Path(path): Path<String>,
-) -> Response {
-  fetch_path_from_client(client, path).await.into_response()
+  State(db): State<db::DbConnection>,
+  Path((store_name, path)): Path<(String, String)>,
+) -> Result<Response, FetcherError> {
+  let store = db
+    .fetch_store_by_name(&store_name)
+    .await
+    .map_err(FetcherError::SurrealDbStoreRetrievalError)?
+    .ok_or_else(|| FetcherError::NoMatchingStore(store_name))?;
+
+  let client = store.config.client().await;
+
+  let response = fetch_path_from_client(&client, path).await?;
+  Ok(response)
 }
 
 #[derive(thiserror::Error, Debug)]
-#[error("An error occured while fetching: {0}")]
-struct FetcherError(#[from] storage::ReadError);
+enum FetcherError {
+  #[error("The store does not exist: {0}")]
+  NoMatchingStore(String),
+  #[error("SurrealDB error: {0}")]
+  SurrealDbStoreRetrievalError(db::SurrealError),
+  #[error("An error occured while fetching: {0}")]
+  ReadError(#[from] storage::ReadError),
+}
 
 #[tracing::instrument(skip(client))]
 async fn fetch_path_from_client(
@@ -42,8 +56,24 @@ async fn fetch_path_from_client(
 
 impl IntoResponse for FetcherError {
   fn into_response(self) -> Response {
-    match self.0 {
-      ReadError::NotFound(path) => {
+    match self {
+      FetcherError::NoMatchingStore(store_name) => {
+        tracing::warn!("asked to fetch from non-existent store");
+        (
+          StatusCode::NOT_FOUND,
+          format!("The store \"{store_name}\" does not exist."),
+        )
+          .into_response()
+      }
+      FetcherError::SurrealDbStoreRetrievalError(e) => {
+        tracing::error!("failed to retrieve store from surrealdb: {e}");
+        (
+          StatusCode::INTERNAL_SERVER_ERROR,
+          format!("An internal error occurred: {e}"),
+        )
+          .into_response()
+      }
+      FetcherError::ReadError(ReadError::NotFound(path)) => {
         tracing::warn!("asked to fetch missing path");
         (
           StatusCode::NOT_FOUND,
@@ -51,7 +81,7 @@ impl IntoResponse for FetcherError {
         )
           .into_response()
       }
-      ReadError::InvalidPath(path) => {
+      FetcherError::ReadError(ReadError::InvalidPath(path)) => {
         tracing::warn!("asked to fetch invalid path");
         (
           StatusCode::BAD_REQUEST,
@@ -59,7 +89,7 @@ impl IntoResponse for FetcherError {
         )
           .into_response()
       }
-      ReadError::IoError(e) => {
+      FetcherError::ReadError(ReadError::IoError(e)) => {
         tracing::warn!("failed to fetch path: {e}");
         (
           StatusCode::INTERNAL_SERVER_ERROR,
@@ -73,8 +103,7 @@ impl IntoResponse for FetcherError {
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  db:             db::DbConnection,
-  storage_client: Arc<storage::DynStorageClient>,
+  db: db::DbConnection,
 }
 
 #[tokio::main]
@@ -87,14 +116,8 @@ async fn main() -> miette::Result<()> {
   }
   println!();
 
-  let client = core_types::StorageCredentials::Local(
-    PathBuf::from_str("/tmp/nika").into_diagnostic()?,
-  )
-  .client()
-  .await;
   let app_state = AppState {
-    storage_client: Arc::new(client),
-    db:             db::DbConnection::new().await?,
+    db: db::DbConnection::new().await?,
   };
   let app = Router::new()
     .route("/:name/*path", get(fetch_handler))

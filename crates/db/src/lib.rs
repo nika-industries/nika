@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use include_dir::{include_dir, Dir};
 use miette::{miette, IntoDiagnostic, Result, WrapErr};
+pub use surrealdb::Error as SurrealError;
 use surrealdb::{
   engine::remote::ws::{Client as WsClient, Ws},
   opt::auth::Root,

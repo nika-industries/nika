@@ -11,6 +11,9 @@ test:
 check:
 	nix flake check -L
 
+clippy:
+	cargo clippy --all-targets
+
 # run surrealdb
 surreal:
 	surreal start file:/tmp/nika_surreal_data --log=info --auth

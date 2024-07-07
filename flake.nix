@@ -78,7 +78,7 @@
         checks = {
           clippy = craneLib.cargoClippy (fetcher-crane-args // {
             cargoArtifacts = fetcher-deps-only;
-            cargoClippyExtraArgs = "-- --deny warnings";
+            cargoClippyExtraArgs = "--all-targets -- --deny warnings";
           });
           docs = craneLib.cargoDoc (fetcher-crane-args // {
             cargoArtifacts = fetcher-deps-only;
