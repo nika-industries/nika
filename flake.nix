@@ -31,6 +31,7 @@
             "Cargo.lock"
             (filter.matchExt "toml")
             ".cargo"
+            "media"
           ];
         };
 

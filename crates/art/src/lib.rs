@@ -22,7 +22,7 @@ pub fn ascii_art(input: TokenStream) -> TokenStream {
 
   // Read the image file
   let mut file = File::open(&full_path)
-    .expect(&format!("failed to open image file: {full_path:?}"));
+    .unwrap_or_else(|_| panic!("failed to open image file: {full_path:?}"));
   let mut buffer = Vec::new();
   file
     .read_to_end(&mut buffer)

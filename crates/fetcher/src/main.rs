@@ -81,11 +81,11 @@ struct AppState {
 async fn main() -> miette::Result<()> {
   tracing_subscriber::fmt::init();
 
-  println!("");
+  println!();
   for line in art::ascii_art!("../../media/ascii_logo.png").lines() {
     println!("{}", line);
   }
-  println!("");
+  println!();
 
   let client = storage::StorageCredentials::Local(
     PathBuf::from_str("/tmp/nika").into_diagnostic()?,
