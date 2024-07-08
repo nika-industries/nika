@@ -20,8 +20,9 @@ axum = { version = "0.7" }
 tokio = { version = "1" }
 tokio-util = { version = "0.7" }
 
-# atomic features
+# atomic-ish features
 ulid = { version = "1", features = [ "serde" ] }
+serde_json = { version = "1" }
 
 # heavy integrations
 surrealdb = { version = "1", default-features = false }

@@ -1,0 +1,11 @@
+[package]
+name = "mollusk"
+version = "0.1.0"
+edition = "2021"
+license-file.workspace = true
+
+[dependencies]
+axum.workspace = true
+miette.workspace = true
+serde_json.workspace = true
+serde.workspace = true

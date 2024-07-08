@@ -2478,6 +2478,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mollusk"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "miette 7.2.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "names"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
