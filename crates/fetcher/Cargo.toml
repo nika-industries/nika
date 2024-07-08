@@ -5,7 +5,13 @@ edition = "2021"
 publish = false
 
 [dependencies]
+art = { path = "../art" }
+core_types = { path = "../core_types", default-features = false }
+db = { path = "../db" }
 storage = { path = "../storage" }
+
+thiserror.workspace = true
+miette = { workspace = true, features = [ "fancy" ] }
 
 axum = { workspace = true, features = [ "macros" ] }
 tokio = { workspace = true, features = [ "rt", "rt-multi-thread" ] }

@@ -1,72 +1,74 @@
-use std::{path::PathBuf, str::FromStr, sync::Arc};
+mod fetcher_error;
+
+use std::{ops::Deref, path::PathBuf, str::FromStr};
 
 use axum::{
   body::Body,
   extract::{FromRef, Path, State},
-  http::StatusCode,
   response::{IntoResponse, Response},
   routing::get,
   Router,
 };
-use storage::ReadError;
+use storage::StorageClientGenerator;
+
+use self::fetcher_error::FetcherError;
+
+#[tracing::instrument(skip(db))]
+async fn fetch_handler(
+  State(db): State<db::DbConnection>,
+  Path((store_name, path)): Path<(String, String)>,
+) -> Response {
+  async move {
+    let store = db
+      .fetch_store_by_name(&store_name)
+      .await
+      .map_err(FetcherError::SurrealDbStoreRetrievalError)?
+      .ok_or_else(|| FetcherError::NoMatchingStore(store_name))?;
+
+    let client = store.config.client().await;
+
+    let response = fetch_path_from_client(&client, path).await?;
+    Ok::<Response, FetcherError>(response)
+  }
+  .await
+  .into_response()
+}
 
 #[tracing::instrument(skip(client))]
-async fn fetch_handler(
-  State(client): State<Arc<storage::DynStorageClient>>,
-  Path(path): Path<String>,
-) -> Response {
-  let Ok(path) = PathBuf::from_str(&path) else {
-    tracing::warn!("asked to fetch invalid path");
-    return (
-      StatusCode::BAD_REQUEST,
-      "Your requested path could not be parsed as a path.",
-    )
-      .into_response();
-  };
+async fn fetch_path_from_client(
+  client: impl Deref<Target = storage::DynStorageClient>,
+  path: String,
+) -> Result<Response, FetcherError> {
+  // the error type here is `Infalliable`
+  let path = PathBuf::from_str(&path).unwrap();
 
-  let reader = match client.read(&path).await {
-    Ok(r) => r,
-    Err(ReadError::NotFound(_)) => {
-      tracing::warn!("asked to fetch missing path");
-      return (
-        StatusCode::NOT_FOUND,
-        format!("The resource at the path {path:?} doesn't exist",),
-      )
-        .into_response();
-    }
-    Err(ReadError::IoError(e)) => {
-      tracing::error!("failed to fetch path: {e}");
-      return (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        format!("An internal error occurred: {e}"),
-      )
-        .into_response();
-    }
-  };
-
+  let reader = client.read(&path).await?;
   let stream = tokio_util::io::ReaderStream::new(reader);
+
   tracing::info!("fetching path");
-  Body::from_stream(stream).into_response()
+  Ok(Body::from_stream(stream).into_response())
 }
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  storage_client: Arc<storage::DynStorageClient>,
+  db: db::DbConnection,
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> miette::Result<()> {
   tracing_subscriber::fmt::init();
 
-  let client =
-    storage::StorageCredentials::Local(PathBuf::from_str("/tmp/nika").unwrap())
-      .client()
-      .await;
+  println!();
+  for line in art::ascii_art!("../../media/ascii_logo.png").lines() {
+    println!("{}", line);
+  }
+  println!();
+
   let app_state = AppState {
-    storage_client: Arc::new(client),
+    db: db::DbConnection::new().await?,
   };
   let app = Router::new()
-    .route("/*path", get(fetch_handler))
+    .route("/:name/*path", get(fetch_handler))
     .with_state(app_state);
 
   let bind_address = "0.0.0.0:3000";
@@ -74,4 +76,6 @@ async fn main() {
 
   tracing::info!("listening on `{bind_address}`");
   axum::serve(listener, app).await.unwrap();
+
+  Ok(())
 }

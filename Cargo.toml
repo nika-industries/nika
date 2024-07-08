@@ -9,10 +9,19 @@ async-trait = { version = "0.1" }
 serde = { version = "1", features = [ "derive" ] }
 thiserror = { version = "1" }
 
+# errors
+miette = { version = "7" }
+
 # mainline application
 axum = { version = "0.7" }
 tokio = { version = "1" }
 tokio-util = { version = "0.7" }
+
+# atomic features
+ulid = { version = "1", features = [ "serde" ] }
+
+# heavy integrations
+surrealdb = { version = "1", default-features = false }
 
 # tracing
 tracing = { version = "0.1" }

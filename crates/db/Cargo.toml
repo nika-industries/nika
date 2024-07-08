@@ -1,0 +1,17 @@
+[package]
+name = "db"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+core_types = { path = "../core_types", features = [ "ssr" ] }
+
+serde.workspace = true
+miette.workspace = true
+tracing.workspace = true
+
+surrealdb = { workspace = true, features = [ "protocol-ws" ] }
+surrealdb-migrations = { version = "1.5" }
+
+include_dir = { version = "0.7" }

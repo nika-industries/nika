@@ -17,6 +17,9 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
+          config.allowUnfreePredicate = pkg: builtins.elem (pkgs.lib.getName pkg) [
+            "surrealdb"
+          ];
         };
         filter = nix-filter.lib;
 
@@ -28,6 +31,7 @@
             "Cargo.lock"
             (filter.matchExt "toml")
             ".cargo"
+            "media"
           ];
         };
 
@@ -57,12 +61,15 @@
         });
         
       in {
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             dev-toolchain
+
             bacon # change detection
             cargo-nextest # testing
             cargo-deny # package auditing
+            surrealdb
+            surrealdb-migrations
           ];
         };
         packages = {
@@ -71,7 +78,7 @@
         checks = {
           clippy = craneLib.cargoClippy (fetcher-crane-args // {
             cargoArtifacts = fetcher-deps-only;
-            cargoClippyExtraArgs = "-- --deny warnings";
+            cargoClippyExtraArgs = "--all-targets -- --deny warnings";
           });
           docs = craneLib.cargoDoc (fetcher-crane-args // {
             cargoArtifacts = fetcher-deps-only;
