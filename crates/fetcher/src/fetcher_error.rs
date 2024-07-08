@@ -1,10 +1,8 @@
-use axum::{
-  http::StatusCode,
-  response::{IntoResponse, Response},
-};
+use axum::http::StatusCode;
+use miette::Diagnostic;
 use storage::ReadError;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Diagnostic, Debug)]
 pub enum FetcherError {
   #[error("The store does not exist: {0}")]
   NoMatchingStore(String),
@@ -14,48 +12,69 @@ pub enum FetcherError {
   ReadError(#[from] storage::ReadError),
 }
 
-impl IntoResponse for FetcherError {
-  fn into_response(self) -> Response {
+impl mollusk::ApiError for FetcherError {
+  fn status_code(&self) -> StatusCode {
+    match self {
+      FetcherError::NoMatchingStore(_) => StatusCode::NOT_FOUND,
+      FetcherError::SurrealDbStoreRetrievalError(_) => {
+        StatusCode::INTERNAL_SERVER_ERROR
+      }
+      FetcherError::ReadError(ReadError::NotFound(_)) => StatusCode::NOT_FOUND,
+      FetcherError::ReadError(ReadError::InvalidPath(_)) => {
+        StatusCode::BAD_REQUEST
+      }
+      FetcherError::ReadError(ReadError::IoError(_)) => {
+        StatusCode::INTERNAL_SERVER_ERROR
+      }
+    }
+  }
+
+  fn slug(&self) -> &'static str {
+    match self {
+      FetcherError::NoMatchingStore(_) => "missing-store",
+      FetcherError::ReadError(ReadError::NotFound(_)) => "missing-path",
+      FetcherError::ReadError(ReadError::InvalidPath(_)) => "invalid-path",
+      FetcherError::SurrealDbStoreRetrievalError(_)
+      | FetcherError::ReadError(ReadError::IoError(_)) => "internal-error",
+    }
+  }
+
+  fn description(&self) -> String {
     match self {
       FetcherError::NoMatchingStore(store_name) => {
+        format!("The store \"{store_name}\" does not exist.")
+      }
+      FetcherError::SurrealDbStoreRetrievalError(e) => {
+        format!("An internal error occurred: {e}")
+      }
+      FetcherError::ReadError(ReadError::NotFound(path)) => {
+        format!("The resource at {path:?} does not exist.")
+      }
+      FetcherError::ReadError(ReadError::InvalidPath(path)) => {
+        format!("The requested path \"{path}\" is invalid.")
+      }
+      FetcherError::ReadError(ReadError::IoError(e)) => {
+        format!("An internal error occurred: {e}")
+      }
+    }
+  }
+
+  fn tracing(&self) {
+    match self {
+      FetcherError::NoMatchingStore(_) => {
         tracing::warn!("asked to fetch from non-existent store");
-        (
-          StatusCode::NOT_FOUND,
-          format!("The store \"{store_name}\" does not exist."),
-        )
-          .into_response()
       }
       FetcherError::SurrealDbStoreRetrievalError(e) => {
         tracing::error!("failed to retrieve store from surrealdb: {e}");
-        (
-          StatusCode::INTERNAL_SERVER_ERROR,
-          format!("An internal error occurred: {e}"),
-        )
-          .into_response()
       }
-      FetcherError::ReadError(ReadError::NotFound(path)) => {
+      FetcherError::ReadError(ReadError::NotFound(_)) => {
         tracing::warn!("asked to fetch missing path");
-        (
-          StatusCode::NOT_FOUND,
-          format!("The resource at {path:?} does not exist."),
-        )
-          .into_response()
       }
-      FetcherError::ReadError(ReadError::InvalidPath(path)) => {
+      FetcherError::ReadError(ReadError::InvalidPath(_)) => {
         tracing::warn!("asked to fetch invalid path");
-        (
-          StatusCode::BAD_REQUEST,
-          format!("Your requested path \"{path}\" is invalid"),
-        )
-          .into_response()
       }
       FetcherError::ReadError(ReadError::IoError(e)) => {
-        tracing::warn!("failed to fetch path: {e}");
-        (
-          StatusCode::INTERNAL_SERVER_ERROR,
-          format!("An internal error occurred: {e}"),
-        )
-          .into_response()
+        tracing::warn!("failed to fetch path due to `IoError`: {e}");
       }
     }
   }

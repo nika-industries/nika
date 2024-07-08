@@ -9,6 +9,7 @@ use axum::{
   routing::get,
   Router,
 };
+use mollusk::RenderApiError;
 use storage::StorageClientGenerator;
 
 use self::fetcher_error::FetcherError;
@@ -17,7 +18,7 @@ use self::fetcher_error::FetcherError;
 async fn fetch_handler(
   State(db): State<db::DbConnection>,
   Path((store_name, path)): Path<(String, String)>,
-) -> Response {
+) -> impl IntoResponse {
   async move {
     let store = db
       .fetch_store_by_name(&store_name)
@@ -31,7 +32,7 @@ async fn fetch_handler(
     Ok::<Response, FetcherError>(response)
   }
   .await
-  .into_response()
+  .render_api_error()
 }
 
 #[tracing::instrument(skip(client))]
