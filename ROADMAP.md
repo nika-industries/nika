@@ -4,15 +4,17 @@
 1. [ ] Proof-Of-Concept Cycle
 	1. [ ] Fetching archives
 		1. [X] Fetcher exists and can fetch from a hardcoded store
-		2. [ ] DB exists and has basic config about a store
-		3. [ ] Fetcher can query the DB for store info
-	2. [ ] Pushing archives
+		2. [X] DB exists and has basic config about a store
+		3. [X] Fetcher can query the DB for store info
+	2. [ ] Licensing
+		1. [ ] We have a license that's as permissive as possible while preventing direct competition from using our code
+	3. [ ] Pushing archives
 		1. [ ] API layer and daemon now exist
 		2. [ ] API layer can use temp storage and create jobs
 		3. [ ] Daemon can execute jobs
 		4. [ ] "Push archive" is job type and functions correctly
 		5. [ ] Archives can be pushed
-	3. [ ] CLI
+	4. [ ] CLI
 		1. [ ] The CLI exists
 		2. [ ] The CLI can execute all API layer/Daemon actions going forward (keep up to date)
 2. [ ] Multi-tenancy
