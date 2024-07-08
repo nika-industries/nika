@@ -6,8 +6,8 @@
 		1. [X] Fetcher exists and can fetch from a hardcoded store
 		2. [X] DB exists and has basic config about a store
 		3. [X] Fetcher can query the DB for store info
-	2. [ ] Licensing
-		1. [ ] We have a license that's as permissive as possible while preventing direct competition from using our code
+	2. [X] Licensing
+		1. [X] We have a license that's as permissive as possible while preventing direct competition from using our code
 	3. [ ] Pushing archives
 		1. [ ] API layer and daemon now exist
 		2. [ ] API layer can use temp storage and create jobs
