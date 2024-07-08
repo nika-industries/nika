@@ -4,7 +4,7 @@ use axum::{
 };
 use miette::Diagnostic;
 
-pub trait ApiError: Diagnostic {
+pub trait ApiError: Diagnostic + Sized {
   /// The [`StatusCode`] that the error should return.
   fn status_code(&self) -> StatusCode;
   /// The unique slug for the error, to enable client-side handling.
@@ -14,19 +14,19 @@ pub trait ApiError: Diagnostic {
   /// This method should run any logging or tracing calls attached to the error.
   fn tracing(&self);
 
-  fn into_response(&self) -> axum::response::Response {
+  fn into_response(self) -> axum::response::Response {
     self.tracing();
-    return (
+    (
       self.status_code(),
       serde_json::json!({
         "error": {
           "id": self.slug(),
-          "description": ApiError::description(self),
+          "description": ApiError::description(&self),
         },
       })
       .to_string(),
     )
-      .into_response();
+      .into_response()
   }
 }
 
