@@ -1,4 +1,7 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{
+  http::StatusCode,
+  response::{IntoResponse, Response},
+};
 use miette::Diagnostic;
 
 pub trait ApiError: Diagnostic {
@@ -24,5 +27,18 @@ pub trait ApiError: Diagnostic {
       .to_string(),
     )
       .into_response();
+  }
+}
+
+pub trait RenderApiError<T> {
+  fn render_api_error(self) -> Result<T, Response>;
+}
+
+impl<T, E> RenderApiError<T> for Result<T, E>
+where
+  E: ApiError,
+{
+  fn render_api_error(self) -> Result<T, Response> {
+    self.map_err(|e| e.into_response())
   }
 }

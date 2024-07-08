@@ -8,6 +8,7 @@ publish = false
 art = { path = "../art" }
 core_types = { path = "../core_types", default-features = false }
 db = { path = "../db" }
+mollusk = { path = "../mollusk" }
 storage = { path = "../storage" }
 
 thiserror.workspace = true
