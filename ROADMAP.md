@@ -2,7 +2,7 @@
 
 ## Cycle Roadmap
 1. [ ] Proof-Of-Concept Cycle
-	1. [ ] Fetching archives
+	1. [X] Fetching archives
 		1. [X] Fetcher exists and can fetch from a hardcoded store
 		2. [X] DB exists and has basic config about a store
 		3. [X] Fetcher can query the DB for store info
