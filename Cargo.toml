@@ -3,6 +3,9 @@
 resolver = "2"
 members = ["crates/*"]
 
+[workspace.package]
+license-file = "LICENSE.md"
+
 [workspace.dependencies]
 # strictly codegen
 async-trait = { version = "0.1" }
