@@ -1396,6 +1396,7 @@ dependencies = [
  "core_types",
  "db",
  "miette 7.2.0",
+ "mollusk",
  "storage",
  "thiserror",
  "tokio",
@@ -2475,6 +2476,16 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "mollusk"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "miette 7.2.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
