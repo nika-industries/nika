@@ -39,10 +39,8 @@ async fn fetch_path_from_client(
   client: impl Deref<Target = storage::DynStorageClient>,
   path: String,
 ) -> Result<Response, FetcherError> {
-  let Ok(path) = PathBuf::from_str(&path) else {
-    tracing::warn!("asked to fetch invalid path");
-    Err(storage::ReadError::InvalidPath(path))?
-  };
+  // the error type here is `Infalliable`
+  let path = PathBuf::from_str(&path).unwrap();
 
   let reader = client.read(&path).await?;
   let stream = tokio_util::io::ReaderStream::new(reader);
