@@ -17,17 +17,21 @@ use self::fetcher_error::FetcherError;
 async fn fetch_handler(
   State(db): State<db::DbConnection>,
   Path((store_name, path)): Path<(String, String)>,
-) -> Result<Response, FetcherError> {
-  let store = db
-    .fetch_store_by_name(&store_name)
-    .await
-    .map_err(FetcherError::SurrealDbStoreRetrievalError)?
-    .ok_or_else(|| FetcherError::NoMatchingStore(store_name))?;
+) -> Response {
+  async move {
+    let store = db
+      .fetch_store_by_name(&store_name)
+      .await
+      .map_err(FetcherError::SurrealDbStoreRetrievalError)?
+      .ok_or_else(|| FetcherError::NoMatchingStore(store_name))?;
 
-  let client = store.config.client().await;
+    let client = store.config.client().await;
 
-  let response = fetch_path_from_client(&client, path).await?;
-  Ok(response)
+    let response = fetch_path_from_client(&client, path).await?;
+    Ok::<Response, FetcherError>(response)
+  }
+  .await
+  .into_response()
 }
 
 #[tracing::instrument(skip(client))]
