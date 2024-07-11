@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 art = { path = "../art" }
-core_types = { path = "../core_types", default-features = false }
+core_types = { path = "../core_types" }
 db = { path = "../db" }
 mollusk = { path = "../mollusk" }
 storage = { path = "../storage" }
