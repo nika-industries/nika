@@ -1,0 +1,10 @@
+[package]
+name = "daemon"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+jobs = { path = "../jobs" }
+
+apalis.workspace = true
