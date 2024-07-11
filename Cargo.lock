@@ -1280,7 +1280,11 @@ name = "daemon"
 version = "0.1.0"
 dependencies = [
  "apalis",
+ "art",
  "jobs",
+ "miette 7.2.0",
+ "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]
