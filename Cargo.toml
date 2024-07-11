@@ -24,6 +24,7 @@ tokio-util = { version = "0.7" }
 ulid = { version = "1", features = [ "serde" ] }
 serde_json = { version = "1" }
 apalis = { version = "0.5" }
+nanorand = { version = "0.7", default-features = false }
 
 # heavy integrations
 surrealdb = { version = "1", default-features = false }

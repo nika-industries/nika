@@ -2780,6 +2780,13 @@ dependencies = [
 
 [[package]]
 name = "names"
+version = "0.1.0"
+dependencies = [
+ "nanorand",
+]
+
+[[package]]
+name = "names"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bddcd3bf5144b6392de80e04c347cd7fab2508f6df16a85fc496ecd5cec39bc"
@@ -4908,7 +4915,7 @@ dependencies = [
  "fs_extra",
  "include_dir",
  "itertools 0.12.1",
- "names",
+ "names 0.14.0",
  "regex",
  "rust-ini",
  "serde",
