@@ -10,4 +10,8 @@ impl Job for HealthCheckJob {
   const NAME: &'static str = "jobs::HealthCheckJob";
 }
 
-async fn execute_health_check_job() -> Result<bool, Infallible> { Ok(true) }
+pub async fn execute_health_check_job(
+  job: HealthCheckJob,
+) -> Result<bool, Infallible> {
+  Ok(true)
+}

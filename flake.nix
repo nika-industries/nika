@@ -68,8 +68,11 @@
             bacon # change detection
             cargo-nextest # testing
             cargo-deny # package auditing
+
             surrealdb
             surrealdb-migrations
+
+            redis
           ];
         };
         packages = {
