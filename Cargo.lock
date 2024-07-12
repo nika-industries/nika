@@ -255,6 +255,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "api"
+version = "0.1.0"
+dependencies = [
+ "apalis",
+ "art",
+ "axum",
+ "core_types",
+ "jobs",
+ "miette 7.2.0",
+ "mollusk",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "approx"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2462,6 +2480,8 @@ name = "jobs"
 version = "0.1.0"
 dependencies = [
  "apalis",
+ "miette 7.2.0",
+ "redis",
  "serde",
 ]
 
@@ -3553,6 +3573,7 @@ dependencies = [
  "pin-project-lite",
  "ryu",
  "sha1_smol",
+ "socket2",
  "tokio",
  "tokio-retry",
  "tokio-util",

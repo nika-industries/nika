@@ -59,11 +59,7 @@ struct AppState {
 async fn main() -> miette::Result<()> {
   tracing_subscriber::fmt::init();
 
-  println!();
-  for line in art::ascii_art!("../../media/ascii_logo.png").lines() {
-    println!("{}", line);
-  }
-  println!();
+  println!(art::ascii_art!("../../media/ascii_logo.png"));
 
   let app_state = AppState {
     db: db::DbConnection::new().await?,

@@ -1,16 +1,28 @@
 
-run-fetcher:
-    cargo run -p fetcher
+_:
+	@just -l
 
-build:
-    cargo build
+# run the fetcher binary
+fetcher:
+    cargo run --bin fetcher
 
+# run the api binary
+api:
+	cargo run --bin api
+
+# run the daemon binary
+daemon:
+	cargo run --bin daemon
+
+# run all tests with nextest
 test:
     cargo nextest run
 
+# run nix checks
 check:
 	nix flake check -L
 
+# run clippy on all targets
 clippy:
 	cargo clippy --all-targets
 
@@ -23,3 +35,7 @@ wipe-surreal:
 # run surrealdb migrations -- surreal must be running
 apply-surreal:
 	surrealdb-migrations apply
+
+# run redis
+redis:
+	redis-server

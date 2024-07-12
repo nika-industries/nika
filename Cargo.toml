@@ -23,7 +23,7 @@ tokio-util = { version = "0.7" }
 # atomic-ish features
 ulid = { version = "1", features = [ "serde" ] }
 serde_json = { version = "1" }
-apalis = { version = "0.5" }
+apalis = { version = "0.5", features = [ "retry" ] }
 nanorand = { version = "0.7", default-features = false }
 
 # heavy integrations

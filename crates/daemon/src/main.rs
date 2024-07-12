@@ -3,7 +3,6 @@ use std::time::Duration;
 use apalis::{
   layers::tracing::TraceLayer,
   prelude::{Monitor, WorkerBuilder, WorkerFactoryFn},
-  redis::RedisStorage,
   utils::TokioExecutor,
 };
 use miette::IntoDiagnostic;
@@ -12,19 +11,10 @@ use miette::IntoDiagnostic;
 async fn main() -> miette::Result<()> {
   tracing_subscriber::fmt::init();
 
-  println!();
-  for line in art::ascii_art!("../../media/ascii_logo.png").lines() {
-    println!("{}", line);
-  }
-  println!();
+  println!(art::ascii_art!("../../media/ascii_logo.png"));
 
   tracing::info!("connecting to job store...");
-  let conn =
-    apalis::redis::connect(std::env::var("REDIS_URL").into_diagnostic()?)
-      .await
-      .into_diagnostic()?;
-  let config = apalis::redis::Config::default();
-  let storage = RedisStorage::new_with_config(conn, config);
+  let storage = jobs::get_storage().await?;
   tracing::info!("connected to job store");
 
   let monitor = Monitor::<TokioExecutor>::new()
