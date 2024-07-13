@@ -71,8 +71,6 @@
 
             surrealdb
             surrealdb-migrations
-
-            redis
           ];
         };
         packages = {

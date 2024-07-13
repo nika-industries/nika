@@ -13,7 +13,6 @@ mollusk = { path = "../mollusk" }
 thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }
 
-apalis = { workspace = true, features = [ "redis" ] }
 axum = { workspace = true, features = [ "macros" ] }
 tokio = { workspace = true, features = [ "rt", "rt-multi-thread" ] }
 tokio-util = { workspace = true, features = [ "io" ] }

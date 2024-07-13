@@ -7,6 +7,3 @@ publish = false
 [dependencies]
 serde.workspace = true
 miette.workspace = true
-
-apalis = { workspace = true, features = [ "redis" ] }
-redis = { version = "0.25" }
