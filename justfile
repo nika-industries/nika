@@ -6,13 +6,25 @@ _:
 fetcher:
     cargo run --bin fetcher
 
+# run the fetcher binary and watch for changes
+watch-fetcher:
+	bacon -j run -- --bin fetcher
+
 # run the api binary
 api:
 	cargo run --bin api
 
+# run the api binary and watch for changes
+watch-api:
+	bacon -j run -- --bin api
+
 # run the daemon binary
 daemon:
 	cargo run --bin daemon
+
+# run the daemon binary and watch for changes
+watch-daemon:
+	bacon -j run -- --bin daemon
 
 # run all tests with nextest
 test:
