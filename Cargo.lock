@@ -176,9 +176,9 @@ dependencies = [
  "art",
  "axum",
  "core_types",
- "jobs",
  "miette 7.2.0",
  "mollusk",
+ "tasks",
  "thiserror",
  "tokio",
  "tokio-util",
@@ -1114,9 +1114,9 @@ name = "daemon"
 version = "0.1.0"
 dependencies = [
  "art",
- "jobs",
  "miette 7.2.0",
  "names 0.1.0",
+ "tasks",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -2213,14 +2213,6 @@ name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
-
-[[package]]
-name = "jobs"
-version = "0.1.0"
-dependencies = [
- "miette 7.2.0",
- "serde",
-]
 
 [[package]]
 name = "jobserver"
@@ -4513,6 +4505,14 @@ name = "target-lexicon"
 version = "0.12.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1fc403891a21bcfb7c37834ba66a547a8f402146eba7265b5a6d88059c9ff2f"
+
+[[package]]
+name = "tasks"
+version = "0.1.0"
+dependencies = [
+ "miette 7.2.0",
+ "serde",
+]
 
 [[package]]
 name = "temp-dir"
