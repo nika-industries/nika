@@ -7,8 +7,9 @@ publish = false
 [dependencies]
 art = { path = "../art" }
 core_types = { path = "../core_types" }
-tasks = { path = "../tasks" }
 mollusk = { path = "../mollusk" }
+rope = { path = "../rope" }
+tasks = { path = "../tasks" }
 
 thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }

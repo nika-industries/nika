@@ -6,8 +6,9 @@ publish = false
 
 [dependencies]
 art = { path = "../art" }
-tasks = { path = "../tasks" }
 names = { path = "../names" }
+rope = { path = "../rope" }
+tasks = { path = "../tasks" }
 
 tracing.workspace = true
 tracing-subscriber.workspace = true

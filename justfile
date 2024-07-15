@@ -47,3 +47,7 @@ wipe-surreal:
 # run surrealdb migrations -- surreal must be running
 apply-surreal:
 	surrealdb-migrations apply
+
+# run redis
+redis: 
+	redis-server

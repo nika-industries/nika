@@ -1,12 +1,17 @@
-use std::convert::Infallible;
-
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct HealthCheckJob;
+#[derive(Clone, Serialize, Deserialize)]
+pub struct HealthCheckTask;
 
-pub async fn execute_health_check_job(
-  job: HealthCheckJob,
-) -> Result<bool, Infallible> {
-  Ok(true)
+#[async_trait::async_trait]
+impl rope::Task for HealthCheckTask {
+  const NAME: &'static str = "HealthCheck";
+
+  type Response = bool;
+  type Error = ();
+
+  async fn run(self) -> Result<Self::Response, Self::Error> {
+    tokio::time::sleep(tokio::time::Duration::from_secs_f32(1.0)).await;
+    Ok(true)
+  }
 }
