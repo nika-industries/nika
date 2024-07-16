@@ -1,3 +1,5 @@
+#![feature(associated_type_defaults)]
+
 use std::{
   fmt::{Debug, Display},
   marker::PhantomData,
@@ -36,9 +38,12 @@ pub trait Task:
     + Send
     + Sync
     + 'static;
+  /// The long-lived shared state the task needs. Cloning this should be light.
+  type State: Clone + Send + Sync + 'static = ();
 
   /// The run function for executing the task.
-  async fn run(self) -> Result<Self::Response, Self::Error>;
+  async fn run(self, state: Self::State)
+    -> Result<Self::Response, Self::Error>;
 }
 
 /// Represents the status of a task.
@@ -108,14 +113,15 @@ pub trait Backend<T: Task> {
 pub struct RedisBackend<T: Task> {
   worker_name: OnceLock<String>,
   conn:        MultiplexedConnection,
+  state:       T::State,
   _t:          PhantomData<T>,
 }
 
 impl<T: Task> RedisBackend<T> {
-  pub async fn new() -> Self {
+  pub async fn new(state: T::State) -> Self {
     RedisBackend {
       worker_name: OnceLock::new(),
-      conn:        Client::open(std::env::var("REDIS_URL").unwrap())
+      conn: Client::open(std::env::var("REDIS_URL").unwrap())
         .into_diagnostic()
         .wrap_err("failed to open redis client")
         .unwrap()
@@ -124,7 +130,8 @@ impl<T: Task> RedisBackend<T> {
         .into_diagnostic()
         .wrap_err("failed to get redis connection")
         .unwrap(),
-      _t:          PhantomData,
+      state,
+      _t: PhantomData,
     }
   }
 }
@@ -226,6 +233,7 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
         task_id,
         self.conn.clone(),
         worker_name.clone(),
+        self.state.clone(),
       ));
     }
   }
@@ -258,11 +266,12 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
   }
 }
 
-#[tracing::instrument(skip(conn), fields(task_name = T::NAME))]
+#[tracing::instrument(skip(conn, state), fields(task_name = T::NAME))]
 async fn run_task<T: Task>(
   task_id: impl TaskId,
   mut conn: MultiplexedConnection,
   worker_name: String,
+  state: T::State,
 ) {
   let result: miette::Result<()> = async move {
     tracing::info!("running task");
@@ -314,7 +323,7 @@ async fn run_task<T: Task>(
     .into_diagnostic()
     .wrap_err("failed to deserialize task params")?;
 
-    let result = tokio::spawn(T::run(params)).await;
+    let result = tokio::spawn(T::run(params, state)).await;
 
     let status = serde_json::to_string(&match result {
       Ok(Ok(response)) => Status::<T>::Completed(response),
