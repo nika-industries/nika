@@ -1,4 +1,4 @@
-const ADJECTIVES: &[&'static str] = &[
+const ADJECTIVES: &[&str] = &[
   "adamant",
   "adept",
   "adventurous",
@@ -66,7 +66,7 @@ const ADJECTIVES: &[&'static str] = &[
   "zippy",
 ];
 
-const NOUNS: &[&'static str] = &[
+const NOUNS: &[&str] = &[
   "aardvark",
   "accordion",
   "apple",

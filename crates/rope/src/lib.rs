@@ -307,7 +307,7 @@ async fn run_task<T: Task>(
       .get(&task_data_key)
       .await
       .into_diagnostic()
-      .wrap_err_with(|| format!("failed to fetch task params"))?;
+      .wrap_err("failed to fetch task params")?;
     let params: T = serde_json::from_str(
       &params.ok_or(miette::miette!("task params did not exist for task"))?,
     )
@@ -337,8 +337,7 @@ async fn run_task<T: Task>(
     Ok(())
   }
   .await;
-  match result {
-    Err(e) => tracing::error!("failed to run task: {e:?}"),
-    _ => (),
+  if let Err(e) = result {
+    tracing::error!("failed to run task: {e:?}")
   }
 }
