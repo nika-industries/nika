@@ -10,5 +10,10 @@ impl rope::Task for HealthCheckTask {
   type Response = bool;
   type Error = ();
 
-  async fn run(self) -> Result<Self::Response, Self::Error> { Ok(true) }
+  async fn run(
+    self,
+    _state: Self::State,
+  ) -> Result<Self::Response, Self::Error> {
+    Ok(true)
+  }
 }

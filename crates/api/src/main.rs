@@ -36,7 +36,7 @@ async fn main() -> miette::Result<()> {
 
   let state = AppState {
     health_check_task_backend:
-      rope::RedisBackend::<tasks::HealthCheckTask>::new().await,
+      rope::RedisBackend::<tasks::HealthCheckTask>::new(()).await,
   };
 
   let app = Router::new()
