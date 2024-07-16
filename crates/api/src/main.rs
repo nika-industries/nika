@@ -14,7 +14,13 @@ async fn health_check_handler(
     .await
     .unwrap();
 
-  id.to_string()
+  let status = health_check_tasks
+    .await_task(id, tokio::time::Duration::from_secs_f32(0.05))
+    .await
+    .unwrap()
+    .unwrap();
+
+  format!("status: {status:?}")
 }
 
 #[derive(Clone, FromRef)]

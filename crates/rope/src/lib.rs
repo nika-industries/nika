@@ -8,7 +8,7 @@ use std::{
 use miette::{Context, Diagnostic, IntoDiagnostic};
 use redis::{aio::MultiplexedConnection, AsyncCommands, Client, RedisError};
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, time::Duration};
 
 /// The primary interface for defining tasks.
 ///
@@ -17,7 +17,7 @@ use tokio::sync::Mutex;
 /// task.
 #[async_trait::async_trait]
 pub trait Task:
-  Serialize + for<'a> Deserialize<'a> + Send + Sync + 'static
+  Debug + Serialize + for<'a> Deserialize<'a> + Send + Sync + 'static
 {
   /// The name of the task.
   const NAME: &'static str;
@@ -51,6 +51,14 @@ pub enum Status<T: Task> {
   Panicked,
 }
 
+/// Represents the status of a task that has completed.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum FinishedStatus<T: Task> {
+  Completed(T::Response),
+  Failed(T::Error),
+  Panicked,
+}
+
 /// A trait for IDs that can be used with a backend.
 pub trait TaskId: Copy + Clone + Display + Debug + FromStr {
   fn new() -> Self;
@@ -72,6 +80,11 @@ pub trait Backend<T: Task> {
     id: Self::Id,
   ) -> Result<Option<Status<T>>, Self::Error>;
   async fn consume(&self);
+  async fn await_task(
+    &self,
+    id: Self::Id,
+    poll_interval: Duration,
+  ) -> Result<Option<FinishedStatus<T>>, Self::Error>;
 }
 
 /// A redis-based task backend.
@@ -124,6 +137,7 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
   type Id = ulid::Ulid;
   type Error = RedisBackendError;
 
+  #[tracing::instrument(skip(self), fields(task_name = T::NAME))]
   async fn submit_task(&self, task: T) -> Result<Self::Id, Self::Error> {
     let task_id = Self::Id::new();
     let task_data_key = task_data_key(T::NAME, task_id.to_string());
@@ -141,6 +155,7 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
     Ok(task_id)
   }
 
+  #[tracing::instrument(skip(self), fields(task_name = T::NAME))]
   async fn get_status(
     &self,
     task_id: Self::Id,
@@ -160,6 +175,7 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
     Ok(Some(task_status))
   }
 
+  #[tracing::instrument(skip(self), fields(task_name = T::NAME))]
   async fn consume(&self) {
     let worker_name = self.worker_name.get_or_init(names::name);
     let task_queue_key = task_queue_key(T::NAME);
@@ -175,19 +191,19 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
           Ok(id) => id,
           Err(_) => {
             tracing::warn!("popped bad ID from {task_queue_key:?}: {id}");
-            tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+            tokio::time::sleep(Duration::from_millis(50)).await;
             continue;
           }
         },
         Ok(None) => {
-          tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+          tokio::time::sleep(Duration::from_millis(50)).await;
           continue;
         }
         Err(_) => {
           tracing::error!(
             "failed to `lpop` from {task_queue_key:?}, continuing worker"
           );
-          tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+          tokio::time::sleep(Duration::from_millis(50)).await;
           continue;
         }
       };
@@ -199,9 +215,36 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
       ));
     }
   }
+
+  #[tracing::instrument(skip(self), fields(task_name = T::NAME))]
+  async fn await_task(
+    &self,
+    id: Self::Id,
+    poll_interval: Duration,
+  ) -> Result<Option<FinishedStatus<T>>, Self::Error> {
+    loop {
+      match self.get_status(id).await? {
+        Some(Status::Completed(response)) => {
+          return Ok(Some(FinishedStatus::Completed(response)));
+        }
+        Some(Status::Failed(error)) => {
+          return Ok(Some(FinishedStatus::Failed(error)));
+        }
+        Some(Status::Panicked) => {
+          return Ok(Some(FinishedStatus::Panicked));
+        }
+        None => {
+          return Ok(None);
+        }
+        _ => (),
+      }
+
+      tokio::time::sleep(poll_interval).await;
+    }
+  }
 }
 
-#[tracing::instrument(skip(conn_mutex))]
+#[tracing::instrument(skip(conn_mutex), fields(task_name = T::NAME))]
 async fn run_task<T: Task>(
   task_id: impl TaskId,
   conn_mutex: Arc<Mutex<MultiplexedConnection>>,
