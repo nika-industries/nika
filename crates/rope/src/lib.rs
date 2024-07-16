@@ -44,23 +44,32 @@ pub trait Task:
 /// Represents the status of a task.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Status<T: Task> {
+  /// The task is in the queue and is waiting to be picked up by a worker.
   Pending,
+  /// The task is being run by a worker.
   InProgress { worker_name: String },
+  /// The task completed with the included response value.
   Completed(T::Response),
+  /// The task failed with the included error value.
   Failed(T::Error),
+  /// The task panicked.
   Panicked,
 }
 
 /// Represents the status of a task that has completed.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum FinishedStatus<T: Task> {
+  /// The task completed with the included response value.
   Completed(T::Response),
+  /// The task failed with the included error value.
   Failed(T::Error),
+  /// The task panicked.
   Panicked,
 }
 
 /// A trait for IDs that can be used with a backend.
 pub trait TaskId: Copy + Clone + Display + Debug + FromStr {
+  /// Generate a new ID.
   fn new() -> Self;
 }
 
@@ -71,15 +80,22 @@ impl TaskId for ulid::Ulid {
 /// A trait defining a task backend.
 #[async_trait::async_trait]
 pub trait Backend<T: Task> {
+  /// The ID type used by the backend.
   type Id: TaskId;
+  /// The error type used by the backend.
   type Error: Diagnostic;
 
+  /// Submit a task. Returns the task ID.
   async fn submit_task(&self, task: T) -> Result<Self::Id, Self::Error>;
+  /// Get the status of a task.
   async fn get_status(
     &self,
     id: Self::Id,
   ) -> Result<Option<Status<T>>, Self::Error>;
+  /// Run a worker to consume tasks. This will not return.
   async fn consume(&self);
+  /// Poll a task until it's no longer `Status::Pending` or
+  /// `Status::InProgress`.
   async fn await_task(
     &self,
     id: Self::Id,
