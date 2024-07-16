@@ -8,7 +8,7 @@ use std::{
 use miette::{Context, Diagnostic, IntoDiagnostic};
 use redis::{aio::MultiplexedConnection, AsyncCommands, Client, RedisError};
 use serde::{Deserialize, Serialize};
-use tokio::time::Duration;
+use tokio::time::{sleep, Duration};
 
 /// The primary interface for defining tasks.
 ///
@@ -183,21 +183,25 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
     loop {
       let task_id: Result<Option<String>, RedisError> =
         conn.lpop(&task_queue_key, None).await;
+      tracing::info!("polling");
       let task_id = match task_id {
         Ok(Some(id)) => match Self::Id::from_str(&id) {
           Ok(id) => id,
           Err(_) => {
             tracing::warn!("popped bad ID from {task_queue_key:?}: {id}");
+            sleep(Duration::from_millis(25)).await;
             continue;
           }
         },
         Ok(None) => {
+          sleep(Duration::from_millis(25)).await;
           continue;
         }
         Err(e) => {
           tracing::error!(
             "failed to `blpop` from {task_queue_key:?}, continuing worker: {e}"
           );
+          sleep(Duration::from_millis(25)).await;
           continue;
         }
       };
@@ -233,7 +237,7 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
         _ => (),
       }
 
-      tokio::time::sleep(poll_interval).await;
+      sleep(poll_interval).await;
     }
   }
 }
