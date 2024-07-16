@@ -1,0 +1,12 @@
+[package]
+name = "tasks"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+async-trait.workspace = true
+rope = { path = "../rope" }
+
+serde.workspace = true
+tokio = { workspace = true, features = ["time"] }

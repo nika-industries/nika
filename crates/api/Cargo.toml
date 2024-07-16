@@ -1,5 +1,5 @@
 [package]
-name = "fetcher"
+name = "api"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -7,9 +7,9 @@ publish = false
 [dependencies]
 art = { path = "../art" }
 core_types = { path = "../core_types" }
-db = { path = "../db" }
 mollusk = { path = "../mollusk" }
-storage = { path = "../storage" }
+rope = { path = "../rope" }
+tasks = { path = "../tasks" }
 
 thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }

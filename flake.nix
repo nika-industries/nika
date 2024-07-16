@@ -42,12 +42,12 @@
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-        fetcher-crane-args = {
+        common-args = {
           inherit src;
           strictDeps = true;
 
-          pname = "fetcher";
-          version = "0.1.0";
+          pname = "nika";
+          version = "0.1";
 
           buildInputs = [];
           nativeBuildInputs = with pkgs; [
@@ -55,10 +55,18 @@
           ];
         };
 
-        fetcher-deps-only = craneLib.buildDepsOnly fetcher-crane-args;
-        fetcher = craneLib.buildPackage (fetcher-crane-args // {
-          cargoArtifacts = fetcher-deps-only;
-        });
+        cargoArtifacts = craneLib.buildDepsOnly common-args;
+
+        individual-crate-args = crate-name: common-args // {
+          inherit cargoArtifacts;
+          pname = crate-name;
+          cargoExtraArgs = "-p ${crate-name}";
+          doCheck = false;
+        };
+
+        fetcher-crate = craneLib.buildPackage (individual-crate-args "fetcher");
+        api-crate = craneLib.buildPackage (individual-crate-args "api");
+        daemon-crate = craneLib.buildPackage (individual-crate-args "daemon");
         
       in {
         devShells.default = pkgs.mkShell {
@@ -68,35 +76,35 @@
             bacon # change detection
             cargo-nextest # testing
             cargo-deny # package auditing
+
             surrealdb
             surrealdb-migrations
+
+            redis
           ];
         };
         packages = {
-          inherit fetcher;
+          fetcher = fetcher-crate;
+          api = api-crate;
+          daemon = daemon-crate;
         };
         checks = {
-          clippy = craneLib.cargoClippy (fetcher-crane-args // {
-            cargoArtifacts = fetcher-deps-only;
+          clippy = craneLib.cargoClippy (common-args // {
+            inherit cargoArtifacts;
             cargoClippyExtraArgs = "--all-targets -- --deny warnings";
           });
-          docs = craneLib.cargoDoc (fetcher-crane-args // {
-            cargoArtifacts = fetcher-deps-only;
+          docs = craneLib.cargoDoc (common-args // {
+            inherit cargoArtifacts;
           });
-          site-server-nextest = craneLib.cargoNextest (fetcher-crane-args // {
-            cargoArtifacts = fetcher-deps-only;
+          nextest = craneLib.cargoNextest (common-args // {
+            inherit cargoArtifacts;
             partitions = 1;
             partitionType = "count";
           });
-          fmt = craneLib.cargoFmt {
-            inherit (fetcher-crane-args) pname version;
-            inherit src;
-          };
-          deny = craneLib.cargoDeny {
-            inherit (fetcher-crane-args) pname version;
-            inherit src;
-          };
-          build-succeeds = fetcher;
+          fmt = craneLib.cargoFmt common-args;
+          deny = craneLib.cargoDeny common-args;
+
+          inherit fetcher-crate api-crate daemon-crate;
         };
       });
 }
