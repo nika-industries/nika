@@ -15,7 +15,7 @@ async fn health_check_handler(
     .unwrap();
 
   let status = health_check_tasks
-    .await_task(id, tokio::time::Duration::from_secs_f32(0.05))
+    .await_task(id, tokio::time::Duration::from_secs_f32(0.01))
     .await
     .unwrap()
     .unwrap();
