@@ -2,13 +2,13 @@ use std::{
   fmt::{Debug, Display},
   marker::PhantomData,
   str::FromStr,
-  sync::{Arc, OnceLock},
+  sync::OnceLock,
 };
 
 use miette::{Context, Diagnostic, IntoDiagnostic};
 use redis::{aio::MultiplexedConnection, AsyncCommands, Client, RedisError};
 use serde::{Deserialize, Serialize};
-use tokio::{sync::Mutex, time::Duration};
+use tokio::time::Duration;
 
 /// The primary interface for defining tasks.
 ///
@@ -91,7 +91,7 @@ pub trait Backend<T: Task> {
 #[derive(Clone)]
 pub struct RedisBackend<T: Task> {
   worker_name: OnceLock<String>,
-  conn:        Arc<Mutex<MultiplexedConnection>>,
+  conn:        MultiplexedConnection,
   _t:          PhantomData<T>,
 }
 
@@ -99,17 +99,15 @@ impl<T: Task> RedisBackend<T> {
   pub async fn new() -> Self {
     RedisBackend {
       worker_name: OnceLock::new(),
-      conn:        Arc::new(Mutex::new(
-        Client::open(std::env::var("REDIS_URL").unwrap())
-          .into_diagnostic()
-          .wrap_err("failed to open redis client")
-          .unwrap()
-          .get_multiplexed_async_connection()
-          .await
-          .into_diagnostic()
-          .wrap_err("failed to get redis connection")
-          .unwrap(),
-      )),
+      conn:        Client::open(std::env::var("REDIS_URL").unwrap())
+        .into_diagnostic()
+        .wrap_err("failed to open redis client")
+        .unwrap()
+        .get_multiplexed_async_connection()
+        .await
+        .into_diagnostic()
+        .wrap_err("failed to get redis connection")
+        .unwrap(),
       _t:          PhantomData,
     }
   }
@@ -148,7 +146,7 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
     let task_status_ser = serde_json::to_string(&Status::<T>::Pending)?;
 
     tracing::info!("submitting task {}:{}", T::NAME, task_id.to_string());
-    let mut conn = self.conn.lock().await;
+    let mut conn = self.conn.clone();
     let _: () = conn.set(task_data_key, task_data_ser).await?;
     let _: () = conn.set(task_status_key, task_status_ser).await?;
     let _: () = conn.rpush(task_queue_key, task_id.to_string()).await?;
@@ -162,7 +160,7 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
   ) -> Result<Option<Status<T>>, Self::Error> {
     let task_status_key = task_status_key(T::NAME, task_id.to_string());
 
-    let mut conn = self.conn.lock().await;
+    let mut conn = self.conn.clone();
     let task_status_ser: Option<String> = conn.get(task_status_key).await?;
     drop(conn);
 
@@ -177,33 +175,29 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
 
   #[tracing::instrument(skip(self), fields(task_name = T::NAME))]
   async fn consume(&self) {
+    let mut conn = self.conn.clone();
     let worker_name = self.worker_name.get_or_init(names::name);
     let task_queue_key = task_queue_key(T::NAME);
 
     tracing::info!("consuming {} tasks", T::NAME);
     loop {
-      let mut conn = self.conn.lock().await;
       let task_id: Result<Option<String>, RedisError> =
         conn.lpop(&task_queue_key, None).await;
-      drop(conn);
       let task_id = match task_id {
         Ok(Some(id)) => match Self::Id::from_str(&id) {
           Ok(id) => id,
           Err(_) => {
             tracing::warn!("popped bad ID from {task_queue_key:?}: {id}");
-            tokio::time::sleep(Duration::from_millis(50)).await;
             continue;
           }
         },
         Ok(None) => {
-          tokio::time::sleep(Duration::from_millis(50)).await;
           continue;
         }
-        Err(_) => {
+        Err(e) => {
           tracing::error!(
-            "failed to `lpop` from {task_queue_key:?}, continuing worker"
+            "failed to `blpop` from {task_queue_key:?}, continuing worker: {e}"
           );
-          tokio::time::sleep(Duration::from_millis(50)).await;
           continue;
         }
       };
@@ -244,10 +238,10 @@ impl<T: Task> Backend<T> for RedisBackend<T> {
   }
 }
 
-#[tracing::instrument(skip(conn_mutex), fields(task_name = T::NAME))]
+#[tracing::instrument(skip(conn), fields(task_name = T::NAME))]
 async fn run_task<T: Task>(
   task_id: impl TaskId,
-  conn_mutex: Arc<Mutex<MultiplexedConnection>>,
+  mut conn: MultiplexedConnection,
   worker_name: String,
 ) {
   let result: miette::Result<()> = async move {
@@ -259,7 +253,6 @@ async fn run_task<T: Task>(
     let expected_status = serde_json::to_string(&Status::<T>::Pending)
       .into_diagnostic()
       .wrap_err("failed to serialize `Status`")?;
-    let mut conn = conn_mutex.lock().await;
     let prev_status: Option<String> = conn
       .get(&task_status_key)
       .await
@@ -300,7 +293,6 @@ async fn run_task<T: Task>(
     )
     .into_diagnostic()
     .wrap_err("failed to deserialize task params")?;
-    drop(conn);
 
     let result = tokio::spawn(T::run(params)).await;
 
@@ -314,7 +306,6 @@ async fn run_task<T: Task>(
     })
     .into_diagnostic()
     .wrap_err("failed to serialize result status")?;
-    let mut conn = conn_mutex.lock().await;
     let _: () = conn
       .set(&task_status_key, status.clone())
       .await
