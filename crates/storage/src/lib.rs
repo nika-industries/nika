@@ -18,7 +18,9 @@ pub trait StorageClientGenerator {
 impl StorageClientGenerator for core_types::StorageCredentials {
   async fn client(&self) -> DynStorageClient {
     match self {
-      Self::Local(path) => Box::new(LocalStorageClient::new(path.clone())),
+      Self::Local(local_storage_creds) => {
+        Box::new(LocalStorageClient::new(local_storage_creds.0.clone()))
+      }
     }
   }
 }

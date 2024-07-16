@@ -16,5 +16,8 @@ pub struct Store {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum StorageCredentials {
-  Local(PathBuf),
+  Local(LocalStorageCredentials),
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct LocalStorageCredentials(pub PathBuf);
