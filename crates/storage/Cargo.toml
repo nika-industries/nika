@@ -11,6 +11,10 @@ async-trait.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = [ "fs" ] }
+object_store = { version = "0.10.1", features = ["aws"] }
+miette.workspace = true
+futures-util.workspace = true
+tokio-util = { workspace = true, features = ["compat"] }
 
 [dev-dependencies]
 temp-dir = { version = "0.1" }

@@ -26,7 +26,7 @@ async fn fetch_handler(
       .map_err(FetcherError::SurrealDbStoreRetrievalError)?
       .ok_or_else(|| FetcherError::NoMatchingStore(store_name))?;
 
-    let client = store.config.client().await;
+    let client = store.config.client().await.unwrap();
 
     let response = fetch_path_from_client(&client, path).await?;
     Ok::<Response, FetcherError>(response)

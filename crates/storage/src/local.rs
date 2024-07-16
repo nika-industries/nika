@@ -1,17 +1,23 @@
 use std::path::{Path, PathBuf};
 
+use core_types::LocalStorageCredentials;
+use miette::{Context, IntoDiagnostic};
+use tokio::io::BufReader;
+
 use super::{DynAsyncReader, ReadError, StorageClient};
 
 pub struct LocalStorageClient(PathBuf);
 
 impl LocalStorageClient {
-  pub fn new(path: PathBuf) -> Self {
-    Self(
-      path
+  pub async fn new(creds: LocalStorageCredentials) -> miette::Result<Self> {
+    Ok(Self(
+      creds
+        .0
         .canonicalize()
-        .expect("Failed to canonicalize path for `LocalStorageClient`")
+        .into_diagnostic()
+        .wrap_err("failed to canonicalize path for `LocalStorageClient`")?
         .to_path_buf(),
-    )
+    ))
   }
 }
 
@@ -40,7 +46,7 @@ impl StorageClient for LocalStorageClient {
 
     let file = tokio::fs::File::open(&path).await?;
 
-    Ok(Box::new(file))
+    Ok(Box::new(BufReader::new(file)))
   }
 }
 
@@ -60,7 +66,11 @@ mod tests {
     let f = temp.child("file1");
     std::fs::write(&f, "abc").unwrap();
 
-    let client = LocalStorageClient::new(temp.path().to_path_buf());
+    let client = LocalStorageClient::new(LocalStorageCredentials(
+      temp.path().to_path_buf(),
+    ))
+    .await
+    .unwrap();
     let mut reader = client
       .read(&PathBuf::from_str("file1").unwrap())
       .await

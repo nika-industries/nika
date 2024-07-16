@@ -33,5 +33,11 @@ mod ssr {
   pub struct LocalStorageCredentials(pub PathBuf);
 
   #[derive(Serialize, Deserialize, Clone, Debug)]
-  pub struct R2StorageCredentials {}
+  pub enum R2StorageCredentials {
+    Default {
+      access_key:        String,
+      secret_access_key: String,
+      endpoint:          String,
+    },
+  }
 }
