@@ -29,6 +29,11 @@ impl R2StorageClient {
           .with_access_key_id(access_key)
           .with_secret_access_key(secret_access_key)
           .with_bucket_name(bucket)
+          .with_client_options(
+            object_store::ClientOptions::new()
+              .with_allow_http2()
+              .with_timeout_disabled(),
+          )
           .build()
           .into_diagnostic()
           .wrap_err("failed to build R2 client instance")?;
