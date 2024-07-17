@@ -10,6 +10,8 @@ pub enum FetcherError {
   SurrealDbStoreRetrievalError(db::SurrealError),
   #[error("An error occured while fetching: {0}")]
   ReadError(#[from] storage::ReadError),
+  #[error("Failed to build the store")]
+  StoreInitError(#[diagnostic_source] miette::Report),
 }
 
 impl mollusk::ApiError for FetcherError {
@@ -26,6 +28,7 @@ impl mollusk::ApiError for FetcherError {
       FetcherError::ReadError(ReadError::IoError(_)) => {
         StatusCode::INTERNAL_SERVER_ERROR
       }
+      FetcherError::StoreInitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
   }
 
@@ -35,7 +38,8 @@ impl mollusk::ApiError for FetcherError {
       FetcherError::ReadError(ReadError::NotFound(_)) => "missing-path",
       FetcherError::ReadError(ReadError::InvalidPath(_)) => "invalid-path",
       FetcherError::SurrealDbStoreRetrievalError(_)
-      | FetcherError::ReadError(ReadError::IoError(_)) => "internal-error",
+      | FetcherError::ReadError(ReadError::IoError(_))
+      | FetcherError::StoreInitError(_) => "internal-error",
     }
   }
 
@@ -56,6 +60,9 @@ impl mollusk::ApiError for FetcherError {
       FetcherError::ReadError(ReadError::IoError(e)) => {
         format!("An internal error occurred: {e}")
       }
+      FetcherError::StoreInitError(e) => {
+        format!("Failed to use store: {e}")
+      }
     }
   }
 
@@ -75,6 +82,9 @@ impl mollusk::ApiError for FetcherError {
       }
       FetcherError::ReadError(ReadError::IoError(e)) => {
         tracing::warn!("failed to fetch path due to `IoError`: {e}");
+      }
+      FetcherError::StoreInitError(e) => {
+        tracing::error!("failed to init store: {e}");
       }
     }
   }
