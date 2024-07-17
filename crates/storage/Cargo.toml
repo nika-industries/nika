@@ -16,6 +16,7 @@ miette.workspace = true
 futures.workspace = true
 tokio-util = { workspace = true, features = ["compat"] }
 tracing.workspace = true
+bytes-stream = "0.0.3"
 
 [dev-dependencies]
 temp-dir = { version = "0.1" }

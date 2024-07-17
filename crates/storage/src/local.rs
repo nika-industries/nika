@@ -2,9 +2,10 @@ use std::path::{Path, PathBuf};
 
 use core_types::LocalStorageCredentials;
 use miette::{Context, IntoDiagnostic};
-use tokio::io::BufReader;
+use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
 
 use super::{DynAsyncReader, ReadError, StorageClient};
+use crate::WriteError;
 
 pub struct LocalStorageClient(PathBuf);
 
@@ -48,6 +49,32 @@ impl StorageClient for LocalStorageClient {
     let file = tokio::fs::File::open(&path).await?;
 
     Ok(Box::new(BufReader::new(file)))
+  }
+
+  #[tracing::instrument(skip(self, reader))]
+  async fn upload(
+    &self,
+    path: &Path,
+    mut reader: DynAsyncReader,
+  ) -> Result<(), WriteError> {
+    let target_path = self.0.as_path().join(path);
+
+    // Ensure the directory structure exists
+    if let Some(parent) = target_path.parent() {
+      tokio::fs::create_dir_all(parent).await?;
+    }
+
+    // Create and open the target file
+    let file = tokio::fs::File::create(&target_path).await?;
+    let mut writer = BufWriter::new(file);
+
+    // Copy data from the reader to the writer
+    tokio::io::copy(&mut reader, &mut writer).await?;
+
+    // Ensure all data is flushed to the file
+    writer.flush().await?;
+
+    Ok(())
   }
 }
 

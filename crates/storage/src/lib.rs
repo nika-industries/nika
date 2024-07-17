@@ -39,7 +39,22 @@ pub enum ReadError {
   IoError(#[from] std::io::Error),
 }
 
+#[derive(thiserror::Error, Debug, miette::Diagnostic)]
+pub enum WriteError {
+  #[error("the supplied path was invalid: {0}")]
+  InvalidPath(String),
+  #[error("a local filesystem error occurred: {0}")]
+  IoError(#[from] std::io::Error),
+  #[error("an error occurred while performing a multipart upload: {0}")]
+  MultipartError(miette::Report),
+}
+
 #[async_trait::async_trait]
 pub trait StorageClient {
   async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError>;
+  async fn upload(
+    &self,
+    path: &Path,
+    reader: DynAsyncReader,
+  ) -> Result<(), WriteError>;
 }

@@ -1,15 +1,17 @@
 use std::path::Path;
 
+use bytes_stream::BytesStream;
 use core_types::R2StorageCredentials;
-use futures::{io::BufReader, TryStreamExt};
+use futures::{StreamExt, TryStreamExt};
 use miette::{Context, IntoDiagnostic};
 use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
-  Error as ObjectStoreError, ObjectStore,
+  Error as ObjectStoreError, ObjectStore, PutPayload,
 };
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use super::{DynAsyncReader, ReadError, StorageClient};
+use crate::WriteError;
 
 pub struct R2StorageClient {
   store: AmazonS3,
@@ -67,6 +69,57 @@ impl StorageClient for R2StorageClient {
       })
       .into_async_read();
 
-    Ok(Box::new(BufReader::new(stream).compat()))
+    Ok(Box::new(futures::io::BufReader::new(stream).compat()))
+  }
+
+  #[tracing::instrument(skip(self, reader))]
+  async fn upload(
+    &self,
+    input_path: &Path,
+    mut reader: DynAsyncReader,
+  ) -> Result<(), WriteError> {
+    let input_path_string = input_path.to_str().unwrap().to_string();
+    let path = object_store::path::Path::parse(input_path_string.clone())
+      .map_err(|_| WriteError::InvalidPath(input_path_string))?;
+
+    let chunk_size = 10 * 1024 * 1024;
+
+    let mut bytes_chunks = tokio_util::io::ReaderStream::new(
+      tokio::io::BufReader::with_capacity(chunk_size, &mut reader),
+    )
+    .bytes_chunks(chunk_size);
+
+    tracing::info!("starting multipart");
+    let mut multipart = self
+      .store
+      .put_multipart(&path)
+      .await
+      .into_diagnostic()
+      .wrap_err("failed to start multipart")
+      .map_err(WriteError::MultipartError)?;
+
+    while let Some(chunk) = bytes_chunks.next().await {
+      let chunk = chunk
+        .into_diagnostic()
+        .wrap_err("failed to get bytes chunk from reader")
+        .map_err(WriteError::MultipartError)?;
+      tracing::info!("got bytes chunk with {} bytes", chunk.len());
+      multipart
+        .put_part(PutPayload::from_bytes(chunk))
+        .await
+        .into_diagnostic()
+        .wrap_err("failed to put part in multipart")
+        .map_err(WriteError::MultipartError)?;
+    }
+
+    tracing::info!("finishing multipart");
+    multipart
+      .complete()
+      .await
+      .into_diagnostic()
+      .wrap_err("failed to complete multipart")
+      .map_err(WriteError::MultipartError)?;
+
+    Ok(())
   }
 }
