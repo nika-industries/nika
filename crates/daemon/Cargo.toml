@@ -6,11 +6,11 @@ publish = false
 
 [dependencies]
 art = { path = "../art" }
-names = { path = "../names" }
+# names = { path = "../names" }
 rope = { path = "../rope" }
 tasks = { path = "../tasks" }
 
-tracing.workspace = true
+# tracing.workspace = true
 tracing-subscriber.workspace = true
 tokio = { workspace = true, features = [ "rt", "rt-multi-thread", "macros", "signal" ] }
 miette = { workspace = true, features = [ "fancy" ] }

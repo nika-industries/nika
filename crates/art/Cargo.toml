@@ -10,7 +10,7 @@ image = { version = "0.25", features = ["rayon", "png"], default-features = fals
 
 syn = { version = "1", features = [ "full" ] }
 quote = { version = "1" }
-proc-macro2 = { version = "1" }
+# proc-macro2 = { version = "1" }
 
 [lib]
 proc-macro = true

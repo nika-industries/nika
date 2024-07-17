@@ -182,7 +182,6 @@ dependencies = [
  "tasks",
  "thiserror",
  "tokio",
- "tokio-util",
  "tracing",
  "tracing-subscriber",
 ]
@@ -246,7 +245,6 @@ version = "0.1.0"
 dependencies = [
  "artem",
  "image",
- "proc-macro2",
  "quote",
  "syn 1.0.109",
 ]
@@ -1136,11 +1134,9 @@ version = "0.1.0"
 dependencies = [
  "art",
  "miette 7.2.0",
- "names 0.1.0",
  "rope",
  "tasks",
  "tokio",
- "tracing",
  "tracing-subscriber",
 ]
 
@@ -1205,7 +1201,6 @@ dependencies = [
  "core_types",
  "include_dir",
  "miette 7.2.0",
- "serde",
  "surrealdb",
  "surrealdb-migrations",
  "tracing",
@@ -2580,7 +2575,6 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "miette 7.2.0",
- "serde",
  "serde_json",
 ]
 
@@ -4418,7 +4412,6 @@ dependencies = [
  "futures-util",
  "miette 7.2.0",
  "object_store 0.10.1",
- "serde",
  "temp-dir",
  "thiserror",
  "tokio",
@@ -4826,7 +4819,6 @@ dependencies = [
  "async-trait",
  "rope",
  "serde",
- "tokio",
 ]
 
 [[package]]
