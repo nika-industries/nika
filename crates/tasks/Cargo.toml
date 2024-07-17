@@ -9,4 +9,4 @@ async-trait.workspace = true
 rope = { path = "../rope" }
 
 serde.workspace = true
-tokio = { workspace = true, features = ["time"] }
+# tokio = { workspace = true, features = ["time"] }

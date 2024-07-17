@@ -1,6 +1,6 @@
 mod fetcher_error;
 
-use std::{ops::Deref, path::PathBuf, str::FromStr};
+use std::{fmt::Debug, ops::Deref, path::PathBuf, str::FromStr};
 
 use axum::{
   body::Body,
@@ -9,10 +9,56 @@ use axum::{
   routing::get,
   Router,
 };
+use miette::IntoDiagnostic;
 use mollusk::RenderApiError;
 use storage::StorageClientGenerator;
 
 use self::fetcher_error::FetcherError;
+
+#[tracing::instrument(skip(db))]
+async fn get_store_client(
+  db: db::DbConnection,
+  store_name: impl AsRef<str> + Debug,
+) -> Result<storage::DynStorageClient, FetcherError> {
+  let creds = match store_name.as_ref() {
+    "test-local" => {
+      tracing::info!("using hard-coded store \"test-local\"");
+      core_types::StorageCredentials::Local(
+        core_types::LocalStorageCredentials(PathBuf::from("/tmp/nika")),
+      )
+    }
+    "nika-temp" => {
+      tracing::info!("using hard-coded store \"nika-temp\"");
+      core_types::StorageCredentials::R2(
+        core_types::R2StorageCredentials::Default {
+          access_key:        std::env::var("R2_TEMP_ACCESS_KEY")
+            .into_diagnostic()
+            .map_err(FetcherError::StoreInitError)?,
+          secret_access_key: std::env::var("R2_TEMP_SECRET_ACCESS_KEY")
+            .into_diagnostic()
+            .map_err(FetcherError::StoreInitError)?,
+          endpoint:          std::env::var("R2_TEMP_ENDPOINT")
+            .into_diagnostic()
+            .map_err(FetcherError::StoreInitError)?,
+          bucket:            std::env::var("R2_TEMP_BUCKET")
+            .into_diagnostic()
+            .map_err(FetcherError::StoreInitError)?,
+        },
+      )
+    }
+    store_name => {
+      db.fetch_store_by_name(store_name.as_ref())
+        .await
+        .map_err(FetcherError::SurrealDbStoreRetrievalError)?
+        .ok_or_else(|| FetcherError::NoMatchingStore(store_name.to_string()))?
+        .config
+    }
+  };
+
+  let client = creds.client().await.map_err(FetcherError::StoreInitError)?;
+
+  Ok(client)
+}
 
 #[tracing::instrument(skip(db))]
 async fn fetch_handler(
@@ -20,13 +66,7 @@ async fn fetch_handler(
   Path((store_name, path)): Path<(String, String)>,
 ) -> impl IntoResponse {
   async move {
-    let store = db
-      .fetch_store_by_name(&store_name)
-      .await
-      .map_err(FetcherError::SurrealDbStoreRetrievalError)?
-      .ok_or_else(|| FetcherError::NoMatchingStore(store_name))?;
-
-    let client = store.config.client().await;
+    let client = get_store_client(db, store_name).await?;
 
     let response = fetch_path_from_client(&client, path).await?;
     Ok::<Response, FetcherError>(response)

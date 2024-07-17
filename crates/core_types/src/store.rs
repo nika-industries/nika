@@ -1,6 +1,7 @@
-use std::path::PathBuf;
-
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "ssr")]
+pub use self::ssr::*;
 
 pub const STORE_TABLE_NAME: &str = "store";
 
@@ -8,13 +9,36 @@ pub const STORE_TABLE_NAME: &str = "store";
 #[cfg_attr(feature = "ssr", serde(from = "crate::ssr::UlidOrThing"))]
 pub struct StoreRecordId(pub ulid::Ulid);
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Store {
-  pub id:     StoreRecordId,
-  pub config: StorageCredentials,
-}
+#[cfg(feature = "ssr")]
+mod ssr {
+  use std::path::PathBuf;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum StorageCredentials {
-  Local(PathBuf),
+  use serde::{Deserialize, Serialize};
+
+  use super::StoreRecordId;
+
+  #[derive(Clone, Debug, Serialize, Deserialize)]
+  pub struct Store {
+    pub id:     StoreRecordId,
+    pub config: StorageCredentials,
+  }
+
+  #[derive(Serialize, Deserialize, Clone, Debug)]
+  pub enum StorageCredentials {
+    Local(LocalStorageCredentials),
+    R2(R2StorageCredentials),
+  }
+
+  #[derive(Serialize, Deserialize, Clone, Debug)]
+  pub struct LocalStorageCredentials(pub PathBuf);
+
+  #[derive(Serialize, Deserialize, Clone, Debug)]
+  pub enum R2StorageCredentials {
+    Default {
+      access_key:        String,
+      secret_access_key: String,
+      endpoint:          String,
+      bucket:            String,
+    },
+  }
 }

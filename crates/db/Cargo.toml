@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 core_types = { path = "../core_types", features = [ "ssr" ] }
 
-serde.workspace = true
+# serde.workspace = true
 miette.workspace = true
 tracing.workspace = true
 

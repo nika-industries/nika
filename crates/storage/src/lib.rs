@@ -1,29 +1,35 @@
-pub mod local;
+mod local;
+mod r2;
 
 use std::path::{Path, PathBuf};
 
 use tokio::io::AsyncRead;
 
-use self::local::LocalStorageClient;
+use self::{local::LocalStorageClient, r2::R2StorageClient};
 
 pub type DynStorageClient = Box<dyn StorageClient + Send + Sync + 'static>;
-pub type DynAsyncReader = Box<dyn AsyncRead + Send + Sync + Unpin + 'static>;
+pub type DynAsyncReader = Box<dyn AsyncRead + Send + Unpin + 'static>;
 
 pub trait StorageClientGenerator {
   fn client(
     &self,
-  ) -> impl std::future::Future<Output = DynStorageClient> + Send;
+  ) -> impl std::future::Future<Output = miette::Result<DynStorageClient>> + Send;
 }
 
 impl StorageClientGenerator for core_types::StorageCredentials {
-  async fn client(&self) -> DynStorageClient {
+  async fn client(&self) -> miette::Result<DynStorageClient> {
     match self {
-      Self::Local(path) => Box::new(LocalStorageClient::new(path.clone())),
+      Self::Local(local_storage_creds) => Ok(Box::new(
+        LocalStorageClient::new(local_storage_creds.clone()).await?,
+      )),
+      Self::R2(r2_storage_creds) => Ok(Box::new(
+        R2StorageClient::new(r2_storage_creds.clone()).await?,
+      )),
     }
   }
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, miette::Diagnostic)]
 pub enum ReadError {
   #[error("the file was not available in storage: {0}")]
   NotFound(PathBuf),

@@ -8,4 +8,4 @@ publish = false
 axum.workspace = true
 miette.workspace = true
 serde_json.workspace = true
-serde.workspace = true
+# serde.workspace = true
