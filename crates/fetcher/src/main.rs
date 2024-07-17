@@ -40,6 +40,9 @@ async fn get_store_client(
           endpoint:          std::env::var("R2_TEMP_ENDPOINT")
             .into_diagnostic()
             .map_err(FetcherError::StoreInitError)?,
+          bucket:            std::env::var("R2_TEMP_BUCKET")
+            .into_diagnostic()
+            .map_err(FetcherError::StoreInitError)?,
         },
       )
     }

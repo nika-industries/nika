@@ -38,6 +38,7 @@ mod ssr {
       access_key:        String,
       secret_access_key: String,
       endpoint:          String,
+      bucket:            String,
     },
   }
 }

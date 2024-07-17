@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use core_types::R2StorageCredentials;
-use futures_util::TryStreamExt;
+use futures::{io::BufReader, TryStreamExt};
 use miette::{Context, IntoDiagnostic};
 use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
@@ -22,14 +22,16 @@ impl R2StorageClient {
         access_key,
         secret_access_key,
         endpoint,
+        bucket,
       } => {
         let r2 = AmazonS3Builder::new()
-          .with_url(endpoint)
+          .with_endpoint(endpoint)
           .with_access_key_id(access_key)
           .with_secret_access_key(secret_access_key)
+          .with_bucket_name(bucket)
           .build()
           .into_diagnostic()
-          .wrap_err("failed to build s3 client instance")?;
+          .wrap_err("failed to build R2 client instance")?;
         Ok(R2StorageClient { store: r2 })
       }
     }
