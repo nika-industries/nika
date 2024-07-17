@@ -11,9 +11,7 @@ use axum::{
 };
 use miette::IntoDiagnostic;
 use mollusk::RenderApiError;
-use storage::{
-  DynAsyncReader, DynStorageClient, StorageClient, StorageClientGenerator,
-};
+use storage::{DynStorageClient, StorageClientGenerator};
 use tokio_stream::StreamExt;
 
 use self::fetcher_error::FetcherError;
@@ -93,7 +91,7 @@ async fn test_upload(
   let reader = tokio_util::io::StreamReader::new(stream);
 
   client
-    .upload(
+    .write(
       PathBuf::from_str(&path).unwrap().as_path(),
       Box::new(reader),
     )

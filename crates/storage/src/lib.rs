@@ -52,7 +52,7 @@ pub enum WriteError {
 #[async_trait::async_trait]
 pub trait StorageClient {
   async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError>;
-  async fn upload(
+  async fn write(
     &self,
     path: &Path,
     reader: DynAsyncReader,

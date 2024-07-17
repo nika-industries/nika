@@ -73,7 +73,7 @@ impl StorageClient for R2StorageClient {
   }
 
   #[tracing::instrument(skip(self, reader))]
-  async fn upload(
+  async fn write(
     &self,
     input_path: &Path,
     mut reader: DynAsyncReader,

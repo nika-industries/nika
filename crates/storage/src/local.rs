@@ -52,7 +52,7 @@ impl StorageClient for LocalStorageClient {
   }
 
   #[tracing::instrument(skip(self, reader))]
-  async fn upload(
+  async fn write(
     &self,
     path: &Path,
     mut reader: DynAsyncReader,
