@@ -45,6 +45,7 @@ impl R2StorageClient {
 
 #[async_trait::async_trait]
 impl StorageClient for R2StorageClient {
+  #[tracing::instrument(skip(self))]
   async fn read(&self, input_path: &Path) -> Result<DynAsyncReader, ReadError> {
     let input_path_string = input_path.to_str().unwrap().to_string();
     let path = object_store::path::Path::parse(input_path_string.clone())

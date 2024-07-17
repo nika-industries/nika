@@ -23,6 +23,7 @@ impl LocalStorageClient {
 
 #[async_trait::async_trait]
 impl StorageClient for LocalStorageClient {
+  #[tracing::instrument(skip(self))]
   async fn read(&self, input_path: &Path) -> Result<DynAsyncReader, ReadError> {
     let path = self.0.as_path().join(input_path);
 
