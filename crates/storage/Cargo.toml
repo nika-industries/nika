@@ -13,7 +13,7 @@ thiserror.workspace = true
 tokio = { workspace = true, features = [ "fs" ] }
 object_store = { version = "0.10.1", features = ["aws"] }
 miette.workspace = true
-futures-util.workspace = true
+futures.workspace = true
 tokio-util = { workspace = true, features = ["compat"] }
 tracing.workspace = true
 

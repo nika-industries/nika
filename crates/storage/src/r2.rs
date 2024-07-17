@@ -60,9 +60,12 @@ impl StorageClient for R2StorageClient {
 
     let stream = get_result
       .into_stream()
-      .map_err(futures_util::io::Error::from)
+      .map_err(|e| {
+        tracing::error!("error while streaming from R2 store: {e:?}");
+        futures::io::Error::from(e)
+      })
       .into_async_read();
 
-    Ok(Box::new(stream.compat()))
+    Ok(Box::new(BufReader::new(stream).compat()))
   }
 }
