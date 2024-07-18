@@ -98,19 +98,30 @@ impl StorageClient for R2StorageClient {
       .wrap_err("failed to start multipart")
       .map_err(WriteError::MultipartError)?;
 
+    let mut upload_parts = Vec::new();
+    let mut i = 0;
     while let Some(chunk) = bytes_chunks.next().await {
       let chunk = chunk
         .into_diagnostic()
         .wrap_err("failed to get bytes chunk from reader")
         .map_err(WriteError::MultipartError)?;
       tracing::info!("got bytes chunk with {} bytes", chunk.len());
-      multipart
-        .put_part(PutPayload::from_bytes(chunk))
-        .await
-        .into_diagnostic()
-        .wrap_err("failed to put part in multipart")
-        .map_err(WriteError::MultipartError)?;
+      upload_parts.push(tokio::spawn({
+        let future = multipart.put_part(PutPayload::from_bytes(chunk));
+        async move {
+          let result = future.await;
+          tracing::info!("uploaded chunk #{i}");
+          result
+        }
+      }));
+      i += 1;
     }
+
+    futures::future::try_join_all(upload_parts)
+      .await
+      .into_diagnostic()
+      .wrap_err("failed to put part in multipart")
+      .map_err(WriteError::MultipartError)?;
 
     tracing::info!("finishing multipart");
     multipart
