@@ -6,12 +6,13 @@ use axum::{
   body::Body,
   extract::{FromRef, Path, State},
   response::{IntoResponse, Response},
-  routing::get,
+  routing::{get, post},
   Router,
 };
 use miette::IntoDiagnostic;
 use mollusk::RenderApiError;
-use storage::StorageClientGenerator;
+use storage::{DynStorageClient, StorageClientGenerator};
+use tokio_stream::StreamExt;
 
 use self::fetcher_error::FetcherError;
 
@@ -19,7 +20,7 @@ use self::fetcher_error::FetcherError;
 async fn get_store_client(
   db: db::DbConnection,
   store_name: impl AsRef<str> + Debug,
-) -> Result<storage::DynStorageClient, FetcherError> {
+) -> Result<DynStorageClient, FetcherError> {
   let creds = match store_name.as_ref() {
     "test-local" => {
       tracing::info!("using hard-coded store \"test-local\"");
@@ -75,9 +76,32 @@ async fn fetch_handler(
   .render_api_error()
 }
 
+#[axum::debug_handler]
+#[tracing::instrument(skip(db, body))]
+async fn test_upload(
+  State(db): State<db::DbConnection>,
+  Path((store_name, path)): Path<(String, String)>,
+  body: axum::body::Body,
+) -> impl IntoResponse {
+  let client = get_store_client(db, store_name).await.unwrap();
+
+  let stream = body.into_data_stream().map(|result| {
+    result.map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
+  });
+  let reader = tokio_util::io::StreamReader::new(stream);
+
+  client
+    .write(
+      PathBuf::from_str(&path).unwrap().as_path(),
+      Box::new(reader),
+    )
+    .await
+    .unwrap();
+}
+
 #[tracing::instrument(skip(client))]
 async fn fetch_path_from_client(
-  client: impl Deref<Target = storage::DynStorageClient>,
+  client: impl Deref<Target = DynStorageClient>,
   path: String,
 ) -> Result<Response, FetcherError> {
   // the error type here is `Infalliable`
@@ -105,6 +129,7 @@ async fn main() -> miette::Result<()> {
     db: db::DbConnection::new().await?,
   };
   let app = Router::new()
+    .route("/test-upload/:name/*path", post(test_upload))
     .route("/:name/*path", get(fetch_handler))
     .with_state(app_state);
 

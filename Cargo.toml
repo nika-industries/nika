@@ -19,11 +19,11 @@ miette = { version = "7" }
 axum = { version = "0.7" }
 tokio = { version = "1" }
 tokio-util = { version = "0.7" }
+tokio-stream = { version = "0.1" }
 
 # atomic-ish features
 ulid = { version = "1", features = [ "serde" ] }
 serde_json = { version = "1" }
-apalis = { version = "0.5", features = [ "retry" ] }
 nanorand = { version = "0.7", default-features = false }
 futures = { version = "0.3" }
 
