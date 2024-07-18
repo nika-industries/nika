@@ -1,13 +1,14 @@
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use bytes_stream::BytesStream;
 use core_types::R2StorageCredentials;
-use futures::{StreamExt, TryStreamExt};
+use futures::{StreamExt, TryFutureExt, TryStreamExt};
 use miette::{Context, IntoDiagnostic};
 use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
   Error as ObjectStoreError, ObjectStore, PutPayload,
 };
+use tokio::sync::Mutex;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use super::{DynAsyncReader, ReadError, StorageClient};
@@ -84,52 +85,67 @@ impl StorageClient for R2StorageClient {
 
     let chunk_size = 10 * 1024 * 1024;
 
-    let mut bytes_chunks = tokio_util::io::ReaderStream::new(
+    let bytes_chunks = tokio_util::io::ReaderStream::new(
       tokio::io::BufReader::with_capacity(chunk_size, &mut reader),
     )
     .bytes_chunks(chunk_size);
 
     tracing::info!("starting multipart");
-    let mut multipart = self
-      .store
-      .put_multipart(&path)
-      .await
-      .into_diagnostic()
-      .wrap_err("failed to start multipart")
-      .map_err(WriteError::MultipartError)?;
-
-    let mut upload_parts = Vec::new();
-    let mut i = 0;
-    while let Some(chunk) = bytes_chunks.next().await {
-      let chunk = chunk
+    let multipart = Arc::new(Mutex::new(
+      self
+        .store
+        .put_multipart(&path)
+        .await
         .into_diagnostic()
-        .wrap_err("failed to get bytes chunk from reader")
-        .map_err(WriteError::MultipartError)?;
-      tracing::info!("got bytes chunk with {} bytes", chunk.len());
-      upload_parts.push(tokio::spawn({
-        let future = multipart.put_part(PutPayload::from_bytes(chunk));
-        async move {
-          let result = future.await;
-          tracing::info!("uploaded chunk #{i}");
-          result
-        }
-      }));
-      i += 1;
-    }
+        .wrap_err("failed to start multipart")
+        .map_err(WriteError::MultipartError)?,
+    ));
 
-    futures::future::try_join_all(upload_parts)
+    let part_stream = bytes_chunks
+      .map_err(|e| {
+        Err::<(), _>(e)
+          .into_diagnostic()
+          .wrap_err("failed to get bytes chunk from reader")
+          .unwrap_err()
+      })
+      .map(|r| {
+        let value = multipart.clone();
+        async move {
+          let chunk = r?;
+          tracing::info!("got bytes chunk with {} bytes", chunk.len());
+
+          let mut multipart = value.lock().await;
+          let future = multipart
+            .put_part(PutPayload::from_bytes(chunk))
+            .map_err(|e| {
+              Err::<(), _>(e)
+                .into_diagnostic()
+                .wrap_err("failed to upload part")
+                .unwrap_err()
+            });
+          drop(multipart);
+          future.await?;
+
+          Ok::<_, miette::Report>(())
+        }
+      })
+      .buffered(3);
+
+    let _ = part_stream
+      .try_collect::<Vec<_>>()
       .await
-      .into_diagnostic()
-      .wrap_err("failed to put part in multipart")
       .map_err(WriteError::MultipartError)?;
 
-    tracing::info!("finishing multipart");
     multipart
+      .lock()
+      .await
       .complete()
       .await
       .into_diagnostic()
       .wrap_err("failed to complete multipart")
       .map_err(WriteError::MultipartError)?;
+
+    tracing::info!("finishing multipart");
 
     Ok(())
   }
