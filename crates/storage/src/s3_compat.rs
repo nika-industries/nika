@@ -14,12 +14,12 @@ use tokio_util::compat::FuturesAsyncReadCompatExt;
 use super::{DynAsyncReader, ReadError, StorageClient};
 use crate::WriteError;
 
-pub struct R2StorageClient {
+pub struct S3CompatStorageClient {
   store: AmazonS3,
 }
 
-impl R2StorageClient {
-  pub async fn new(creds: R2StorageCredentials) -> miette::Result<Self> {
+impl S3CompatStorageClient {
+  pub async fn new_r2(creds: R2StorageCredentials) -> miette::Result<Self> {
     match creds {
       R2StorageCredentials::Default {
         access_key,
@@ -40,14 +40,14 @@ impl R2StorageClient {
           .build()
           .into_diagnostic()
           .wrap_err("failed to build R2 client instance")?;
-        Ok(R2StorageClient { store: r2 })
+        Ok(S3CompatStorageClient { store: r2 })
       }
     }
   }
 }
 
 #[async_trait::async_trait]
-impl StorageClient for R2StorageClient {
+impl StorageClient for S3CompatStorageClient {
   #[tracing::instrument(skip(self))]
   async fn read(&self, input_path: &Path) -> Result<DynAsyncReader, ReadError> {
     let input_path_string = input_path.to_str().unwrap().to_string();
