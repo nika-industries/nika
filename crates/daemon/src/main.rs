@@ -1,3 +1,5 @@
+//! Binary for consuming and running tasks.
+
 use rope::Backend;
 
 #[tokio::main]

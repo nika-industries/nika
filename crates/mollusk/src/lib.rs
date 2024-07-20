@@ -1,9 +1,12 @@
+//! Provides standardized API schemas.
+
 use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
 };
 use miette::Diagnostic;
 
+/// An error that can be directly returned to a user from an API route.
 pub trait ApiError: Diagnostic + Sized {
   /// The [`StatusCode`] that the error should return.
   fn status_code(&self) -> StatusCode;
@@ -14,7 +17,8 @@ pub trait ApiError: Diagnostic + Sized {
   /// This method should run any logging or tracing calls attached to the error.
   fn tracing(&self);
 
-  fn into_response(self) -> axum::response::Response {
+  /// Converts the API error into an [`axum`] [`Response`].
+  fn into_response(self) -> Response {
     self.tracing();
     (
       self.status_code(),
@@ -30,7 +34,9 @@ pub trait ApiError: Diagnostic + Sized {
   }
 }
 
+/// Extension trait that adds the `render_api_error` to `Result<T, E: ApiError>`
 pub trait RenderApiError<T> {
+  /// Converts `Result<T, E: ApiError>` into `Result<T, Response>`
   fn render_api_error(self) -> Result<T, Response>;
 }
 

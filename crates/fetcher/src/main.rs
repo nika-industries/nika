@@ -1,3 +1,5 @@
+//! Binary for the main archive fetch route.
+
 mod fetcher_error;
 
 use std::{fmt::Debug, ops::Deref, path::PathBuf, str::FromStr};

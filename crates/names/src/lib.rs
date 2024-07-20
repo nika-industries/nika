@@ -1,3 +1,5 @@
+//! Generates names.
+
 const ADJECTIVES: &[&str] = &[
   "adamant",
   "adept",

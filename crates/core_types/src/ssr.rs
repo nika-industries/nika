@@ -8,10 +8,13 @@ use surrealdb::{
 
 use crate::{Store, StoreRecordId, STORE_TABLE_NAME};
 
+/// A [`Ulid`](ulid::Ulid) or a [`Thing`].
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum UlidOrThing {
+  /// A [`Ulid`](ulid::Ulid).
   Ulid(ulid::Ulid),
+  /// A [`Thing`].
   Thing(Thing),
 }
 

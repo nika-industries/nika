@@ -1,3 +1,6 @@
+//! Provides a task system for executing arbitrary logic across persistent and
+//! distributed workers.
+
 #![feature(associated_type_defaults)]
 
 use std::{
@@ -52,7 +55,10 @@ pub enum Status<T: Task> {
   /// The task is in the queue and is waiting to be picked up by a worker.
   Pending,
   /// The task is being run by a worker.
-  InProgress { worker_name: String },
+  InProgress {
+    /// The name of the worker running the task.
+    worker_name: String,
+  },
   /// The task completed with the included response value.
   Completed(T::Response),
   /// The task failed with the included error value.
@@ -118,6 +124,7 @@ pub struct RedisBackend<T: Task> {
 }
 
 impl<T: Task> RedisBackend<T> {
+  /// Build a new [`RedisBackend`].
   pub async fn new(state: T::State) -> Self {
     RedisBackend {
       worker_name: OnceLock::new(),
@@ -139,8 +146,10 @@ impl<T: Task> RedisBackend<T> {
 /// The error type for [`RedisBackend`].
 #[derive(Debug, thiserror::Error, Diagnostic)]
 pub enum RedisBackendError {
+  /// An error occurred serializing to/deserializing from JSON.
   #[error("ser/de error: {0}")]
   SerdeJsonError(#[from] serde_json::Error),
+  /// An error occurred when communicating with Redis.
   #[error("redis error: {0}")]
   RedisError(#[from] redis::RedisError),
 }
