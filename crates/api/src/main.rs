@@ -1,3 +1,5 @@
+//! API server that handles platform actions for the frontend and CLI.
+
 use axum::{
   extract::{FromRef, State},
   response::IntoResponse,

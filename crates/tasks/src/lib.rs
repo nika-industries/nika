@@ -1,5 +1,8 @@
+//! Provides types and business logic for all platform tasks used with [`rope`].
+
 use serde::{Deserialize, Serialize};
 
+/// The health check task.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HealthCheckTask;
 

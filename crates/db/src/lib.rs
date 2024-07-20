@@ -1,7 +1,5 @@
 //! Provides access to the SurrealDB database.
 
-#![warn(missing_docs)]
-
 mod store;
 
 use std::sync::Arc;

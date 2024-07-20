@@ -1,3 +1,5 @@
+//! Provides a proc-macro for rendering logos to ASCII-art strings.
+
 extern crate proc_macro;
 
 use std::{
@@ -12,6 +14,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, LitStr};
 
+/// Produces an ASCII-art string from the the provided file.
 #[proc_macro]
 pub fn ascii_art(input: TokenStream) -> TokenStream {
   // Parse the input token stream as a string literal

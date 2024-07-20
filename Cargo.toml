@@ -6,6 +6,9 @@ members = ["crates/*"]
 [workspace.package]
 license-file = "LICENSE.md"
 
+[workspace.lints.rust]
+missing_docs = "deny"
+
 [workspace.dependencies]
 # strictly codegen
 async-trait = { version = "0.1" }

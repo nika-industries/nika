@@ -1,3 +1,5 @@
+//! Provides traits and implementations for storage clients.
+
 mod local;
 mod s3_compat;
 
@@ -7,10 +9,15 @@ use tokio::io::AsyncRead;
 
 use self::{local::LocalStorageClient, s3_compat::S3CompatStorageClient};
 
+/// Trait alias for `Box<dyn StorageClient + ...>`
 pub type DynStorageClient = Box<dyn StorageClient + Send + Sync + 'static>;
+/// Trait alias for `Box<dyn AsyncReader + ...>`
 pub type DynAsyncReader = Box<dyn AsyncRead + Send + Unpin + 'static>;
 
+/// Extension trait that allows generating a dynamic client from
+/// `StorageCredentials`.
 pub trait StorageClientGenerator {
+  /// Generates a dynamic client from `StorageCredentials`.
   fn client(
     &self,
   ) -> impl std::future::Future<Output = miette::Result<DynStorageClient>> + Send;
@@ -29,29 +36,40 @@ impl StorageClientGenerator for core_types::StorageCredentials {
   }
 }
 
+/// An error type used when reading from a `StorageClient`.
 #[derive(thiserror::Error, Debug, miette::Diagnostic)]
 pub enum ReadError {
+  /// The path was not found in the storage.
   #[error("the file was not available in storage: {0}")]
   NotFound(PathBuf),
+  /// The path was invalid.
   #[error("the supplied path was invalid: {0}")]
   InvalidPath(String),
+  /// An IO error occurred.
   #[error("a local filesystem error occurred: {0}")]
   IoError(#[from] std::io::Error),
 }
 
+/// An error type used when writing to a `StorageClient`.
 #[derive(thiserror::Error, Debug, miette::Diagnostic)]
 pub enum WriteError {
+  /// The path was invalid.
   #[error("the supplied path was invalid: {0}")]
   InvalidPath(String),
+  /// An IO error occurred.
   #[error("a local filesystem error occurred: {0}")]
   IoError(#[from] std::io::Error),
+  /// An error occurred while uploading a multipart.
   #[error("an error occurred while performing a multipart upload: {0}")]
   MultipartError(miette::Report),
 }
 
+/// The main storage trait. Allows reading to or writing from a stream of bytes.
 #[async_trait::async_trait]
 pub trait StorageClient {
+  /// Reads a file. Returns a [`DynAsyncReader`].
   async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError>;
+  /// Writes a file. Consumes a [`DynAsyncReader`].
   async fn write(
     &self,
     path: &Path,
