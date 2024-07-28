@@ -7,7 +7,7 @@
       url = "https://flakehub.com/f/oxalica/rust-overlay/0.1.tar.gz";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    crane.url = "https://flakehub.com/f/ipetkov/crane/0.17.tar.gz";
+    crane.url = "https://flakehub.com/f/ipetkov/crane/0.18.tar.gz";
     nix-filter.url = "github:numtide/nix-filter";
   };
 
@@ -35,8 +35,8 @@
           ];
         };
 
-        toolchain = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
-        dev-toolchain = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
+        toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
+        dev-toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
         });
 
@@ -71,7 +71,7 @@
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
-            dev-toolchain
+            (dev-toolchain pkgs)
 
             bacon # change detection
             cargo-nextest # testing
