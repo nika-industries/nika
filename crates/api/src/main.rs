@@ -1,18 +1,25 @@
 //! API server that handles platform actions for the frontend and CLI.
 
+use std::{fmt::Debug, path::PathBuf, str::FromStr};
+
 use axum::{
-  extract::{FromRef, State},
+  extract::{FromRef, Path, State},
   response::IntoResponse,
-  routing::get,
-  Router,
+  routing::{get, post},
+  Json, Router,
 };
-use rope::Backend;
+use miette::IntoDiagnostic;
+use mollusk::CredsFetchingError;
+use rope::{Backend, RedisBackend};
+use storage::StorageClientGenerator;
+use tasks::HealthCheckTask;
+use tokio_stream::StreamExt;
 
 async fn health_check_handler(
-  State(health_check_tasks): State<rope::RedisBackend<tasks::HealthCheckTask>>,
+  State(health_check_tasks): State<RedisBackend<HealthCheckTask>>,
 ) -> impl IntoResponse {
   let id = health_check_tasks
-    .submit_task(tasks::HealthCheckTask)
+    .submit_task(HealthCheckTask)
     .await
     .unwrap();
 
@@ -25,9 +32,85 @@ async fn health_check_handler(
   format!("status: {status:?}")
 }
 
+async fn get_store_creds_handler(
+  State(db): State<db::DbConnection>,
+  Path(store_name): Path<String>,
+) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError> {
+  Ok(get_store_creds(db, store_name).await.map(Json)?)
+}
+
+#[tracing::instrument(skip(db))]
+async fn get_store_creds(
+  db: db::DbConnection,
+  store_name: impl AsRef<str> + Debug,
+) -> Result<core_types::StorageCredentials, CredsFetchingError> {
+  let creds = match store_name.as_ref() {
+    "nika-temp" => {
+      tracing::info!("using hard-coded store \"nika-temp\"");
+      core_types::StorageCredentials::R2(
+        core_types::R2StorageCredentials::Default {
+          access_key:        std::env::var("R2_TEMP_ACCESS_KEY")
+            .into_diagnostic()
+            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
+          secret_access_key: std::env::var("R2_TEMP_SECRET_ACCESS_KEY")
+            .into_diagnostic()
+            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
+          endpoint:          std::env::var("R2_TEMP_ENDPOINT")
+            .into_diagnostic()
+            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
+          bucket:            std::env::var("R2_TEMP_BUCKET")
+            .into_diagnostic()
+            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
+        },
+      )
+    }
+    store_name => {
+      db.fetch_store_by_name(store_name.as_ref())
+        .await
+        .map_err(|e| {
+          CredsFetchingError::SurrealDbStoreRetrievalError(e.to_string())
+        })?
+        .ok_or_else(|| {
+          CredsFetchingError::NoMatchingStore(store_name.to_string())
+        })?
+        .config
+    }
+  };
+
+  Ok(creds)
+}
+
+#[tracing::instrument(skip(db, body))]
+async fn test_upload(
+  State(db): State<db::DbConnection>,
+  Path((store_name, path)): Path<(String, String)>,
+  body: axum::body::Body,
+) -> impl IntoResponse {
+  let client = get_store_creds(db, store_name)
+    .await
+    .unwrap()
+    .client()
+    .await
+    .unwrap();
+
+  client
+    .write(
+      PathBuf::from_str(&path).unwrap().as_path(),
+      Box::new(tokio_util::io::StreamReader::new(
+        body.into_data_stream().map(|result| {
+          result
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
+        }),
+      )),
+    )
+    .await
+    .unwrap();
+}
+
 #[derive(Clone, FromRef)]
 struct AppState {
-  health_check_task_backend: rope::RedisBackend<tasks::HealthCheckTask>,
+  db: db::DbConnection,
+  health_check_task_backend: RedisBackend<HealthCheckTask>,
 }
 
 #[tokio::main]
@@ -37,11 +120,13 @@ async fn main() -> miette::Result<()> {
   println!(art::ascii_art!("../../media/ascii_logo.png"));
 
   let state = AppState {
-    health_check_task_backend:
-      rope::RedisBackend::<tasks::HealthCheckTask>::new(()).await,
+    db: db::DbConnection::new().await?,
+    health_check_task_backend: RedisBackend::<HealthCheckTask>::new(()).await,
   };
 
   let app = Router::new()
+    .route("/test-upload/:name/*path", post(test_upload))
+    .route("/creds/:name", get(get_store_creds_handler))
     .route("/health", get(health_check_handler))
     .with_state(state);
 

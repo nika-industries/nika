@@ -10,5 +10,7 @@ workspace = true
 [dependencies]
 axum.workspace = true
 miette.workspace = true
+serde.workspace = true
 serde_json.workspace = true
-# serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

@@ -9,18 +9,19 @@ workspace = true
 
 [dependencies]
 art = { path = "../art" }
-core_types = { path = "../core_types" }
-db = { path = "../db" }
+core_types = { path = "../core_types", features = ["ssr"] }
 mollusk = { path = "../mollusk" }
 storage = { path = "../storage" }
 
+serde.workspace = true
 thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }
 
 axum = { workspace = true, features = [ "macros" ] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 tokio = { workspace = true, features = [ "rt", "rt-multi-thread" ] }
-tokio-util = { workspace = true, features = [ "io" ] }
+tokio-stream.workspace = true
+tokio-util.workspace = true
 
 tracing.workspace = true
 tracing-subscriber.workspace = true
-tokio-stream.workspace = true
