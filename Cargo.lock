@@ -176,12 +176,17 @@ dependencies = [
  "art",
  "axum",
  "core_types",
+ "db",
  "miette 7.2.0",
  "mollusk",
  "rope",
+ "serde",
+ "storage",
  "tasks",
  "thiserror",
  "tokio",
+ "tokio-stream",
+ "tokio-util",
  "tracing",
  "tracing-subscriber",
 ]
@@ -1452,9 +1457,10 @@ dependencies = [
  "art",
  "axum",
  "core_types",
- "db",
  "miette 7.2.0",
  "mollusk",
+ "reqwest 0.12.5",
+ "serde",
  "storage",
  "thiserror",
  "tokio",
@@ -2060,6 +2066,7 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.26.0",
  "tower-service",
+ "webpki-roots 0.26.3",
 ]
 
 [[package]]
@@ -2587,7 +2594,10 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "miette 7.2.0",
+ "serde",
  "serde_json",
+ "thiserror",
+ "tracing",
 ]
 
 [[package]]
@@ -3624,6 +3634,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
+ "webpki-roots 0.26.3",
  "winreg 0.52.0",
 ]
 
