@@ -8,16 +8,18 @@
 		3. [X] Fetcher can query the DB for store info
 	2. [X] Licensing
 		1. [X] We have a license that's as permissive as possible while preventing direct competition from using our code
-	3. [ ] Pushing archives
+	3. [X] Jobs
 		1. [X] API layer and daemon now exist
 		2. [X] API layer can create jobs
-		3. [ ] API layer can use temp storage
-		4. [ ] Daemon can execute jobs
-		5. [ ] "Push archive" is job type and functions correctly
-		6. [ ] Archives can be pushed
-	4. [ ] CLI
+		3. [X] API layer can use temp storage
+		4. [X] Daemon can execute jobs
+	4. [ ] Nix Primitives
 		1. [ ] The CLI exists
-		2. [ ] The CLI can execute all API layer/Daemon actions going forward (keep up to date)
+		2. [ ] The CLI can create/extract bare Nix archives (not closures)
+		3. [ ] The CLI can calculate Nix closures
+		4. [ ] The CLI can produce `.narinfo` files
+	5. [ ] Pushing archives
+		1. [ ] "Push archive" is job type and functions correctly
 2. [ ] Multi-tenancy
 	1. [ ] Stores vs. Caches
 		1. [ ] Stores and caches are now separate things in the DB
