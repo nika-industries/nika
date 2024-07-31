@@ -1,6 +1,6 @@
 //! API server that handles platform actions for the frontend and CLI.
 
-use std::{fmt::Debug, path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
 use axum::{
   extract::{FromRef, Path, State},
@@ -8,11 +8,9 @@ use axum::{
   routing::{get, post},
   Json, Router,
 };
-use miette::IntoDiagnostic;
-use mollusk::CredsFetchingError;
 use rope::{Backend, RedisBackend};
 use storage::StorageClientGenerator;
-use tasks::HealthCheckTask;
+use tasks::{HealthCheckTask, Task};
 use tokio_stream::StreamExt;
 
 async fn health_check_handler(
@@ -36,48 +34,12 @@ async fn get_store_creds_handler(
   State(db): State<db::DbConnection>,
   Path(store_name): Path<String>,
 ) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError> {
-  Ok(get_store_creds(db, store_name).await.map(Json)?)
-}
-
-#[tracing::instrument(skip(db))]
-async fn get_store_creds(
-  db: db::DbConnection,
-  store_name: impl AsRef<str> + Debug,
-) -> Result<core_types::StorageCredentials, CredsFetchingError> {
-  let creds = match store_name.as_ref() {
-    "nika-temp" => {
-      tracing::info!("using hard-coded store \"nika-temp\"");
-      core_types::StorageCredentials::R2(
-        core_types::R2StorageCredentials::Default {
-          access_key:        std::env::var("R2_TEMP_ACCESS_KEY")
-            .into_diagnostic()
-            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-          secret_access_key: std::env::var("R2_TEMP_SECRET_ACCESS_KEY")
-            .into_diagnostic()
-            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-          endpoint:          std::env::var("R2_TEMP_ENDPOINT")
-            .into_diagnostic()
-            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-          bucket:            std::env::var("R2_TEMP_BUCKET")
-            .into_diagnostic()
-            .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-        },
-      )
-    }
-    store_name => {
-      db.fetch_store_by_name(store_name.as_ref())
-        .await
-        .map_err(|e| {
-          CredsFetchingError::SurrealDbStoreRetrievalError(e.to_string())
-        })?
-        .ok_or_else(|| {
-          CredsFetchingError::NoMatchingStore(store_name.to_string())
-        })?
-        .config
-    }
-  };
-
-  Ok(creds)
+  Ok(
+    tasks::FetchStoreCredsTask { store_name }
+      .run(db)
+      .await
+      .map(Json)?,
+  )
 }
 
 #[tracing::instrument(skip(db, body))]
@@ -86,7 +48,8 @@ async fn test_upload(
   Path((store_name, path)): Path<(String, String)>,
   body: axum::body::Body,
 ) -> impl IntoResponse {
-  let client = get_store_creds(db, store_name)
+  let client = tasks::FetchStoreCredsTask { store_name }
+    .run(db)
     .await
     .unwrap()
     .client()

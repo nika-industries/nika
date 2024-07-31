@@ -8,8 +8,13 @@ publish = false
 workspace = true
 
 [dependencies]
-async-trait.workspace = true
+core_types = { path = "../core_types" }
+db = { path = "../db" }
+mollusk = { path = "../mollusk" }
 rope = { path = "../rope" }
 
+async-trait.workspace = true
+miette.workspace = true
 serde.workspace = true
-# tokio = { workspace = true, features = ["time"] }
+
+tracing.workspace = true
