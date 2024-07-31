@@ -3,6 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    wrangler = {
+      url = "github:ulrikstrid/nix-wrangler";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     rust-overlay = {
       url = "https://flakehub.com/f/oxalica/rust-overlay/0.1.tar.gz";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -11,7 +15,7 @@
     nix-filter.url = "github:numtide/nix-filter";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, crane, nix-filter, flake-utils }: 
+  outputs = { self, nixpkgs, wrangler, rust-overlay, crane, nix-filter, flake-utils }: 
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -38,6 +42,7 @@
         toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
         dev-toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
+          targets = [ "wasm32-unknown-unknown" ];
         });
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
@@ -77,8 +82,13 @@
             cargo-nextest # testing
             cargo-deny # package auditing
 
-            surrealdb
-            surrealdb-migrations
+            # cf worker deployment
+            yarn
+            wrangler.packages.${system}.wrangler
+            worker-build
+            wasm-pack
+
+            surrealdb surrealdb-migrations
 
             redis
           ];
