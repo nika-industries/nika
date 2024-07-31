@@ -1,22 +1,10 @@
 //! Provides types and business logic for all platform tasks used with [`rope`].
 
-use serde::{Deserialize, Serialize};
+mod fetch_store_creds;
+mod health_check;
 
-/// The health check task.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct HealthCheckTask;
+pub use rope::Task;
 
-#[async_trait::async_trait]
-impl rope::Task for HealthCheckTask {
-  const NAME: &'static str = "HealthCheck";
-
-  type Response = bool;
-  type Error = ();
-
-  async fn run(
-    self,
-    _state: Self::State,
-  ) -> Result<Self::Response, Self::Error> {
-    Ok(true)
-  }
-}
+pub use self::{
+  fetch_store_creds::FetchStoreCredsTask, health_check::HealthCheckTask,
+};
