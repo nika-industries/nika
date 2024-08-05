@@ -1,6 +1,6 @@
 //! API server that handles platform actions for the frontend and CLI.
 
-use std::{path::PathBuf, str::FromStr};
+mod temp_storage_payload;
 
 use axum::{
   extract::{FromRef, Path, State},
@@ -9,9 +9,7 @@ use axum::{
   Json, Router,
 };
 use rope::{Backend, RedisBackend};
-use storage::StorageClientGenerator;
 use tasks::{HealthCheckTask, Task};
-use tokio_stream::StreamExt;
 
 async fn health_check_handler(
   State(health_check_tasks): State<RedisBackend<HealthCheckTask>>,
@@ -33,7 +31,7 @@ async fn health_check_handler(
 async fn get_store_creds_handler(
   State(db): State<db::DbConnection>,
   Path(store_name): Path<String>,
-) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError> {
+) -> Result<Json<core_types::StorageCredentials>, mollusk::ExternalApiError> {
   Ok(
     tasks::FetchStoreCredsTask { store_name }
       .run(db)
@@ -42,32 +40,28 @@ async fn get_store_creds_handler(
   )
 }
 
-#[tracing::instrument(skip(db, body))]
-async fn test_upload(
-  State(db): State<db::DbConnection>,
+#[tracing::instrument(skip(db, payload))]
+async fn naive_upload(
   Path((store_name, path)): Path<(String, String)>,
-  body: axum::body::Body,
+  State(db): State<db::DbConnection>,
+  payload: temp_storage_payload::TempStoragePayload,
 ) -> impl IntoResponse {
-  let client = tasks::FetchStoreCredsTask { store_name }
-    .run(db)
-    .await
-    .unwrap()
-    .client()
-    .await
-    .unwrap();
+  let _creds = tasks::FetchStoreCredsTask {
+    store_name: store_name.clone(),
+  }
+  .run(db.clone())
+  .await
+  .unwrap();
 
-  client
-    .write(
-      PathBuf::from_str(&path).unwrap().as_path(),
-      Box::new(tokio_util::io::StreamReader::new(
-        body.into_data_stream().map(|result| {
-          result
-            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
-        }),
-      )),
-    )
-    .await
-    .unwrap();
+  let payload_path = payload.upload().await.unwrap();
+  tasks::NaiveUploadTask {
+    store_name,
+    path: path.into(),
+    temp_storage_path: payload_path,
+  }
+  .run(db)
+  .await
+  .unwrap();
 }
 
 #[derive(Clone, FromRef)]
@@ -88,7 +82,7 @@ async fn main() -> miette::Result<()> {
   };
 
   let app = Router::new()
-    .route("/test-upload/:name/*path", post(test_upload))
+    .route("/naive-upload/:name/*path", post(naive_upload))
     .route("/creds/:name", get(get_store_creds_handler))
     .route("/health", get(health_check_handler))
     .with_state(state);

@@ -11,7 +11,7 @@ workspace = true
 core_types = { path = "../core_types" }
 
 async-trait.workspace = true
-# serde.workspace = true
+serde.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = [ "fs" ] }
 object_store = { version = "0.10.1", features = ["aws"] }

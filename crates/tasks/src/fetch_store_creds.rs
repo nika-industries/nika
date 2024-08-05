@@ -1,4 +1,3 @@
-use miette::IntoDiagnostic;
 use mollusk::CredsFetchingError;
 use serde::{Deserialize, Serialize};
 
@@ -20,23 +19,10 @@ impl rope::Task for FetchStoreCredsTask {
   async fn run(self, db: Self::State) -> Result<Self::Response, Self::Error> {
     let creds = match self.store_name.as_ref() {
       "nika-temp" => {
-        tracing::info!("using hard-coded store \"nika-temp\"");
-        core_types::StorageCredentials::R2(
-          core_types::R2StorageCredentials::Default {
-            access_key:        std::env::var("R2_TEMP_ACCESS_KEY")
-              .into_diagnostic()
-              .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-            secret_access_key: std::env::var("R2_TEMP_SECRET_ACCESS_KEY")
-              .into_diagnostic()
-              .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-            endpoint:          std::env::var("R2_TEMP_ENDPOINT")
-              .into_diagnostic()
-              .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-            bucket:            std::env::var("R2_TEMP_BUCKET")
-              .into_diagnostic()
-              .map_err(|e| CredsFetchingError::StoreInitError(e.to_string()))?,
-          },
-        )
+        tracing::debug!("using hard-coded store \"nika-temp\"");
+        storage::temp::get_temp_storage_creds().map_err(|e| {
+          CredsFetchingError::TempStorageCredsError(e.to_string())
+        })?
       }
       store_name => {
         db.fetch_store_by_name(store_name.as_ref())

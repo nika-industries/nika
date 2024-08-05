@@ -4443,6 +4443,7 @@ dependencies = [
  "futures",
  "miette 7.2.0",
  "object_store 0.10.1",
+ "serde",
  "temp-dir",
  "thiserror",
  "tokio",
@@ -4854,6 +4855,7 @@ dependencies = [
  "mollusk",
  "rope",
  "serde",
+ "storage",
  "tracing",
 ]
 

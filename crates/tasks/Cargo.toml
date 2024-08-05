@@ -12,6 +12,7 @@ core_types = { path = "../core_types" }
 db = { path = "../db" }
 mollusk = { path = "../mollusk" }
 rope = { path = "../rope" }
+storage = { path = "../storage" }
 
 async-trait.workspace = true
 miette.workspace = true
