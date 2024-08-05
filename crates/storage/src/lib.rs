@@ -2,6 +2,7 @@
 
 mod local;
 mod s3_compat;
+pub mod temp;
 
 use std::path::{Path, PathBuf};
 

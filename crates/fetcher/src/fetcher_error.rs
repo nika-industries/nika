@@ -19,21 +19,24 @@ impl mollusk::ApiError for FetcherError {
     match self {
       FetcherError::CredsFetchingError(
         CredsFetchingError::NoMatchingStore(_),
-      ) => StatusCode::NOT_FOUND,
+      )
+      | FetcherError::ReadError(ReadError::NotFound(_)) => {
+        StatusCode::NOT_FOUND
+      }
       FetcherError::CredsFetchingError(
         CredsFetchingError::SurrealDbStoreRetrievalError(_),
-      ) => StatusCode::INTERNAL_SERVER_ERROR,
-      FetcherError::CredsFetchingError(CredsFetchingError::StoreInitError(
+      )
+      | FetcherError::StoreInitError(_)
+      | FetcherError::ReadError(ReadError::IoError(_))
+      | FetcherError::CredsFetchingError(CredsFetchingError::StoreInitError(
         _,
-      )) => StatusCode::INTERNAL_SERVER_ERROR,
-      FetcherError::ReadError(ReadError::NotFound(_)) => StatusCode::NOT_FOUND,
+      ))
+      | FetcherError::CredsFetchingError(
+        CredsFetchingError::TempStorageCredsError(_),
+      ) => StatusCode::INTERNAL_SERVER_ERROR,
       FetcherError::ReadError(ReadError::InvalidPath(_)) => {
         StatusCode::BAD_REQUEST
       }
-      FetcherError::ReadError(ReadError::IoError(_)) => {
-        StatusCode::INTERNAL_SERVER_ERROR
-      }
-      FetcherError::StoreInitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
   }
 
@@ -51,6 +54,9 @@ impl mollusk::ApiError for FetcherError {
       | FetcherError::CredsFetchingError(CredsFetchingError::StoreInitError(
         _,
       ))
+      | FetcherError::CredsFetchingError(
+        CredsFetchingError::TempStorageCredsError(_),
+      )
       | FetcherError::StoreInitError(_) => "internal-error",
     }
   }
@@ -63,6 +69,13 @@ impl mollusk::ApiError for FetcherError {
       FetcherError::CredsFetchingError(
         CredsFetchingError::SurrealDbStoreRetrievalError(e),
       ) => format!("An internal error occurred: {e}"),
+      FetcherError::CredsFetchingError(
+        CredsFetchingError::TempStorageCredsError(e),
+      ) => format!("An internal error occurred: {e}"),
+      FetcherError::CredsFetchingError(CredsFetchingError::StoreInitError(
+        _,
+      ))
+      | FetcherError::StoreInitError(_) => "Failed to use store".to_string(),
       FetcherError::ReadError(ReadError::NotFound(path)) => {
         format!("The resource at {path:?} does not exist.")
       }
@@ -72,10 +85,6 @@ impl mollusk::ApiError for FetcherError {
       FetcherError::ReadError(ReadError::IoError(e)) => {
         format!("An internal error occurred: {e}")
       }
-      FetcherError::CredsFetchingError(CredsFetchingError::StoreInitError(
-        _,
-      ))
-      | FetcherError::StoreInitError(_) => "Failed to use store".to_string(),
     }
   }
 
@@ -90,6 +99,11 @@ impl mollusk::ApiError for FetcherError {
         CredsFetchingError::SurrealDbStoreRetrievalError(e),
       ) => {
         tracing::error!("failed to retrieve store from surrealdb: {e}");
+      }
+      FetcherError::CredsFetchingError(
+        CredsFetchingError::TempStorageCredsError(e),
+      ) => {
+        tracing::error!("failed to fetch temp storage creds: {e}");
       }
       FetcherError::ReadError(ReadError::NotFound(_)) => {
         tracing::warn!("asked to fetch missing path");
