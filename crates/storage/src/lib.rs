@@ -28,10 +28,10 @@ impl StorageClientGenerator for core_types::StorageCredentials {
     match self {
       Self::Local(local_storage_creds) => Ok(Box::new(
         LocalStorageClient::new(local_storage_creds.clone()).await?,
-      )),
+      ) as DynStorageClient),
       Self::R2(r2_storage_creds) => Ok(Box::new(
         S3CompatStorageClient::new_r2(r2_storage_creds.clone()).await?,
-      )),
+      ) as DynStorageClient),
     }
   }
 }
