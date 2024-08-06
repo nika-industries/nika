@@ -14,8 +14,8 @@
 		3. [X] API layer can use temp storage
 		4. [X] Daemon can execute jobs
 	4. [ ] Nix Primitives
-		1. [ ] The CLI exists
-		2. [ ] The CLI can create/extract bare Nix archives (not closures)
+		1. [X] The CLI exists
+		2. [X] The CLI can create/extract bare Nix archives (not closures)
 		3. [ ] The CLI can calculate Nix closures
 		4. [ ] The CLI can produce `.narinfo` files
 	5. [ ] Pushing archives
