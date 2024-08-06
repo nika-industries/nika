@@ -1,0 +1,15 @@
+[package]
+name = "nasty"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+nix-nar = { version = "0.3", optional = true }
+
+[lints]
+workspace = true
+
+[features]
+default = [ "nar" ]
+nar = [ "dep:nix-nar" ]
