@@ -2,6 +2,8 @@
 
 #[cfg(feature = "ssr")]
 mod ssr;
+#[cfg(feature = "ssr")]
+mod storage_creds;
 mod store;
 
 #[cfg(feature = "ssr")]
