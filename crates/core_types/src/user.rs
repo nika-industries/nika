@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{slug::Slug, OrgRecordId};
+use crate::OrgRecordId;
 
 /// The [`User`] table name.
 pub const USER_TABLE_NAME: &str = "user";
@@ -16,7 +16,7 @@ pub struct User {
   /// The user's ID.
   pub id:   UserRecordId,
   /// The user's name.
-  pub name: Slug,
+  pub name: String,
   /// The user's org.
   pub org:  OrgRecordId,
 }
