@@ -18,7 +18,7 @@ pub struct Token {
   /// The token's nickname.
   pub nickname: Slug,
   /// The token's owner.
-  pub org:      UserRecordId,
+  pub owner:    UserRecordId,
   /// The token's permissions.
   pub perms:    PermissionSet,
 }
