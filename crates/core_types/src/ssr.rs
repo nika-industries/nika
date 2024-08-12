@@ -6,7 +6,9 @@ use surrealdb::{
   sql::{Id, Thing},
 };
 
-use crate::{Store, StoreRecordId, STORE_TABLE_NAME};
+use crate::{
+  Org, OrgRecordId, Store, StoreRecordId, ORG_TABLE_NAME, STORE_TABLE_NAME,
+};
 
 /// A [`Ulid`](ulid::Ulid) or a [`Thing`].
 #[derive(Deserialize, Debug, Clone)]
@@ -112,3 +114,4 @@ macro_rules! impl_table {
 }
 
 impl_table!(StoreRecordId, Store, STORE_TABLE_NAME);
+impl_table!(OrgRecordId, Org, ORG_TABLE_NAME);
