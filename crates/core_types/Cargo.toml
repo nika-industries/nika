@@ -13,7 +13,7 @@ serde.workspace = true
 
 surrealdb = { workspace = true, optional = true }
 slug = { version = "0.1" }
-nutype.workspace = true
+nutype = { workspace = true, features = [ "serde" ] }
 
 [features]
 default = [ ]
