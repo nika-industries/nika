@@ -5,7 +5,7 @@ use crate::slug::Slug;
 /// The [`Org`] table name.
 pub const ORG_TABLE_NAME: &str = "org";
 
-/// A [`Org`] record ID.
+/// An [`Org`] record ID.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ssr", serde(from = "crate::ssr::UlidOrThing"))]
 pub struct OrgRecordId(pub ulid::Ulid);
