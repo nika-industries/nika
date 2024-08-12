@@ -16,7 +16,7 @@ mod ssr {
   use serde::{Deserialize, Serialize};
 
   use super::StoreRecordId;
-  use crate::storage_creds::StorageCredentials;
+  use crate::{storage_creds::StorageCredentials, OrgRecordId};
 
   /// A store.
   #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -25,5 +25,7 @@ mod ssr {
     pub id:     StoreRecordId,
     /// The store's credentials.
     pub config: StorageCredentials,
+    /// The [`Org`](crate::Org) the store belongs to.
+    pub org:    OrgRecordId,
   }
 }
