@@ -7,7 +7,8 @@ use surrealdb::{
 };
 
 use crate::{
-  Org, OrgRecordId, Store, StoreRecordId, ORG_TABLE_NAME, STORE_TABLE_NAME,
+  Org, OrgRecordId, Store, StoreRecordId, User, UserRecordId, ORG_TABLE_NAME,
+  STORE_TABLE_NAME, USER_TABLE_NAME,
 };
 
 /// A [`Ulid`](ulid::Ulid) or a [`Thing`].
@@ -115,3 +116,4 @@ macro_rules! impl_table {
 
 impl_table!(StoreRecordId, Store, STORE_TABLE_NAME);
 impl_table!(OrgRecordId, Org, ORG_TABLE_NAME);
+impl_table!(UserRecordId, User, USER_TABLE_NAME);
