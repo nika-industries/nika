@@ -31,7 +31,7 @@ async fn health_check_handler(
 async fn get_store_creds_handler(
   State(db): State<db::DbConnection>,
   Path(store_name): Path<String>,
-) -> Result<Json<core_types::StorageCredentials>, mollusk::ExternalApiError> {
+) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError> {
   Ok(
     tasks::FetchStoreCredsTask { store_name }
       .run(db)
