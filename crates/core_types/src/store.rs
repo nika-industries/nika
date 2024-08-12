@@ -16,16 +16,18 @@ mod ssr {
   use serde::{Deserialize, Serialize};
 
   use super::StoreRecordId;
-  use crate::{storage_creds::StorageCredentials, OrgRecordId};
+  use crate::{storage_creds::StorageCredentials, OrgRecordId, Slug};
 
   /// A store.
   #[derive(Clone, Debug, Serialize, Deserialize)]
   pub struct Store {
     /// The store's ID.
-    pub id:     StoreRecordId,
+    pub id:       StoreRecordId,
+    /// The store's nickname.
+    pub nickname: Slug,
     /// The store's credentials.
-    pub config: StorageCredentials,
+    pub config:   StorageCredentials,
     /// The [`Org`](crate::Org) the store belongs to.
-    pub org:    OrgRecordId,
+    pub org:      OrgRecordId,
   }
 }

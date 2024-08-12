@@ -2,9 +2,11 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
+use crate::StoreRecordId;
+
 /// A permission set for a `Store`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PermissionSet(pub HashSet<(ulid::Ulid, StorePermission)>);
+pub struct PermissionSet(pub HashSet<(StoreRecordId, StorePermission)>);
 
 /// User permissions for `Store`s.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]

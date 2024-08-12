@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{slug::Slug, PermissionSet, UserRecordId};
+use crate::{slug::Slug, OrgRecordId, PermissionSet, UserRecordId};
 
 /// The [`Token`] table name.
 pub const TOKEN_TABLE_NAME: &str = "token";
@@ -17,8 +17,12 @@ pub struct Token {
   pub id:       TokenRecordId,
   /// The token's nickname.
   pub nickname: Slug,
-  /// The token's owner.
-  pub owner:    UserRecordId,
+  /// The token's secret.
+  pub secret:   Slug,
   /// The token's permissions.
   pub perms:    PermissionSet,
+  /// The token's owner.
+  pub owner:    UserRecordId,
+  /// THe token's org.
+  pub org:      OrgRecordId,
 }
