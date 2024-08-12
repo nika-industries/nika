@@ -14,11 +14,11 @@ pub struct TokenRecordId(pub ulid::Ulid);
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Token {
   /// The token's ID.
-  pub id:    TokenRecordId,
-  /// The token's name.
-  pub name:  Slug,
+  pub id:       TokenRecordId,
+  /// The token's nickname.
+  pub nickname: Slug,
   /// The token's owner.
-  pub org:   UserRecordId,
+  pub org:      UserRecordId,
   /// The token's permissions.
-  pub perms: PermissionSet,
+  pub perms:    PermissionSet,
 }
