@@ -18,7 +18,7 @@ pub use self::{
 };
 
 /// An error that can be directly returned to a user from an API route.
-pub trait ApiError: Diagnostic + Sized {
+pub trait MolluskError: Diagnostic + Sized {
   /// The [`StatusCode`] that the error should return.
   fn status_code(&self) -> StatusCode;
   /// The unique slug for the error, to enable client-side handling.
@@ -36,7 +36,7 @@ pub trait ApiError: Diagnostic + Sized {
       Json(serde_json::json!({
         "error": {
           "id": self.slug(),
-          "description": ApiError::description(&self),
+          "description": MolluskError::description(&self),
         },
       })),
     )
@@ -67,14 +67,14 @@ pub trait RenderInternalError<T> {
 
 impl<T, E> RenderInternalError<T> for Result<T, E>
 where
-  E: ApiError + Serialize,
+  E: MolluskError + Serialize,
 {
   fn render_internal_error(self) -> Result<T, InternalApiError> {
     self.map_err(|e| InternalApiError::from(e))
   }
 }
 
-impl<T: ApiError + Serialize> From<T> for InternalApiError {
+impl<T: MolluskError + Serialize> From<T> for InternalApiError {
   fn from(e: T) -> Self {
     e.tracing();
     InternalApiError((e.status_code(), Json(e)).into_response())
@@ -90,13 +90,13 @@ pub trait RenderExternalError<T> {
 
 impl<T, E> RenderExternalError<T> for Result<T, E>
 where
-  E: ApiError,
+  E: MolluskError,
 {
   fn render_external_error(self) -> Result<T, ExternalApiError> {
     self.map_err(|e| ExternalApiError::from(e))
   }
 }
 
-impl<T: ApiError> From<T> for ExternalApiError {
+impl<T: MolluskError> From<T> for ExternalApiError {
   fn from(e: T) -> Self { ExternalApiError(e.into_external_response()) }
 }

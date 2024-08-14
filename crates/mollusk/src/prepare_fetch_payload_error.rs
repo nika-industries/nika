@@ -7,7 +7,7 @@ use crate::{
     NoMatchingStoreError, UnauthenticatedStoreAccessError,
     UnauthorizedStoreAccessError,
   },
-  ApiError, InternalError,
+  InternalError, MolluskError,
 };
 
 /// An error that occurs when preparing to fetch a payload.
@@ -27,7 +27,7 @@ pub enum PrepareFetchPayloadError {
   InternalError(#[from] InternalError),
 }
 
-impl ApiError for PrepareFetchPayloadError {
+impl MolluskError for PrepareFetchPayloadError {
   fn status_code(&self) -> StatusCode {
     match self {
       Self::NoMatchingStore(e) => e.status_code(),

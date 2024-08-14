@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use miette::Diagnostic;
 use serde::{Deserialize, Serialize};
 
-use crate::ApiError;
+use crate::MolluskError;
 
 /// An unrecoverable internal error.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
@@ -18,7 +18,7 @@ pub enum InternalError {
   SurrealDbQueryError(String),
 }
 
-impl ApiError for InternalError {
+impl MolluskError for InternalError {
   fn status_code(&self) -> StatusCode { StatusCode::INTERNAL_SERVER_ERROR }
   fn slug(&self) -> &'static str { "internal-error" }
   fn description(&self) -> String { "An internal error occurred".to_string() }
@@ -32,7 +32,7 @@ impl ApiError for InternalError {
 #[error("The store does not exist: {0:?}")]
 pub struct NoMatchingStoreError(pub String);
 
-impl ApiError for NoMatchingStoreError {
+impl MolluskError for NoMatchingStoreError {
   fn status_code(&self) -> StatusCode { StatusCode::NOT_FOUND }
   fn slug(&self) -> &'static str { "missing-store" }
   fn description(&self) -> String {
@@ -49,7 +49,7 @@ impl ApiError for NoMatchingStoreError {
 #[error("The store requires authentication: {0:?}")]
 pub struct UnauthenticatedStoreAccessError(pub String);
 
-impl ApiError for UnauthenticatedStoreAccessError {
+impl MolluskError for UnauthenticatedStoreAccessError {
   fn status_code(&self) -> StatusCode { StatusCode::UNAUTHORIZED }
   fn slug(&self) -> &'static str { "unauthenticated-store-access" }
   fn description(&self) -> String {
@@ -72,7 +72,7 @@ pub struct UnauthorizedStoreAccessError {
   permission: core_types::StorePermission,
 }
 
-impl ApiError for UnauthorizedStoreAccessError {
+impl MolluskError for UnauthorizedStoreAccessError {
   fn status_code(&self) -> StatusCode { StatusCode::FORBIDDEN }
   fn slug(&self) -> &'static str { "unauthorized-store-access" }
   fn description(&self) -> String {
