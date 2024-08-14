@@ -4,6 +4,29 @@ use serde::{Deserialize, Serialize};
 
 use crate::ApiError;
 
+/// An unrecoverable internal error.
+#[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
+pub enum InternalError {
+  /// Temp storage credentials could not be fetched.
+  #[error("Failed to fetch temp storage credentials")]
+  TempStorageCredsError(String),
+  /// An error occurred while connecting to surreal.
+  #[error("SurrealDB connection error: {0}")]
+  SurrealDbConnectionError(String),
+  /// An error occurred while querying surreal.
+  #[error("SurrealDB query error: {0}")]
+  SurrealDbQueryError(String),
+}
+
+impl ApiError for InternalError {
+  fn status_code(&self) -> StatusCode { StatusCode::INTERNAL_SERVER_ERROR }
+  fn slug(&self) -> &'static str { "internal-error" }
+  fn description(&self) -> String { "An internal error occurred".to_string() }
+  fn tracing(&self) {
+    tracing::error!("internal error: {:?}", self);
+  }
+}
+
 /// An error that occurs when the store does not exist.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error("The store does not exist: {0:?}")]
