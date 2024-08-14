@@ -30,7 +30,7 @@ impl ApiError for InternalError {
 /// An error that occurs when the store does not exist.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error("The store does not exist: {0:?}")]
-pub struct NoMatchingStoreError(String);
+pub struct NoMatchingStoreError(pub String);
 
 impl ApiError for NoMatchingStoreError {
   fn status_code(&self) -> StatusCode { StatusCode::NOT_FOUND }
@@ -47,7 +47,7 @@ impl ApiError for NoMatchingStoreError {
 /// provided.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error("The store requires authentication: {0:?}")]
-pub struct UnauthenticatedStoreAccessError(String);
+pub struct UnauthenticatedStoreAccessError(pub String);
 
 impl ApiError for UnauthenticatedStoreAccessError {
   fn status_code(&self) -> StatusCode { StatusCode::UNAUTHORIZED }
