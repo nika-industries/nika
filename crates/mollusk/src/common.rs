@@ -68,8 +68,10 @@ impl MolluskError for UnauthenticatedStoreAccessError {
    permission: \"{permission}\""
 )]
 pub struct UnauthorizedStoreAccessError {
-  store_name: String,
-  permission: core_types::StorePermission,
+  /// The name of the store.
+  pub store_name: String,
+  /// The required permission.
+  pub permission: core_types::StorePermissionType,
 }
 
 impl MolluskError for UnauthorizedStoreAccessError {
