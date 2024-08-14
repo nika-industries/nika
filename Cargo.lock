@@ -2653,6 +2653,7 @@ name = "mollusk"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "core_types",
  "miette 7.2.0",
  "serde",
  "serde_json",
