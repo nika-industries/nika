@@ -1,6 +1,6 @@
 //! Binary for consuming and running tasks.
 
-use rope::Backend;
+// use rope::Backend;
 
 #[tokio::main]
 async fn main() -> miette::Result<()> {
@@ -8,9 +8,8 @@ async fn main() -> miette::Result<()> {
 
   println!(art::ascii_art!("../../media/ascii_logo.png"));
 
-  let backend = rope::RedisBackend::<tasks::HealthCheckTask>::new(()).await;
-
-  backend.consume().await;
+  // let backend = rope::RedisBackend::<tasks::HealthCheckTask>::new(()).await;
+  // backend.consume().await;
 
   Ok(())
 }
