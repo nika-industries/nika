@@ -12,7 +12,10 @@ use axum::{
 use miette::Diagnostic;
 use serde::Serialize;
 
-pub use self::creds_fetching_error::CredsFetchingError;
+pub use self::{
+  common::*, creds_fetching_error::CredsFetchingError,
+  prepare_fetch_payload_error::PrepareFetchPayloadError,
+};
 
 /// An error that can be directly returned to a user from an API route.
 pub trait ApiError: Diagnostic + Sized {
