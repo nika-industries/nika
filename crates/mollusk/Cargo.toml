@@ -8,6 +8,8 @@ publish = false
 workspace = true
 
 [dependencies]
+core_types = { path = "../core_types" }
+
 axum.workspace = true
 miette.workspace = true
 serde.workspace = true

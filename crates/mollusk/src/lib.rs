@@ -1,6 +1,8 @@
 //! Provides standardized API schemas and errors for inter-service use.
 
+mod common;
 mod creds_fetching_error;
+mod prepare_fetch_payload_error;
 
 use axum::{
   http::StatusCode,
