@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::ApiError;
 
+/// An error that occurs when the store does not exist.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error("The store does not exist: {0:?}")]
 pub struct NoMatchingStoreError(String);
@@ -19,6 +20,8 @@ impl ApiError for NoMatchingStoreError {
   }
 }
 
+/// An error that occurs when the store requires authentication but no token was
+/// provided.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error("The store requires authentication: {0:?}")]
 pub struct UnauthenticatedStoreAccessError(String);
@@ -34,6 +37,8 @@ impl ApiError for UnauthenticatedStoreAccessError {
   }
 }
 
+/// An error that occurs when the token does not have the requested access to
+/// the store.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error(
   "The given token does not have access to the store {store_name:?}; required \
