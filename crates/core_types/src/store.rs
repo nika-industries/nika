@@ -27,6 +27,8 @@ mod ssr {
     pub nickname: Slug,
     /// The store's credentials.
     pub config:   StorageCredentials,
+    /// Whether the store is public.
+    pub public:   bool,
     /// The [`Org`](crate::Org) the store belongs to.
     pub org:      OrgRecordId,
   }

@@ -1,4 +1,7 @@
-use std::collections::HashSet;
+use std::{
+  collections::HashSet,
+  fmt::{self, Display, Formatter},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -15,4 +18,13 @@ pub enum StorePermission {
   Read,
   /// The user has write access.
   Write,
+}
+
+impl Display for StorePermission {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      StorePermission::Read => write!(f, "read"),
+      StorePermission::Write => write!(f, "write"),
+    }
+  }
 }
