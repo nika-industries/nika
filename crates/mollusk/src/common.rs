@@ -92,3 +92,22 @@ impl MolluskError for UnauthorizedStoreAccessError {
     );
   }
 }
+
+/// An error that occurs when the token is malformed.
+#[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
+#[error("The token is malformed: {token:?}")]
+pub struct MalformedTokenError {
+  /// The malformed token.
+  pub token: String,
+}
+
+impl MolluskError for MalformedTokenError {
+  fn status_code(&self) -> StatusCode { StatusCode::BAD_REQUEST }
+  fn slug(&self) -> &'static str { "malformed-token" }
+  fn description(&self) -> String {
+    format!("The token {:?} is malformed.", self.token)
+  }
+  fn tracing(&self) {
+    tracing::warn!("malformed token: {:?}", self.token);
+  }
+}
