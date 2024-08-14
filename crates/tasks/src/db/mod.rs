@@ -1,12 +1,14 @@
 use rope::Task;
 use serde::{Deserialize, Serialize};
 
+/// The FetchStoreByNameFromDb task.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FetchStoreByNameFromDbTask {
   store_name: String,
 }
 
 impl FetchStoreByNameFromDbTask {
+  /// Creates a new FetchStoreByNameFromDb task. Does not run the task.
   pub fn new(store_name: String) -> Self { Self { store_name } }
 }
 
