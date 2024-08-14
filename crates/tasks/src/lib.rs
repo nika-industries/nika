@@ -2,9 +2,8 @@
 
 mod fetch_store_creds;
 mod naive_upload;
+mod prepare_fetch_payload;
 
 pub use rope::Task;
 
-pub use self::{
-  fetch_store_creds::FetchStoreCredsTask, naive_upload::NaiveUploadTask,
-};
+pub use self::{fetch_store_creds::*, naive_upload::*};
