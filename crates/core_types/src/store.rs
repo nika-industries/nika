@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "ssr")]
-pub use self::ssr::*;
+use crate::{OrgRecordId, Slug, StorageCredentials};
 
 /// The [`Store`] table name.
 pub const STORE_TABLE_NAME: &str = "store";
@@ -11,49 +10,17 @@ pub const STORE_TABLE_NAME: &str = "store";
 #[cfg_attr(feature = "ssr", serde(from = "crate::ssr::UlidOrThing"))]
 pub struct StoreRecordId(pub ulid::Ulid);
 
-#[cfg(feature = "ssr")]
-mod ssr {
-  use std::path::PathBuf;
-
-  use serde::{Deserialize, Serialize};
-
-  use super::StoreRecordId;
-
-  /// A store.
-  #[derive(Clone, Debug, Serialize, Deserialize)]
-  pub struct Store {
-    /// The store's ID.
-    pub id:     StoreRecordId,
-    /// The store's credentials.
-    pub config: StorageCredentials,
-  }
-
-  /// Credentials for a storage backend.
-  #[derive(Serialize, Deserialize, Clone, Debug)]
-  pub enum StorageCredentials {
-    /// Storage credentials for local filesystem storage.
-    Local(LocalStorageCredentials),
-    /// Storage credentials for R2 object storage.
-    R2(R2StorageCredentials),
-  }
-
-  /// Storage credentials for local filesystem storage.
-  #[derive(Serialize, Deserialize, Clone, Debug)]
-  pub struct LocalStorageCredentials(pub PathBuf);
-
-  /// Storage credentials for R2 object storage.
-  #[derive(Serialize, Deserialize, Clone, Debug)]
-  pub enum R2StorageCredentials {
-    /// The default credential set for R2.
-    Default {
-      /// The access key ID. Corresponds directly to S3 equivalent.
-      access_key:        String,
-      /// The access key secret. Corresponds directly to S3 equivalent.
-      secret_access_key: String,
-      /// The http endpoint: `https://[account_id].r2.cloudflarestorage.com`
-      endpoint:          String,
-      /// The bucket name. Corresponds directly to S3 equivalent.
-      bucket:            String,
-    },
-  }
+/// A store.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Store {
+  /// The store's ID.
+  pub id:       StoreRecordId,
+  /// The store's nickname.
+  pub nickname: Slug,
+  /// The store's credentials.
+  pub config:   StorageCredentials,
+  /// Whether the store is public.
+  pub public:   bool,
+  /// The [`Org`](crate::Org) the store belongs to.
+  pub org:      OrgRecordId,
 }

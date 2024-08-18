@@ -7,6 +7,7 @@ use std::{ops::Deref, path::PathBuf, str::FromStr};
 use axum::{
   body::Body,
   extract::Path,
+  http::HeaderMap,
   response::{IntoResponse, Response},
   routing::get,
   Router,
@@ -33,29 +34,39 @@ impl<T, E> UntaggedResult<T, E> {
   }
 }
 
-async fn get_store_client(
+async fn get_fetch_payload(
   store_name: String,
-) -> Result<DynStorageClient, FetcherError> {
-  let response =
-    reqwest::get(format!("http://localhost:3000/creds/{store_name}"))
-      .await
-      .unwrap()
-      .json::<UntaggedResult<
-        core_types::StorageCredentials,
-        mollusk::CredsFetchingError,
-      >>()
-      .await
-      .unwrap();
-  let creds = response.into_result()?;
-  let client = creds.client().await.map_err(FetcherError::StoreInitError)?;
-  Ok(client)
+  token_secret: Option<String>,
+) -> Result<core_types::StorageCredentials, mollusk::PrepareFetchPayloadError> {
+  let client = reqwest::Client::new();
+  let response = client
+    .get("http://localhost:3000/fetch_payload".to_string())
+    .json(&(store_name, token_secret))
+    .send()
+    .await
+    .unwrap()
+    .json::<UntaggedResult<
+      core_types::StorageCredentials,
+      mollusk::PrepareFetchPayloadError,
+    >>()
+    .await
+    .unwrap()
+    .into_result()?;
+  Ok(response)
 }
 
-#[tracing::instrument]
+#[tracing::instrument(skip(headers))]
 async fn fetch_handler(
   Path((store_name, path)): Path<(String, String)>,
+  headers: HeaderMap,
 ) -> Result<Response, ExternalApiError> {
-  let client = get_store_client(store_name).await?;
+  let token_secret = headers
+    .get("authorization")
+    .and_then(|value| value.to_str().ok())
+    .map(|value| value.to_string());
+
+  let creds = get_fetch_payload(store_name, token_secret).await?;
+  let client = creds.client().await.unwrap();
 
   let response = fetch_path_from_client(&client, path).await?;
   Ok(response)

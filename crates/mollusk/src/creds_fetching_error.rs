@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use miette::Diagnostic;
 use serde::{Deserialize, Serialize};
 
-use crate::ApiError;
+use crate::MolluskError;
 
 /// Error for retrieving storage credentials.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
@@ -21,7 +21,7 @@ pub enum CredsFetchingError {
   SurrealDbStoreRetrievalError(String),
 }
 
-impl ApiError for CredsFetchingError {
+impl MolluskError for CredsFetchingError {
   fn status_code(&self) -> StatusCode {
     match self {
       CredsFetchingError::NoMatchingStore(_) => StatusCode::NOT_FOUND,

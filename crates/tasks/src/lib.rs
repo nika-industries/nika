@@ -1,12 +1,14 @@
 //! Provides types and business logic for all platform tasks used with [`rope`].
 
+mod db;
 mod fetch_store_creds;
-mod health_check;
 mod naive_upload;
+mod prepare_fetch_payload;
+mod token;
 
 pub use rope::Task;
 
 pub use self::{
-  fetch_store_creds::FetchStoreCredsTask, health_check::HealthCheckTask,
-  naive_upload::NaiveUploadTask,
+  db::*, fetch_store_creds::*, naive_upload::*, prepare_fetch_payload::*,
+  token::*,
 };

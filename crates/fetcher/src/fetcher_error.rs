@@ -14,7 +14,7 @@ pub enum FetcherError {
   StoreInitError(#[diagnostic_source] miette::Report),
 }
 
-impl mollusk::ApiError for FetcherError {
+impl mollusk::MolluskError for FetcherError {
   fn status_code(&self) -> StatusCode {
     match self {
       FetcherError::CredsFetchingError(

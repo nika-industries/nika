@@ -8,37 +8,34 @@ use axum::{
   routing::{get, post},
   Json, Router,
 };
-use rope::{Backend, RedisBackend};
-use tasks::{HealthCheckTask, Task};
+use tasks::Task;
 
-async fn health_check_handler(
-  State(health_check_tasks): State<RedisBackend<HealthCheckTask>>,
-) -> impl IntoResponse {
-  let id = health_check_tasks
-    .submit_task(HealthCheckTask)
-    .await
-    .unwrap();
-
-  let status = health_check_tasks
-    .await_task(id, tokio::time::Duration::from_secs_f32(0.01))
-    .await
-    .unwrap()
-    .unwrap();
-
-  format!("status: {status:?}")
-}
-
-async fn get_store_creds_handler(
+async fn prepare_fetch_payload(
   State(db): State<db::DbConnection>,
-  Path(store_name): Path<String>,
-) -> Result<Json<core_types::StorageCredentials>, mollusk::ExternalApiError> {
+  Json((store_name, token_secret)): Json<(String, Option<String>)>,
+) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError> {
   Ok(
-    tasks::FetchStoreCredsTask { store_name }
-      .run(db)
-      .await
-      .map(Json)?,
+    tasks::PrepareFetchPayloadTask {
+      store_name,
+      token_secret,
+    }
+    .run(db)
+    .await
+    .map(Json)?,
   )
 }
+
+// async fn get_store_creds_handler(
+//   State(db): State<db::DbConnection>,
+//   Path(store_name): Path<String>,
+// ) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError>
+// {   Ok(
+//     tasks::FetchStoreCredsTask { store_name }
+//       .run(db)
+//       .await
+//       .map(Json)?,
+//   )
+// }
 
 #[tracing::instrument(skip(db, payload))]
 async fn naive_upload(
@@ -46,13 +43,6 @@ async fn naive_upload(
   State(db): State<db::DbConnection>,
   payload: temp_storage_payload::TempStoragePayload,
 ) -> impl IntoResponse {
-  let _creds = tasks::FetchStoreCredsTask {
-    store_name: store_name.clone(),
-  }
-  .run(db.clone())
-  .await
-  .unwrap();
-
   let payload_path = payload.upload().await.unwrap();
   tasks::NaiveUploadTask {
     store_name,
@@ -67,7 +57,6 @@ async fn naive_upload(
 #[derive(Clone, FromRef)]
 struct AppState {
   db: db::DbConnection,
-  health_check_task_backend: RedisBackend<HealthCheckTask>,
 }
 
 #[tokio::main]
@@ -78,13 +67,12 @@ async fn main() -> miette::Result<()> {
 
   let state = AppState {
     db: db::DbConnection::new().await?,
-    health_check_task_backend: RedisBackend::<HealthCheckTask>::new(()).await,
   };
 
   let app = Router::new()
     .route("/naive-upload/:name/*path", post(naive_upload))
-    .route("/creds/:name", get(get_store_creds_handler))
-    .route("/health", get(health_check_handler))
+    // .route("/creds/:name", get(get_store_creds_handler))
+    .route("/fetch_payload", get(prepare_fetch_payload))
     .with_state(state);
 
   let bind_address = "0.0.0.0:3000";

@@ -1,6 +1,7 @@
 //! Provides access to the SurrealDB database.
 
 mod store;
+mod token;
 
 use std::sync::Arc;
 

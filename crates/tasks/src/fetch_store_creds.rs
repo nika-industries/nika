@@ -25,7 +25,7 @@ impl rope::Task for FetchStoreCredsTask {
         })?
       }
       store_name => {
-        db.fetch_store_by_name(store_name.as_ref())
+        db.fetch_store_by_nickname(store_name.as_ref())
           .await
           .map_err(|e| {
             CredsFetchingError::SurrealDbStoreRetrievalError(e.to_string())
