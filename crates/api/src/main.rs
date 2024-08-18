@@ -10,17 +10,32 @@ use axum::{
 };
 use tasks::Task;
 
-async fn get_store_creds_handler(
+async fn prepare_fetch_payload(
   State(db): State<db::DbConnection>,
-  Path(store_name): Path<String>,
+  Json((store_name, token_secret)): Json<(String, Option<String>)>,
 ) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError> {
   Ok(
-    tasks::FetchStoreCredsTask { store_name }
-      .run(db)
-      .await
-      .map(Json)?,
+    tasks::PrepareFetchPayloadTask {
+      store_name,
+      token_secret,
+    }
+    .run(db)
+    .await
+    .map(Json)?,
   )
 }
+
+// async fn get_store_creds_handler(
+//   State(db): State<db::DbConnection>,
+//   Path(store_name): Path<String>,
+// ) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError>
+// {   Ok(
+//     tasks::FetchStoreCredsTask { store_name }
+//       .run(db)
+//       .await
+//       .map(Json)?,
+//   )
+// }
 
 #[tracing::instrument(skip(db, payload))]
 async fn naive_upload(
@@ -56,7 +71,8 @@ async fn main() -> miette::Result<()> {
 
   let app = Router::new()
     .route("/naive-upload/:name/*path", post(naive_upload))
-    .route("/creds/:name", get(get_store_creds_handler))
+    // .route("/creds/:name", get(get_store_creds_handler))
+    .route("/fetch_payload", get(prepare_fetch_payload))
     .with_state(state);
 
   let bind_address = "0.0.0.0:3000";

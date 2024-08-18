@@ -4,7 +4,11 @@ mod db;
 mod fetch_store_creds;
 mod naive_upload;
 mod prepare_fetch_payload;
+mod token;
 
 pub use rope::Task;
 
-pub use self::{db::*, fetch_store_creds::*, naive_upload::*};
+pub use self::{
+  db::*, fetch_store_creds::*, naive_upload::*, prepare_fetch_payload::*,
+  token::*,
+};

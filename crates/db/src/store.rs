@@ -8,7 +8,7 @@ impl DbConnection {
   ///
   /// The `store` table has a unique index on the `name` field, which is why the
   /// return type is an `Option<>` instead of a `Vec<>`.
-  pub async fn fetch_store_by_name(
+  pub async fn fetch_store_by_nickname(
     &self,
     name: &str,
   ) -> SurrealResult<Option<core_types::Store>> {
@@ -16,7 +16,7 @@ impl DbConnection {
       .use_main()
       .await?
       .query(format!(
-        "SELECT * FROM {STORE_TABLE_NAME} WHERE name = $name"
+        "SELECT * FROM {STORE_TABLE_NAME} WHERE nickname = $name"
       ))
       .bind(("name", name))
       .await?

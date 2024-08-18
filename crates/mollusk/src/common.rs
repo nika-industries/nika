@@ -96,12 +96,12 @@ impl MolluskError for UnauthorizedStoreAccessError {
 /// An error that occurs when the token is malformed.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error("The token is malformed: {token:?}")]
-pub struct MalformedTokenError {
+pub struct MalformedTokenSecretError {
   /// The malformed token.
   pub token: String,
 }
 
-impl MolluskError for MalformedTokenError {
+impl MolluskError for MalformedTokenSecretError {
   fn status_code(&self) -> StatusCode { StatusCode::BAD_REQUEST }
   fn slug(&self) -> &'static str { "malformed-token" }
   fn description(&self) -> String {
@@ -109,5 +109,24 @@ impl MolluskError for MalformedTokenError {
   }
   fn tracing(&self) {
     tracing::warn!("malformed token: {:?}", self.token);
+  }
+}
+
+/// An error that occurs when the token doesn't exist.
+#[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
+#[error("The supplied token does not exist: {token:?}")]
+pub struct NonExistentTokenError {
+  /// The non-existent token.
+  pub token: String,
+}
+
+impl MolluskError for NonExistentTokenError {
+  fn status_code(&self) -> StatusCode { StatusCode::FORBIDDEN }
+  fn slug(&self) -> &'static str { "non-existent-token" }
+  fn description(&self) -> String {
+    format!("The supplied token {:?} does not exist.", self.token)
+  }
+  fn tracing(&self) {
+    tracing::warn!("supplied token does not exist: {:?}", self.token);
   }
 }

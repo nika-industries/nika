@@ -7,7 +7,8 @@ use crate::{
     NoMatchingStoreError, UnauthenticatedStoreAccessError,
     UnauthorizedStoreAccessError,
   },
-  InternalError, MolluskError,
+  InternalError, MalformedTokenSecretError, MolluskError,
+  NonExistentTokenError,
 };
 
 /// An error that occurs when preparing to fetch a payload.
@@ -22,42 +23,23 @@ pub enum PrepareFetchPayloadError {
   /// The store access was unauthorized (token supplied but insufficient).
   #[error(transparent)]
   UnauthorizedStoreAccess(#[from] UnauthorizedStoreAccessError),
+  /// The supplied token does not exist.
+  #[error(transparent)]
+  NonExistentToken(#[from] NonExistentTokenError),
+  /// The token secret was malformed.
+  #[error(transparent)]
+  MalformedTokenSecret(#[from] MalformedTokenSecretError),
   /// Internal error
   #[error(transparent)]
   InternalError(#[from] InternalError),
 }
 
-impl MolluskError for PrepareFetchPayloadError {
-  fn status_code(&self) -> StatusCode {
-    match self {
-      Self::NoMatchingStore(e) => e.status_code(),
-      Self::UnauthenticatedStoreAccess(e) => e.status_code(),
-      Self::UnauthorizedStoreAccess(e) => e.status_code(),
-      Self::InternalError(e) => e.status_code(),
-    }
-  }
-  fn slug(&self) -> &'static str {
-    match self {
-      Self::NoMatchingStore(e) => e.slug(),
-      Self::UnauthenticatedStoreAccess(e) => e.slug(),
-      Self::UnauthorizedStoreAccess(e) => e.slug(),
-      Self::InternalError(e) => e.slug(),
-    }
-  }
-  fn description(&self) -> String {
-    match self {
-      Self::NoMatchingStore(e) => e.description(),
-      Self::UnauthenticatedStoreAccess(e) => e.description(),
-      Self::UnauthorizedStoreAccess(e) => e.description(),
-      Self::InternalError(e) => e.description(),
-    }
-  }
-  fn tracing(&self) {
-    match self {
-      Self::NoMatchingStore(e) => e.tracing(),
-      Self::UnauthenticatedStoreAccess(e) => e.tracing(),
-      Self::UnauthorizedStoreAccess(e) => e.tracing(),
-      Self::InternalError(e) => e.tracing(),
-    }
-  }
-}
+crate::delegate_mollusk_error!(
+  PrepareFetchPayloadError,
+  NoMatchingStore,
+  UnauthenticatedStoreAccess,
+  UnauthorizedStoreAccess,
+  NonExistentToken,
+  MalformedTokenSecret,
+  InternalError,
+);

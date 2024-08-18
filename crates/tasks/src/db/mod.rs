@@ -20,12 +20,15 @@ impl Task for FetchStoreByNameFromDbTask {
   type Error = mollusk::InternalError;
   type State = db::DbConnection;
 
+  #[tracing::instrument(skip(state))]
   async fn run(
     self,
     state: Self::State,
   ) -> Result<Self::Response, Self::Error> {
+    tracing::info!("running FetchStoreByNameFromDb task");
+
     state
-      .fetch_store_by_name(&self.store_name)
+      .fetch_store_by_nickname(&self.store_name)
       .await
       .map_err(|e| {
         let error = format!("failed to fetch store by name: {}", e);

@@ -1,6 +1,7 @@
 //! Provides standardized API schemas and errors for inter-service use.
 
 mod common;
+mod confirm_token_by_secret_has_permission_error;
 mod creds_fetching_error;
 mod prepare_fetch_payload_error;
 
@@ -13,7 +14,9 @@ use miette::Diagnostic;
 use serde::Serialize;
 
 pub use self::{
-  common::*, creds_fetching_error::CredsFetchingError,
+  common::*,
+  confirm_token_by_secret_has_permission_error::ConfirmTokenBySecretHasPermissionError,
+  creds_fetching_error::CredsFetchingError,
   prepare_fetch_payload_error::PrepareFetchPayloadError,
 };
 
@@ -99,4 +102,36 @@ where
 
 impl<T: MolluskError> From<T> for ExternalApiError {
   fn from(e: T) -> Self { ExternalApiError(e.into_external_response()) }
+}
+
+/// A macro to delegate the `MolluskError` trait to an enum of errors.
+#[macro_export]
+macro_rules! delegate_mollusk_error {
+  ($enum_name:ident, $($variant:ident),+ $(,)?) => {
+    impl MolluskError for $enum_name {
+      fn status_code(&self) -> StatusCode {
+        match self {
+          $(Self::$variant(e) => e.status_code()),+
+        }
+      }
+
+      fn slug(&self) -> &'static str {
+        match self {
+          $(Self::$variant(e) => e.slug()),+
+        }
+      }
+
+      fn description(&self) -> String {
+        match self {
+          $(Self::$variant(e) => e.description()),+
+        }
+      }
+
+      fn tracing(&self) {
+        match self {
+          $(Self::$variant(e) => e.tracing()),+
+        }
+      }
+    }
+  };
 }

@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 /// Credentials for a storage backend.
 #[derive(Serialize, Deserialize, Clone, Debug)]
+// workaround : https://github.com/surrealdb/surrealdb/issues/4516
+#[serde(tag = "type", content = "data")]
 pub enum StorageCredentials {
   /// Storage credentials for local filesystem storage.
   Local(LocalStorageCredentials),

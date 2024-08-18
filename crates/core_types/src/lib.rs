@@ -1,4 +1,4 @@
-//! Provides core platform-level types used by most crates in the workspace.
+//! Provides core platform-level types. Used by most crates in the workspace.
 
 mod org;
 mod perms;

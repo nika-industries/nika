@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "ssr")]
-pub use self::ssr::*;
+use crate::{OrgRecordId, Slug, StorageCredentials};
 
 /// The [`Store`] table name.
 pub const STORE_TABLE_NAME: &str = "store";
@@ -11,25 +10,17 @@ pub const STORE_TABLE_NAME: &str = "store";
 #[cfg_attr(feature = "ssr", serde(from = "crate::ssr::UlidOrThing"))]
 pub struct StoreRecordId(pub ulid::Ulid);
 
-#[cfg(feature = "ssr")]
-mod ssr {
-  use serde::{Deserialize, Serialize};
-
-  use super::StoreRecordId;
-  use crate::{storage_creds::StorageCredentials, OrgRecordId, Slug};
-
-  /// A store.
-  #[derive(Clone, Debug, Serialize, Deserialize)]
-  pub struct Store {
-    /// The store's ID.
-    pub id:       StoreRecordId,
-    /// The store's nickname.
-    pub nickname: Slug,
-    /// The store's credentials.
-    pub config:   StorageCredentials,
-    /// Whether the store is public.
-    pub public:   bool,
-    /// The [`Org`](crate::Org) the store belongs to.
-    pub org:      OrgRecordId,
-  }
+/// A store.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Store {
+  /// The store's ID.
+  pub id:       StoreRecordId,
+  /// The store's nickname.
+  pub nickname: Slug,
+  /// The store's credentials.
+  pub config:   StorageCredentials,
+  /// Whether the store is public.
+  pub public:   bool,
+  /// The [`Org`](crate::Org) the store belongs to.
+  pub org:      OrgRecordId,
 }
