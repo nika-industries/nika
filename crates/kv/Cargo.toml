@@ -2,10 +2,18 @@
 name = "kv"
 version = "0.1.0"
 edition = "2021"
-public = false
+publish = false
 
 [lints]
 workspace = true
 
 [dependencies]
+miette.workspace = true
+thiserror.workspace = true
+futures.workspace = true
+
+fred = { version = "9.1" }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }
 
