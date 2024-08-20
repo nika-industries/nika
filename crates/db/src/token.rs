@@ -10,7 +10,7 @@ impl DbConnection {
   /// the return type is an `Option<>` instead of a `Vec<>`.
   pub async fn fetch_token_by_secret(
     &self,
-    secret: core_types::Slug,
+    secret: slugger::Slug,
   ) -> SurrealResult<Option<core_types::Token>> {
     self
       .use_main()

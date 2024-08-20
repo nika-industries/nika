@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-
-use crate::slug::Slug;
+use slugger::Slug;
 
 /// The [`Org`] table name.
 pub const ORG_TABLE_NAME: &str = "org";

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use slugger::Slug;
 
-use crate::{slug::Slug, OrgRecordId, PermissionSet, UserRecordId};
+use crate::{OrgRecordId, PermissionSet, UserRecordId};
 
 /// The [`Token`] table name.
 pub const TOKEN_TABLE_NAME: &str = "token";

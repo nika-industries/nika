@@ -9,6 +9,7 @@ workspace = true
 
 [dependencies]
 core_types = { path = "../core_types", features = [ "ssr" ] }
+slugger = { path = "../slugger" }
 
 # serde.workspace = true
 miette.workspace = true

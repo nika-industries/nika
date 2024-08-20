@@ -1094,9 +1094,8 @@ checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 name = "core_types"
 version = "0.1.0"
 dependencies = [
- "nutype",
  "serde",
- "slug",
+ "slugger",
  "surrealdb",
  "ulid",
 ]
@@ -1275,6 +1274,7 @@ dependencies = [
  "core_types",
  "include_dir",
  "miette 7.2.0",
+ "slugger",
  "surrealdb",
  "surrealdb-migrations",
  "tracing",
@@ -4513,6 +4513,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "slugger"
+version = "0.1.0"
+dependencies = [
+ "nutype",
+ "serde",
+ "slug",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5064,6 +5073,7 @@ dependencies = [
  "mollusk",
  "rope",
  "serde",
+ "slugger",
  "storage",
  "tracing",
 ]

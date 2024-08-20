@@ -2,7 +2,6 @@
 
 mod org;
 mod perms;
-mod slug;
 #[cfg(feature = "ssr")]
 mod ssr;
 #[cfg(feature = "ssr")]
@@ -13,6 +12,6 @@ mod user;
 
 pub use ulid::Ulid;
 
-pub use self::{org::*, perms::*, slug::*, store::*, token::*, user::*};
+pub use self::{org::*, perms::*, store::*, token::*, user::*};
 #[cfg(feature = "ssr")]
 pub use self::{ssr::*, storage_creds::*};

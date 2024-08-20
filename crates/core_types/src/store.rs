@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use slugger::Slug;
 
-use crate::{OrgRecordId, Slug, StorageCredentials};
+use crate::{OrgRecordId, StorageCredentials};
 
 /// The [`Store`] table name.
 pub const STORE_TABLE_NAME: &str = "store";
