@@ -8,6 +8,8 @@ publish = false
 workspace = true
 
 [dependencies]
+slugger = { path = "../slugger" }
+
 miette.workspace = true
 thiserror.workspace = true
 futures.workspace = true

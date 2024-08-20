@@ -1,5 +1,7 @@
 //! A generic interface for key-value stores.
 
+pub mod starc;
+
 use std::future::Future;
 
 /// Represents errors that can occur when interacting with a key-value store.
