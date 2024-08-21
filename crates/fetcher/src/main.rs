@@ -66,7 +66,7 @@ async fn fetch_handler(
     .map(|value| value.to_string());
 
   let creds = get_fetch_payload(store_name, token_secret).await?;
-  let client = creds.client().await.unwrap();
+  let client = creds.client().await.map_err(FetcherError::StoreInitError)?;
 
   let response = fetch_path_from_client(&client, path).await?;
   Ok(response)
