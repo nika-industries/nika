@@ -69,10 +69,14 @@
           doCheck = false;
         };
 
-        fetcher-crate = craneLib.buildPackage (individual-crate-args "fetcher");
-        api-crate = craneLib.buildPackage (individual-crate-args "api");
-        daemon-crate = craneLib.buildPackage (individual-crate-args "daemon");
-        
+        build-crate = name: craneLib.buildPackage (individual-crate-args name);
+
+        crates = {
+          fetcher = build-crate "fetcher";
+          api = build-crate "api";
+          daemon = build-crate "daemon";
+        };
+
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
@@ -94,9 +98,7 @@
           ];
         };
         packages = {
-          fetcher = fetcher-crate;
-          api = api-crate;
-          daemon = daemon-crate;
+          inherit (crates) fetcher api daemon;
         };
         checks = {
           clippy = craneLib.cargoClippy (common-args // {
@@ -114,7 +116,7 @@
           fmt = craneLib.cargoFmt common-args;
           deny = craneLib.cargoDeny common-args;
 
-          inherit fetcher-crate api-crate daemon-crate;
+          inherit (crates) fetcher api daemon;
         };
       });
 }
