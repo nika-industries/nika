@@ -16,6 +16,17 @@ pub enum Starc<T: ?Sized + 'static> {
   Owned(Arc<T>),
 }
 
+impl<T> Starc<T> {
+  /// Create a new `Starc` from a static value.
+  pub const fn new_static(value: &'static T) -> Self { Self::Static(value) }
+  /// Create a new `Starc` from an owned value.
+  pub fn new_owned(value: T) -> Self { Self::Owned(Arc::new(value)) }
+  /// Create a new `Starc` from a `LazyLock`.
+  pub fn new_lazy(value: &'static std::sync::LazyLock<T>) -> Self {
+    Self::new_static(value)
+  }
+}
+
 impl<T: ?Sized> Deref for Starc<T> {
   type Target = T;
 
