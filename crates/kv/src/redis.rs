@@ -33,22 +33,22 @@ impl KvPrimitive for Redis {
 
   fn get(
     &self,
-    key: &str,
+    key: &Key,
   ) -> impl Future<Output = KvResult<Option<String>>> + Send {
     self
       .client
-      .get(key)
+      .get(key.to_string())
       .map_err(|e: RedisError| KvError::PlatformError(e.to_string()))
   }
 
   fn set(
     &self,
-    key: &str,
+    key: &Key,
     value: String,
   ) -> impl Future<Output = KvResult<()>> + Send {
     self
       .client
-      .set(key, value, None, None, false)
+      .set(key.to_string(), value, None, None, false)
       .map_err(|e: RedisError| KvError::PlatformError(e.to_string()))
   }
 }

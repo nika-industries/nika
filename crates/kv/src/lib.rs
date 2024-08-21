@@ -6,6 +6,8 @@ pub mod redis;
 
 use std::future::Future;
 
+use self::key::Key;
+
 /// Represents errors that can occur when interacting with a key-value store.
 #[derive(Debug, Clone, thiserror::Error, miette::Diagnostic)]
 pub enum KvError {
@@ -24,12 +26,12 @@ pub trait KvPrimitive {
   /// Get the value associated with a key.
   fn get(
     &self,
-    key: &str,
+    key: &Key,
   ) -> impl Future<Output = KvResult<Option<String>>> + Send;
   /// Set the value associated with a key.
   fn set(
     &self,
-    key: &str,
+    key: &Key,
     value: String,
   ) -> impl Future<Output = KvResult<()>> + Send;
 }
