@@ -38,6 +38,13 @@ impl Key {
   /// Push a new segment onto the key.
   pub fn push(&mut self, segment: Starc<Slug>) { self.segments.push(segment); }
 
+  /// Create a new key by pushing a segment onto the given key.
+  pub fn push_new(&self, segment: Starc<Slug>) -> Self {
+    let mut new_key = self.clone();
+    new_key.push(segment);
+    new_key
+  }
+
   /// Get the segment at the given index, if it exists.
   pub fn get(&self, index: usize) -> Option<&Starc<Slug>> {
     match index {
@@ -83,6 +90,26 @@ mod tests {
   }
 
   #[test]
+  fn key_push() {
+    let mut key = Key::new(Starc::new_lazy(&A));
+    key.push(Starc::new_lazy(&B));
+    assert_eq!(key.to_string(), "a:b");
+
+    key.push(Starc::new_lazy(&C));
+    assert_eq!(key.to_string(), "a:b:c");
+  }
+
+  #[test]
+  fn key_push_new() {
+    let key = Key::new(Starc::new_lazy(&A));
+    let new_key = key.push_new(Starc::new_lazy(&B));
+    assert_eq!(new_key.to_string(), "a:b");
+
+    let new_key = new_key.push_new(Starc::new_lazy(&C));
+    assert_eq!(new_key.to_string(), "a:b:c");
+  }
+
+  #[test]
   fn key_get() {
     let key = Key::new(Starc::new_lazy(&A));
     assert_eq!(key.get(0), Some(&Starc::new_lazy(&A)));
@@ -93,15 +120,5 @@ mod tests {
     assert_eq!(key.get(0), Some(&Starc::new_lazy(&A)));
     assert_eq!(key.get(1), Some(&Starc::new_lazy(&B)));
     assert_eq!(key.get(2), None);
-  }
-
-  #[test]
-  fn key_push() {
-    let mut key = Key::new(Starc::new_lazy(&A));
-    key.push(Starc::new_lazy(&B));
-    assert_eq!(key.to_string(), "a:b");
-
-    key.push(Starc::new_lazy(&C));
-    assert_eq!(key.to_string(), "a:b:c");
   }
 }
