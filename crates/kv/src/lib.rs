@@ -1,7 +1,6 @@
 //! A generic interface for key-value stores.
 
 pub mod key;
-pub mod starc;
 
 use std::future::Future;
 

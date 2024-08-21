@@ -4,8 +4,7 @@ use std::fmt;
 
 use slugger::Slug;
 use smallvec::SmallVec;
-
-use crate::starc::Starc;
+use starc::Starc;
 
 /// A key for use with a store, consisting of a collection of segments.
 ///
