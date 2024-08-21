@@ -21,6 +21,10 @@ impl<T> Starc<T> {
   pub const fn new_static(value: &'static T) -> Self { Self::Static(value) }
   /// Create a new `Starc` from an owned value.
   pub fn new_owned(value: T) -> Self { Self::Owned(Arc::new(value)) }
+  /// Create a new `Starc` from a `LazyLock`. Mainly used for type inference.
+  pub fn new_lazy(value: &'static std::sync::LazyLock<T>) -> Self {
+    Self::new_static(value)
+  }
 }
 
 impl<T: ?Sized> Deref for Starc<T> {
@@ -104,11 +108,6 @@ impl<T: Ord + ?Sized> Ord for Starc<T> {
 impl From<String> for Starc<str> {
   #[inline]
   fn from(value: String) -> Self { Starc::Owned(value.into()) }
-}
-
-impl From<slugger::Slug> for Starc<slugger::Slug> {
-  #[inline]
-  fn from(value: slugger::Slug) -> Self { Starc::Owned(value.into()) }
 }
 
 impl<T: ?Sized> From<&'static T> for Starc<T> {
