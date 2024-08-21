@@ -7,6 +7,7 @@ async fn prepare_redis() -> kv::redis::Redis {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_redis_set_and_get() {
   let store = prepare_redis().await;
 

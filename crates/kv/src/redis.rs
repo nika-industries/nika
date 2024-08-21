@@ -1,4 +1,3 @@
-
 //! Contains a Redis implementation of the key-value interface.
 
 use fred::prelude::*;

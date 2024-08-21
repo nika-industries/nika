@@ -22,5 +22,5 @@ smallvec = "1.13.2"
 tokio = { workspace = true, features = ["full"] }
 
 [features]
-default = [ ]
+default = [ "redis" ]
 redis = [ "dep:fred" ]
