@@ -35,8 +35,10 @@ pub trait KvPrimitive {
 /// Defines composite and first-party methods for key-value stores.
 pub trait KvExtension: KvPrimitive {}
 
-/// Contains a Redis implementation of the key-value interface.
+#[cfg(feature = "redis")]
 pub mod redis {
+  //! Contains a Redis implementation of the key-value interface.
+
   use fred::prelude::*;
   use futures::TryFutureExt;
 

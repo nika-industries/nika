@@ -15,9 +15,12 @@ miette.workspace = true
 thiserror.workspace = true
 futures.workspace = true
 
-fred = { version = "9.1" }
+fred = { version = "9.1", optional = true }
 smallvec = "1.13.2"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
 
+[features]
+default = [ ]
+redis = [ "dep:fred" ]
