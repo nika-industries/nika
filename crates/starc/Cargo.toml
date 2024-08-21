@@ -2,7 +2,7 @@
 name = "starc"
 version = "0.1.0"
 edition = "2021"
-license-file.workspace = true
+publish = false
 
 [dependencies]
 
