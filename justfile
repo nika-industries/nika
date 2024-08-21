@@ -26,9 +26,13 @@ daemon:
 watch-daemon:
 	bacon -j run -- --bin daemon
 
-# run all tests with nextest
+# run tests with nextest
 test:
     cargo nextest run
+
+# run all tests, including ones that require a running redis instance
+test-all:
+	cargo nextest run --run-ignored all
 
 # run nix checks
 check:
