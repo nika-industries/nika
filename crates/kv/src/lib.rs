@@ -20,9 +20,6 @@ type KvResult<T> = Result<T, KvError>;
 
 /// Defines methods common to all key-value stores.
 pub trait KvPrimitive {
-  /// The error type for platform errors.
-  type PlatformError;
-
   /// Get the value associated with a key.
   fn get(
     &self,
