@@ -77,8 +77,6 @@
           daemon = build-crate "daemon";
         };
 
-        tikv = (import ./nix/tikv.nix) { inherit pkgs crane; };
-
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
@@ -97,8 +95,6 @@
             surrealdb surrealdb-migrations
 
             redis
-
-            tikv.tikv
           ];
         };
         packages = {
