@@ -15,12 +15,13 @@ miette.workspace = true
 thiserror.workspace = true
 futures.workspace = true
 
-fred = { version = "9.1", optional = true }
+tikv-client = { version = "0.3", optional = true }
+
 smallvec = "1.13.2"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
 
 [features]
-default = [ "redis" ]
-redis = [ "dep:fred" ]
+default = [ "tikv" ]
+tikv = [ "dep:tikv-client" ]

@@ -1,8 +1,8 @@
 //! A generic interface for key-value stores.
 
 pub mod key;
-#[cfg(feature = "redis")]
-pub mod redis;
+#[cfg(feature = "tikv")]
+pub mod tikv;
 
 use std::future::Future;
 
