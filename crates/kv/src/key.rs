@@ -1,6 +1,6 @@
 //! Key type for use with a store.
 
-use std::fmt;
+use std::{fmt, sync::LazyLock};
 
 use slugger::Slug;
 use smallvec::SmallVec;
@@ -31,6 +31,13 @@ impl Key {
   pub fn new(segment: Starc<Slug>) -> Self {
     Self {
       first_segment: segment,
+      segments:      SmallVec::new(),
+    }
+  }
+  /// Create a new key with the given `LazyLock` segment.
+  pub fn new_lazy(segment: &'static LazyLock<Slug>) -> Self {
+    Self {
+      first_segment: Starc::new_lazy(segment),
       segments:      SmallVec::new(),
     }
   }
