@@ -56,31 +56,5 @@ apply-surreal:
 redis: 
 	redis-server
 
-tikv-docker:
-	docker run \
-		--rm \
-		--name tikv1 \
-		--network host \
-		-v /etc/localtime:/etc/localtime:ro \
-		--mount type=bind,source=./tikv_data,target=/data \
-		pingcap/tikv:latest \
-		--addr="0.0.0.0:20160" \
-		--advertise-addr="127.0.0.1:20160" \
-		--data-dir="/data/tikv1" \
-		--pd="127.0.0.1:2379"
-
-pd-docker:
-	docker run \
-		--rm \
-		--name pd1 \
-		--network host \
-		-v /etc/localtime:/etc/localtime:ro \
-		--mount type=bind,source=./tikv_data,target=/data \
-		pingcap/pd:latest \
-		--name="pd1" \
-		--data-dir="/data/pd1" \
-		--client-urls="http://0.0.0.0:2379" \
-		--advertise-client-urls="http://127.0.0.1:2379" \
-		--peer-urls="http://0.0.0.0:2380" \
-		--advertise-peer-urls="http://127.0.0.1:2380" \
-		--initial-cluster="pd1=http://127.0.0.1:2380"
+tikv:
+	docker compose -f tikv_compose.yaml up
