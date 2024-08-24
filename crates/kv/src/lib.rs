@@ -7,6 +7,9 @@ pub mod value;
 
 use std::future::Future;
 
+pub use slugger::Slug;
+pub use starc::Starc;
+
 use self::{key::Key, value::Value};
 
 /// Represents errors that can occur when interacting with a key-value store.
