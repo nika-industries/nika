@@ -5,81 +5,98 @@ mod token;
 
 use std::sync::Arc;
 
-use include_dir::{include_dir, Dir};
-use miette::{miette, IntoDiagnostic, Result, WrapErr};
-pub use surrealdb::Error as SurrealError;
-use surrealdb::{
-  engine::remote::ws::{Client as WsClient, Ws},
-  opt::auth::Root,
-  Result as SurrealResult, Surreal,
-};
+use kv::prelude::*;
+use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
-
-const MIGRATIONS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/migrations");
 
 /// The shared database type.
 #[derive(Clone, Debug)]
-pub struct DbConnection(Arc<Surreal<WsClient>>);
+pub struct DbConnection<T>(Arc<T>);
 
-impl DbConnection {
-  /// Constructs a new [`DbConnection`].
+pub type TikvDb = DbConnection<TikvClient>;
+
+impl TikvDb {
+  /// Constructs a new [`DbConnection`]`<`[`TikvClient`]`>`.
   #[instrument]
   pub async fn new() -> Result<Self> {
-    let client = Surreal::new::<Ws>(
-      std::env::var("SURREAL_WS_URL")
-        .into_diagnostic()
-        .wrap_err("could not find env var \"SURREAL_WS_URL\"")?,
-    )
-    .await
-    .into_diagnostic()
-    .wrap_err_with(|| {
-      format!(
-        "Could not connect to SurrealDB endpoint: `{}`\n\tNB: don't include \
-         the ws:// or wss:// prefix, e.g. `example.com:8080` instead of \
-         `wss://example.com:8080`",
-        std::env::var("SURREAL_WS_URL").unwrap()
-      )
-    })?;
+    let urls = std::env::var("TIKV_URLS")
+      .into_diagnostic()
+      .wrap_err("missing TIKV_URLS")?;
+    let urls = urls.split(',').collect();
+    let client = TikvClient::new(urls).await.into_diagnostic()?;
 
-    client
-      .signin(Root {
-        username: &std::env::var("SURREAL_USER")
-          .into_diagnostic()
-          .wrap_err("could not find env var \"SURREAL_USER\"")?,
-        password: &std::env::var("SURREAL_PASS")
-          .into_diagnostic()
-          .wrap_err("could not find env var \"SURREAL_PASS\"")?,
+    Ok(DbConnection(Arc::new(client)))
+  }
+}
+
+fn model_index_segment<M: models::Model>(index_name: &str) -> Starc<Slug> {
+  Starc::new_owned(Slug::new(format!("{}_index_{}", M::TABLE_NAME, index_name)))
+}
+
+impl<T: KvTransactional> DbConnection<T> {
+  #[instrument(skip(self))]
+  pub(crate) async fn create_model<M: models::Model>(
+    &self,
+    model: M,
+  ) -> Result<()> {
+    // the model itself will be stored under [model_name]:[id] -> model
+    // and each index will be stored under
+    // [model_name]_index_[index_name]:[index_value] -> [id]
+
+    // calculate the key for the model
+    let model_name_segment = Starc::new_owned(Slug::new(M::TABLE_NAME));
+    let id_ulid: models::Ulid = model.id().into();
+    let id_segment = Starc::new_owned(Slug::new(id_ulid));
+    let model_key = kv::key::Key::new(model_name_segment).with(id_segment);
+
+    // calculate the keys for the indexes
+    let index_keys = M::INDICES
+      .iter()
+      .map(|(index_name, index_fn)| {
+        kv::key::Key::new(model_index_segment::<M>(index_name))
+          .with(Starc::new_owned(index_fn(&model)))
       })
+      .collect::<Vec<_>>();
+
+    // serialize the model into bytes
+    let model_value = kv::value::Value::serialize(&model)
+      .into_diagnostic()
+      .context("failed to serialize model")?;
+
+    // serialize the id into bytes
+    let id_value = kv::value::Value::serialize(&id_ulid)
+      .into_diagnostic()
+      .context("failed to serialize id")?;
+
+    // begin a transaction
+    let mut txn = self
+      .0
+      .begin_pessimistic_transaction()
       .await
       .into_diagnostic()
-      .wrap_err("failed to sign in to SurrealDB as root")?;
+      .context("failed to begin pessimistic transaction")?;
 
-    Ok(Self(Arc::new(client)))
-  }
-
-  /// Consumes the [`DbConnection`] and returns the inner [`Surreal`] instance.
-  #[instrument(skip(self))]
-  pub async fn into_inner(self) -> SurrealResult<Surreal<WsClient>> {
-    let client = self.use_main().await?;
-    Ok(Arc::unwrap_or_clone(client.clone()))
-  }
-
-  #[instrument(skip(self))]
-  async fn use_main(&self) -> SurrealResult<&Arc<Surreal<WsClient>>> {
-    self.0.use_ns("main").use_db("main").await?;
-    Ok(&self.0)
-  }
-
-  /// Runs the database migrations defined in `crates/db/migrations` on the DB.
-  #[instrument(skip(self))]
-  pub async fn run_migrations(&self) -> Result<()> {
-    let db = self.use_main().await.into_diagnostic()?;
-
-    surrealdb_migrations::MigrationRunner::new(db)
-      .load_files(&MIGRATIONS_DIR)
-      .up()
+    // insert the model and indexes
+    txn
+      .insert(&model_key, model_value)
       .await
-      .map_err(|e| miette!("failed to run surrealdb migrations: {e}"))?;
+      .into_diagnostic()
+      .context("failed to insert model")?;
+
+    for index_key in index_keys {
+      txn
+        .insert(&index_key, id_value.clone())
+        .await
+        .into_diagnostic()
+        .context("failed to insert index")?;
+    }
+
+    // commit the transaction
+    txn
+      .commit()
+      .await
+      .into_diagnostic()
+      .context("failed to commit transaction")?;
 
     Ok(())
   }

@@ -8,14 +8,9 @@ publish = false
 workspace = true
 
 [dependencies]
+kv = { path = "../kv", features = [ "tikv" ] }
 models = { path = "../models" }
 slugger = { path = "../slugger" }
 
-# serde.workspace = true
 miette.workspace = true
 tracing.workspace = true
-
-surrealdb = { workspace = true, features = [ "protocol-ws" ] }
-surrealdb-migrations = { version = "1.5" }
-
-include_dir = { version = "0.7" }
