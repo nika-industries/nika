@@ -7,7 +7,6 @@ pub const USER_TABLE_NAME: &str = "user";
 
 /// A [`User`] record ID.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ssr", serde(from = "crate::ssr::UlidOrThing"))]
 pub struct UserRecordId(pub ulid::Ulid);
 
 /// A user.

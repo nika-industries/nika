@@ -8,7 +8,6 @@ pub const TOKEN_TABLE_NAME: &str = "token";
 
 /// A [`Token`] record ID.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ssr", serde(from = "crate::ssr::UlidOrThing"))]
 pub struct TokenRecordId(pub ulid::Ulid);
 
 /// A token.
