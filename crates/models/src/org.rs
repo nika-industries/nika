@@ -10,6 +10,10 @@ pub const ORG_TABLE_NAME: &str = "org";
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct OrgRecordId(pub ulid::Ulid);
 
+impl From<OrgRecordId> for ulid::Ulid {
+  fn from(id: OrgRecordId) -> ulid::Ulid { id.0 }
+}
+
 /// An org.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Org {

@@ -10,6 +10,10 @@ pub const TOKEN_TABLE_NAME: &str = "token";
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TokenRecordId(pub ulid::Ulid);
 
+impl From<TokenRecordId> for ulid::Ulid {
+  fn from(id: TokenRecordId) -> ulid::Ulid { id.0 }
+}
+
 /// A token.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Token {

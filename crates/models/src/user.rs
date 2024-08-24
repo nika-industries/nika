@@ -9,6 +9,10 @@ pub const USER_TABLE_NAME: &str = "user";
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct UserRecordId(pub ulid::Ulid);
 
+impl From<UserRecordId> for ulid::Ulid {
+  fn from(id: UserRecordId) -> ulid::Ulid { id.0 }
+}
+
 /// A user.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct User {

@@ -24,7 +24,15 @@ pub trait Model:
   Clone + Debug + PartialEq + Serialize + DeserializeOwned + 'static
 {
   /// The model's ID type
-  type Id: Clone + Debug + PartialEq + Eq + Hash + Serialize + DeserializeOwned;
+  type Id: Clone
+    + Debug
+    + PartialEq
+    + Eq
+    + Hash
+    + Serialize
+    + DeserializeOwned
+    + Into<Ulid>
+    + 'static;
   /// The table name in the database.
   const TABLE_NAME: &'static str;
 

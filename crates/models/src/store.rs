@@ -10,6 +10,10 @@ pub const STORE_TABLE_NAME: &str = "store";
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct StoreRecordId(pub ulid::Ulid);
 
+impl From<StoreRecordId> for ulid::Ulid {
+  fn from(id: StoreRecordId) -> ulid::Ulid { id.0 }
+}
+
 /// A store.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Store {
