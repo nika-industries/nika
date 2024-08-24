@@ -49,7 +49,7 @@ pub trait KvPrimitive {
 }
 
 /// Defines methods on transactions.
-pub trait KvTransaction: KvPrimitive {
+pub trait KvTransaction {
   /// Commit the transaction.
   fn commit(&mut self) -> impl Future<Output = KvResult<()>> + Send;
   /// Rollback the transaction.
@@ -72,3 +72,6 @@ pub trait KvTransactional {
     &self,
   ) -> impl Future<Output = KvResult<Self::PessimisticTransaction>> + Send;
 }
+
+/// Defines composed functionality built on top of transactions.
+pub trait KvExtension: KvTransactional {}
