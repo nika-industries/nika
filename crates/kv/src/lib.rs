@@ -7,10 +7,20 @@ pub mod value;
 
 use std::future::Future;
 
-pub use slugger::Slug;
-pub use starc::Starc;
-
 use self::{key::Key, value::Value};
+
+/// Re-exports commonly used types and traits.
+pub mod prelude {
+  pub use slugger::Slug;
+  pub use starc::Starc;
+
+  #[cfg(feature = "tikv")]
+  pub use crate::tikv::TikvClient;
+  pub use crate::{
+    key::Key, value::Value, KvError, KvPrimitive, KvResult, KvTransaction,
+    KvTransactional,
+  };
+}
 
 /// Represents errors that can occur when interacting with a key-value store.
 #[derive(Debug, Clone, thiserror::Error)]
