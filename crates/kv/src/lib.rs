@@ -10,7 +10,7 @@ use std::future::Future;
 use self::{key::Key, value::Value};
 
 /// Represents errors that can occur when interacting with a key-value store.
-#[derive(Debug, Clone, thiserror::Error, miette::Diagnostic)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum KvError {
   /// An error occurred in the underlying platform.
   #[error("platform error: {0}")]

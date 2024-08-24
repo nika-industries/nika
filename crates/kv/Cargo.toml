@@ -11,11 +11,10 @@ workspace = true
 slugger = { path = "../slugger" }
 starc = { path = "../starc" }
 
-miette.workspace = true
 thiserror.workspace = true
 futures.workspace = true
 
-tikv-client = { version = "0.3", optional = true }
+tikv-client = { version = "0.3", optional = true, default-features = false }
 
 smallvec = "1.13.2"
 rmp-serde = "1.3.0"
