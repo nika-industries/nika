@@ -1,7 +1,7 @@
 use std::{path::Path, sync::Arc};
 
 use bytes_stream::BytesStream;
-use core_types::R2StorageCredentials;
+use models::R2StorageCredentials;
 use futures::{StreamExt, TryFutureExt, TryStreamExt};
 use miette::{Context, IntoDiagnostic};
 use object_store::{

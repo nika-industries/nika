@@ -37,7 +37,7 @@ impl<T, E> UntaggedResult<T, E> {
 async fn get_fetch_payload(
   store_name: String,
   token_secret: Option<String>,
-) -> Result<core_types::StorageCredentials, mollusk::PrepareFetchPayloadError> {
+) -> Result<models::StorageCredentials, mollusk::PrepareFetchPayloadError> {
   let client = reqwest::Client::new();
   let response = client
     .get("http://localhost:3000/fetch_payload".to_string())
@@ -46,7 +46,7 @@ async fn get_fetch_payload(
     .await
     .unwrap()
     .json::<UntaggedResult<
-      core_types::StorageCredentials,
+      models::StorageCredentials,
       mollusk::PrepareFetchPayloadError,
     >>()
     .await

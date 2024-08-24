@@ -12,7 +12,7 @@ pub struct FetchStoreCredsTask {
 impl rope::Task for FetchStoreCredsTask {
   const NAME: &'static str = "FetchStoreCreds";
 
-  type Response = core_types::StorageCredentials;
+  type Response = models::StorageCredentials;
   type Error = CredsFetchingError;
   type State = db::DbConnection;
 

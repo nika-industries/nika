@@ -71,7 +71,7 @@ pub struct UnauthorizedStoreAccessError {
   /// The name of the store.
   pub store_name: String,
   /// The required permission.
-  pub permission: core_types::StorePermissionType,
+  pub permission: models::StorePermissionType,
 }
 
 impl MolluskError for UnauthorizedStoreAccessError {

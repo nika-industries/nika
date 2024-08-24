@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ConfirmTokenBySecretHasPermissionTask {
   token_secret: String,
-  permission:   core_types::Permission,
+  permission:   models::Permission,
 }
 
 impl ConfirmTokenBySecretHasPermissionTask {
   /// Creates a new ConfirmTokenBySecretHasPermission task. Does not run the
   /// task.
-  pub fn new(token_secret: String, permission: core_types::Permission) -> Self {
+  pub fn new(token_secret: String, permission: models::Permission) -> Self {
     Self {
       token_secret,
       permission,
@@ -34,7 +34,7 @@ impl Task for ConfirmTokenBySecretHasPermissionTask {
     let token_secret_slug = slugger::Slug::new(self.token_secret.clone());
 
     // make sure the secret is valid as a token secret
-    if !core_types::validate_token_secret(&token_secret_slug)
+    if !models::validate_token_secret(&token_secret_slug)
       || !token_secret_slug.as_ref().eq(&self.token_secret)
     {
       Err(mollusk::MalformedTokenSecretError {

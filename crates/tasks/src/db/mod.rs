@@ -16,7 +16,7 @@ impl FetchStoreByNameFromDbTask {
 impl Task for FetchStoreByNameFromDbTask {
   const NAME: &'static str = "FetchStoreByNameFromDb";
 
-  type Response = Option<core_types::Store>;
+  type Response = Option<models::Store>;
   type Error = mollusk::InternalError;
   type State = db::DbConnection;
 

@@ -9,7 +9,7 @@ workspace = true
 
 [dependencies]
 art = { path = "../art" }
-core_types = { path = "../core_types" }
+models = { path = "../models" }
 db = { path = "../db" }
 mollusk = { path = "../mollusk" }
 rope = { path = "../rope" }

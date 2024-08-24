@@ -175,9 +175,9 @@ version = "0.1.0"
 dependencies = [
  "art",
  "axum 0.7.5",
- "core_types",
  "db",
  "miette 7.2.0",
+ "models",
  "mollusk",
  "rope",
  "serde",
@@ -1147,15 +1147,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 
 [[package]]
-name = "core_types"
-version = "0.1.0"
-dependencies = [
- "serde",
- "slugger",
- "ulid",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1311,9 +1302,9 @@ checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 name = "db"
 version = "0.1.0"
 dependencies = [
- "core_types",
  "include_dir",
  "miette 7.2.0",
+ "models",
  "slugger",
  "surrealdb",
  "surrealdb-migrations",
@@ -1576,8 +1567,8 @@ version = "0.1.0"
 dependencies = [
  "art",
  "axum 0.7.5",
- "core_types",
  "miette 7.2.0",
+ "models",
  "mollusk",
  "reqwest 0.12.5",
  "serde",
@@ -2818,12 +2809,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "models"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "slugger",
+ "ulid",
+]
+
+[[package]]
 name = "mollusk"
 version = "0.1.0"
 dependencies = [
  "axum 0.7.5",
- "core_types",
  "miette 7.2.0",
+ "models",
  "serde",
  "serde_json",
  "thiserror",
@@ -4910,9 +4910,9 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes-stream",
- "core_types",
  "futures",
  "miette 7.2.0",
+ "models",
  "object_store 0.10.1",
  "serde",
  "temp-dir",
@@ -5326,9 +5326,9 @@ name = "tasks"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "core_types",
  "db",
  "miette 7.2.0",
+ "models",
  "mollusk",
  "rope",
  "serde",

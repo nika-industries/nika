@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use core_types::LocalStorageCredentials;
+use models::LocalStorageCredentials;
 use miette::{Context, IntoDiagnostic};
 use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
 

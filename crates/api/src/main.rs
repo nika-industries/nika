@@ -13,7 +13,7 @@ use tasks::Task;
 async fn prepare_fetch_payload(
   State(db): State<db::DbConnection>,
   Json((store_name, token_secret)): Json<(String, Option<String>)>,
-) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError> {
+) -> Result<Json<models::StorageCredentials>, mollusk::InternalApiError> {
   Ok(
     tasks::PrepareFetchPayloadTask {
       store_name,
@@ -28,7 +28,7 @@ async fn prepare_fetch_payload(
 // async fn get_store_creds_handler(
 //   State(db): State<db::DbConnection>,
 //   Path(store_name): Path<String>,
-// ) -> Result<Json<core_types::StorageCredentials>, mollusk::InternalApiError>
+// ) -> Result<Json<models::StorageCredentials>, mollusk::InternalApiError>
 // {   Ok(
 //     tasks::FetchStoreCredsTask { store_name }
 //       .run(db)

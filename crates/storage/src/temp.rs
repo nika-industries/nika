@@ -15,9 +15,9 @@ pub struct TempStorageCredsError {
 
 /// Fetches temp storage credentials from the environment.
 pub fn get_temp_storage_creds(
-) -> Result<core_types::StorageCredentials, TempStorageCredsError> {
-  Ok(core_types::StorageCredentials::R2(
-    core_types::R2StorageCredentials::Default {
+) -> Result<models::StorageCredentials, TempStorageCredsError> {
+  Ok(models::StorageCredentials::R2(
+    models::R2StorageCredentials::Default {
       access_key:        std::env::var("R2_TEMP_ACCESS_KEY")
         .into_diagnostic()
         .map_err(|error| TempStorageCredsError { error })?,
