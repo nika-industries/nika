@@ -5711,7 +5711,9 @@ name = "ulid"
 version = "1.0.0"
 source = "git+https://github.com/TimLuq/ulid-rs?branch=fix-57-feature-combos-compiles#1469a34420a0e12cd6c12bd44301bb7f79b49860"
 dependencies = [
+ "rand 0.8.5",
  "serde",
+ "uuid",
 ]
 
 [[package]]

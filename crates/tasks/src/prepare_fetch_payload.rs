@@ -51,7 +51,7 @@ impl rope::Task for PrepareFetchPayloadTask {
     match authorized {
       Ok(true) => (),
       Ok(false) => Err(UnauthorizedStoreAccessError {
-        store_name: store.nickname.clone().into_inner(),
+        store_name: store.name.clone().into_inner(),
         permission: models::StorePermissionType::Read,
       })?,
       Err(ConfirmTokenBySecretHasPermissionError::NonExistentToken(e)) => {
