@@ -42,6 +42,12 @@ impl Key {
     }
   }
 
+  /// Add a new segment onto the key with method chaining.
+  pub fn with(mut self, segment: Starc<Slug>) -> Self {
+    self.push(segment);
+    self
+  }
+
   /// Push a new segment onto the key.
   pub fn push(&mut self, segment: Starc<Slug>) { self.segments.push(segment); }
 
