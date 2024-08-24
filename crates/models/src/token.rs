@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use slugger::Slug;
 
-use crate::{OrgRecordId, PermissionSet, UserRecordId};
+use crate::{Model, OrgRecordId, PermissionSet, UserRecordId};
 
 /// The [`Token`] table name.
 pub const TOKEN_TABLE_NAME: &str = "token";
@@ -11,7 +11,7 @@ pub const TOKEN_TABLE_NAME: &str = "token";
 pub struct TokenRecordId(pub ulid::Ulid);
 
 /// A token.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Token {
   /// The token's ID.
   pub id:       TokenRecordId,
@@ -25,6 +25,15 @@ pub struct Token {
   pub owner:    UserRecordId,
   /// THe token's org.
   pub org:      OrgRecordId,
+}
+
+impl Model for Token {
+  type Id = TokenRecordId;
+  const TABLE_NAME: &'static str = TOKEN_TABLE_NAME;
+  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
+    &[("secret", |t| t.secret.clone())];
+
+  fn id(&self) -> Self::Id { self.id }
 }
 
 /// Validates a token secret. Returns `true` if the secret is valid.

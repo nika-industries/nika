@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::StoreRecordId;
 
 /// A permission set for a `Store`.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PermissionSet(pub HashSet<Permission>);
 
 /// A permission.

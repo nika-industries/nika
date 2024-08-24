@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use slugger::Slug;
 
+use crate::Model;
+
 /// The [`Org`] table name.
 pub const ORG_TABLE_NAME: &str = "org";
 
@@ -9,10 +11,19 @@ pub const ORG_TABLE_NAME: &str = "org";
 pub struct OrgRecordId(pub ulid::Ulid);
 
 /// An org.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Org {
   /// The org's ID.
   pub id:   OrgRecordId,
   /// The org's name.
   pub name: Slug,
+}
+
+impl Model for Org {
+  type Id = OrgRecordId;
+  const TABLE_NAME: &'static str = ORG_TABLE_NAME;
+  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
+    &[("name", |org| org.name.clone())];
+
+  fn id(&self) -> Self::Id { self.id }
 }
