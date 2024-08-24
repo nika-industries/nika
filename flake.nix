@@ -53,10 +53,13 @@
 
           pname = "nika";
           version = "0.1";
+          doCheck = false;
 
-          buildInputs = [];
           nativeBuildInputs = with pkgs; [
             pkg-config
+          ];
+          buildInputs = with pkgs; [
+            openssl
           ];
         };
 
@@ -66,7 +69,6 @@
           inherit cargoArtifacts;
           pname = crate-name;
           cargoExtraArgs = "-p ${crate-name}";
-          doCheck = false;
         };
 
         build-crate = name: craneLib.buildPackage (individual-crate-args name);
