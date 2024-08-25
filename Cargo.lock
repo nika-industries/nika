@@ -755,6 +755,7 @@ dependencies = [
  "miette",
  "models",
  "slugger",
+ "tokio",
  "tracing",
 ]
 

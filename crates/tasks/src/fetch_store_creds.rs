@@ -14,7 +14,7 @@ impl rope::Task for FetchStoreCredsTask {
 
   type Response = models::StorageCredentials;
   type Error = CredsFetchingError;
-  type State = db::DbConnection;
+  type State = db::TikvDb;
 
   async fn run(self, db: Self::State) -> Result<Self::Response, Self::Error> {
     let creds = match self.store_name.as_ref() {
@@ -25,7 +25,7 @@ impl rope::Task for FetchStoreCredsTask {
         })?
       }
       store_name => {
-        db.fetch_store_by_nickname(store_name.as_ref())
+        db.fetch_store_by_name(&slugger::Slug::new(store_name))
           .await
           .map_err(|e| {
             CredsFetchingError::SurrealDbStoreRetrievalError(e.to_string())

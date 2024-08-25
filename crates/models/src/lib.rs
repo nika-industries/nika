@@ -10,7 +10,7 @@ mod user;
 use std::{fmt::Debug, hash::Hash};
 
 use serde::{de::DeserializeOwned, Serialize};
-use slugger::Slug;
+pub use slugger::Slug;
 pub use ulid::Ulid;
 
 pub use self::{

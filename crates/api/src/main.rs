@@ -11,7 +11,7 @@ use axum::{
 use tasks::Task;
 
 async fn prepare_fetch_payload(
-  State(db): State<db::DbConnection>,
+  State(db): State<db::TikvDb>,
   Json((store_name, token_secret)): Json<(String, Option<String>)>,
 ) -> Result<Json<models::StorageCredentials>, mollusk::InternalApiError> {
   Ok(
@@ -40,7 +40,7 @@ async fn prepare_fetch_payload(
 #[tracing::instrument(skip(db, payload))]
 async fn naive_upload(
   Path((store_name, path)): Path<(String, String)>,
-  State(db): State<db::DbConnection>,
+  State(db): State<db::TikvDb>,
   payload: temp_storage_payload::TempStoragePayload,
 ) -> impl IntoResponse {
   let payload_path = payload.upload().await.unwrap();
@@ -56,7 +56,7 @@ async fn naive_upload(
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  db: db::DbConnection,
+  db: db::TikvDb,
 }
 
 #[tokio::main]

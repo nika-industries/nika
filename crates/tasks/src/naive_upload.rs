@@ -20,7 +20,7 @@ impl rope::Task for NaiveUploadTask {
 
   type Response = ();
   type Error = ();
-  type State = db::DbConnection;
+  type State = db::TikvDb;
 
   async fn run(
     self,

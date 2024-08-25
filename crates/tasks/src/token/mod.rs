@@ -25,7 +25,7 @@ impl Task for ConfirmTokenBySecretHasPermissionTask {
 
   type Response = bool;
   type Error = mollusk::ConfirmTokenBySecretHasPermissionError;
-  type State = db::DbConnection;
+  type State = db::TikvDb;
 
   async fn run(
     self,
@@ -44,7 +44,7 @@ impl Task for ConfirmTokenBySecretHasPermissionTask {
 
     // fetch the token
     let token = state
-      .fetch_token_by_secret(token_secret_slug)
+      .fetch_token_by_secret(&token_secret_slug)
       .await
       .map_err(|e| {
         let error = format!("failed to fetch token by secret: {}", e);

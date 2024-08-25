@@ -16,7 +16,7 @@ impl rope::Task for PrepareFetchPayloadTask {
 
   type Response = models::StorageCredentials;
   type Error = PrepareFetchPayloadError;
-  type State = db::DbConnection;
+  type State = db::TikvDb;
 
   async fn run(self, db: Self::State) -> Result<Self::Response, Self::Error> {
     let PrepareFetchPayloadTask {
