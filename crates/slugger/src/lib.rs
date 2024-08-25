@@ -1,6 +1,6 @@
 //! Provides a type-safe slug.
 
-pub use slug::slugify;
+use slug::slugify;
 
 /// A slug, as determined by the [`slug`] library.
 #[nutype::nutype(
