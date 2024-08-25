@@ -21,9 +21,6 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
-          config.allowUnfreePredicate = pkg: builtins.elem (pkgs.lib.getName pkg) [
-            "surrealdb"
-          ];
         };
         filter = nix-filter.lib;
 
@@ -97,8 +94,6 @@
             wrangler.packages.${system}.wrangler
             worker-build
             wasm-pack
-
-            surrealdb surrealdb-migrations
 
             redis
           ];

@@ -1,4 +1,4 @@
-//! Provides access to the SurrealDB database.
+//! Provides access to the database.
 
 mod store;
 mod token;
