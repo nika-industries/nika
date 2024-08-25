@@ -50,4 +50,4 @@ tikv:
 	docker compose -f tikv_compose.yaml up
 
 migrate:
-    cargo run --bin migrate
+    cargo run --bin migrator
