@@ -1,5 +1,6 @@
 //! Provides access to the database.
 
+mod migrate;
 mod store;
 mod token;
 
@@ -37,7 +38,7 @@ impl TikvDb {
 fn model_key<M: models::Model>(id: &M::Id) -> Key {
   let model_name_segment = Starc::new_owned(Slug::new(M::TABLE_NAME));
   let id_ulid: models::Ulid = id.clone().into();
-  let id_segment = Starc::new_owned(Slug::new(id_ulid));
+  let id_segment = Starc::new_owned(Slug::new(id_ulid.to_string()));
   Key::new(model_name_segment).with(id_segment)
 }
 
