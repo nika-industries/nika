@@ -36,7 +36,9 @@
           ];
         };
 
-        toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
+        toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.minimal.override {
+          extensions = [ "rustfmt" "clippy" ];
+        });
         dev-toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
           targets = [ "wasm32-unknown-unknown" ];
