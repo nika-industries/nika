@@ -16,7 +16,7 @@ serde = { version = "1", features = [ "derive" ] }
 thiserror = { version = "1" }
 
 # errors
-miette = { version = "7" }
+miette = { version = "7", default-features = false, features = [ "derive" ] }
 
 # mainline application
 axum = { version = "0.7" }
