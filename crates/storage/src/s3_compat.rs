@@ -1,9 +1,9 @@
 use std::{path::Path, sync::Arc};
 
 use bytes_stream::BytesStream;
-use models::R2StorageCredentials;
 use futures::{StreamExt, TryFutureExt, TryStreamExt};
 use miette::{Context, IntoDiagnostic};
+use models::R2StorageCredentials;
 use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
   Error as ObjectStoreError, ObjectStore, PutPayload,
