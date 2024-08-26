@@ -65,6 +65,11 @@ impl Key {
       i => self.segments.get(i - 1),
     }
   }
+
+  /// Get an iterator over the segments of the key.
+  pub fn segments(&self) -> impl Iterator<Item = &Starc<Slug>> {
+    std::iter::once(&self.first_segment).chain(self.segments.iter())
+  }
 }
 
 impl fmt::Display for Key {
