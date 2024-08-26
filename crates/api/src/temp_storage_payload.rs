@@ -63,7 +63,7 @@ impl TempStoragePayload {
       }),
     ));
 
-    let path = PathBuf::from_str(&core_types::Ulid::new().to_string()).unwrap();
+    let path = PathBuf::from_str(&models::Ulid::new().to_string()).unwrap();
     client
       .write(&path, body_stream)
       .await

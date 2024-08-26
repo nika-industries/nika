@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ConfirmTokenBySecretHasPermissionTask {
   token_secret: String,
-  permission:   core_types::Permission,
+  permission:   models::Permission,
 }
 
 impl ConfirmTokenBySecretHasPermissionTask {
   /// Creates a new ConfirmTokenBySecretHasPermission task. Does not run the
   /// task.
-  pub fn new(token_secret: String, permission: core_types::Permission) -> Self {
+  pub fn new(token_secret: String, permission: models::Permission) -> Self {
     Self {
       token_secret,
       permission,
@@ -25,16 +25,16 @@ impl Task for ConfirmTokenBySecretHasPermissionTask {
 
   type Response = bool;
   type Error = mollusk::ConfirmTokenBySecretHasPermissionError;
-  type State = db::DbConnection;
+  type State = db::TikvDb;
 
   async fn run(
     self,
     state: Self::State,
   ) -> Result<Self::Response, Self::Error> {
-    let token_secret_slug = core_types::Slug::new(self.token_secret.clone());
+    let token_secret_slug = slugger::Slug::new(self.token_secret.clone());
 
     // make sure the secret is valid as a token secret
-    if !core_types::validate_token_secret(&token_secret_slug)
+    if !models::validate_token_secret(&token_secret_slug)
       || !token_secret_slug.as_ref().eq(&self.token_secret)
     {
       Err(mollusk::MalformedTokenSecretError {
@@ -44,7 +44,7 @@ impl Task for ConfirmTokenBySecretHasPermissionTask {
 
     // fetch the token
     let token = state
-      .fetch_token_by_secret(token_secret_slug)
+      .fetch_token_by_secret(&token_secret_slug)
       .await
       .map_err(|e| {
         let error = format!("failed to fetch token by secret: {}", e);

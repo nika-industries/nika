@@ -3,9 +3,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 /// Credentials for a storage backend.
-#[derive(Serialize, Deserialize, Clone, Debug)]
-// workaround : https://github.com/surrealdb/surrealdb/issues/4516
-#[serde(tag = "type", content = "data")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum StorageCredentials {
   /// Storage credentials for local filesystem storage.
   Local(LocalStorageCredentials),
@@ -14,11 +12,11 @@ pub enum StorageCredentials {
 }
 
 /// Storage credentials for local filesystem storage.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LocalStorageCredentials(pub PathBuf);
 
 /// Storage credentials for R2 object storage.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum R2StorageCredentials {
   /// The default credential set for R2.
   Default {

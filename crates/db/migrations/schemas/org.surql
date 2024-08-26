@@ -1,5 +1,0 @@
-DEFINE TABLE org SCHEMALESS;
-
-DEFINE FIELD name ON org TYPE string;
-
-DEFINE INDEX uniqueOrgNameIndex ON TABLE org COLUMNS name UNIQUE;

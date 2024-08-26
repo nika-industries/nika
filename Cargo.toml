@@ -16,7 +16,7 @@ serde = { version = "1", features = [ "derive" ] }
 thiserror = { version = "1" }
 
 # errors
-miette = { version = "7" }
+miette = { version = "7", default-features = false, features = [ "derive" ] }
 
 # mainline application
 axum = { version = "0.7" }
@@ -25,15 +25,12 @@ tokio-util = { version = "0.7" }
 tokio-stream = { version = "0.1" }
 
 # atomic-ish features
-ulid = { version = "1", features = [ "serde" ] }
+ulid = { git = "https://github.com/TimLuq/ulid-rs", branch = "fix-57-feature-combos-compiles", default-features = false, features = [ "serde" ] }
 serde_json = { version = "1" }
 nanorand = { version = "0.7", default-features = false }
 futures = { version = "0.3" }
 clap = { version = "4.5", features = [ "derive" ] }
 nutype = { version = "0.4" }
-
-# heavy integrations
-surrealdb = { version = "1", default-features = false }
 
 # tracing
 tracing = { version = "0.1" }

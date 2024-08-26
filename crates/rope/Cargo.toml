@@ -12,10 +12,10 @@ names = { path = "../names" }
 
 async-trait.workspace = true
 miette.workspace = true
-redis = { version = "0.25", features = [ "aio", "tokio-comp" ] }
+redis = { version = "0.25", default-features = false, features = [ "keep-alive", "aio", "tokio-comp" ] }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = [ "sync", "time" ] }
 tracing = { workspace = true }
-ulid.workspace = true
+ulid = { workspace = true, features = [ "std" ] }

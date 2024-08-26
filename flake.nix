@@ -21,9 +21,6 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
-          config.allowUnfreePredicate = pkg: builtins.elem (pkgs.lib.getName pkg) [
-            "surrealdb"
-          ];
         };
         filter = nix-filter.lib;
 
@@ -39,7 +36,9 @@
           ];
         };
 
-        toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
+        toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.minimal.override {
+          extensions = [ "rustfmt" "clippy" ];
+        });
         dev-toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
           targets = [ "wasm32-unknown-unknown" ];
@@ -53,10 +52,13 @@
 
           pname = "nika";
           version = "0.1";
+          doCheck = false;
 
-          buildInputs = [];
           nativeBuildInputs = with pkgs; [
             pkg-config
+          ];
+          buildInputs = with pkgs; [
+            openssl
           ];
         };
 
@@ -66,17 +68,24 @@
           inherit cargoArtifacts;
           pname = crate-name;
           cargoExtraArgs = "-p ${crate-name}";
-          doCheck = false;
         };
 
-        fetcher-crate = craneLib.buildPackage (individual-crate-args "fetcher");
-        api-crate = craneLib.buildPackage (individual-crate-args "api");
-        daemon-crate = craneLib.buildPackage (individual-crate-args "daemon");
-        
+        build-crate = name: craneLib.buildPackage (individual-crate-args name);
+
+        crates = {
+          fetcher = build-crate "fetcher";
+          api = build-crate "api";
+          daemon = build-crate "daemon";
+        };
+
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             (dev-toolchain pkgs)
+
+            # basic libraries
+            pkg-config
+            openssl
 
             bacon # change detection
             cargo-nextest # testing
@@ -88,15 +97,11 @@
             worker-build
             wasm-pack
 
-            surrealdb surrealdb-migrations
-
             redis
           ];
         };
         packages = {
-          fetcher = fetcher-crate;
-          api = api-crate;
-          daemon = daemon-crate;
+          inherit (crates) fetcher api daemon;
         };
         checks = {
           clippy = craneLib.cargoClippy (common-args // {
@@ -114,7 +119,7 @@
           fmt = craneLib.cargoFmt common-args;
           deny = craneLib.cargoDeny common-args;
 
-          inherit fetcher-crate api-crate daemon-crate;
+          inherit (crates) fetcher api daemon;
         };
       });
 }

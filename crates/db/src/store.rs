@@ -1,25 +1,14 @@
-use core_types::STORE_TABLE_NAME;
-use surrealdb::Result as SurrealResult;
+use kv::prelude::*;
+use miette::Result;
 
 use super::DbConnection;
 
-impl DbConnection {
-  /// Fetches the [`core_types::Store`] matching the given name from the DB.
-  ///
-  /// The `store` table has a unique index on the `name` field, which is why the
-  /// return type is an `Option<>` instead of a `Vec<>`.
-  pub async fn fetch_store_by_nickname(
+impl<T: KvTransactional> DbConnection<T> {
+  /// Fetches the [`models::Store`] matching the given name from the DB.
+  pub async fn fetch_store_by_name(
     &self,
-    name: &str,
-  ) -> SurrealResult<Option<core_types::Store>> {
-    self
-      .use_main()
-      .await?
-      .query(format!(
-        "SELECT * FROM {STORE_TABLE_NAME} WHERE nickname = $name"
-      ))
-      .bind(("name", name))
-      .await?
-      .take(0)
+    name: &Slug,
+  ) -> Result<Option<models::Store>> {
+    self.fetch_model_by_index("name", name).await
   }
 }

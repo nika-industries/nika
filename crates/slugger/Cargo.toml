@@ -1,5 +1,5 @@
 [package]
-name = "core_types"
+name = "slugger"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -8,13 +8,6 @@ publish = false
 workspace = true
 
 [dependencies]
-ulid.workspace = true
 serde.workspace = true
-
-surrealdb = { workspace = true, optional = true }
 slug = { version = "0.1" }
 nutype = { workspace = true, features = [ "serde" ] }
-
-[features]
-default = [ ]
-ssr = [ "dep:surrealdb" ]

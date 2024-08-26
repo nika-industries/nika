@@ -1,0 +1,13 @@
+[package]
+name = "migrator"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+db = { path = "../db" }
+miette = { workspace = true, features = ["fancy"] }
+tokio = { workspace = true, features = ["rt"] }

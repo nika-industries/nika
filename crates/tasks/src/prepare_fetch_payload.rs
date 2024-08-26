@@ -14,9 +14,9 @@ pub struct PrepareFetchPayloadTask {
 impl rope::Task for PrepareFetchPayloadTask {
   const NAME: &'static str = "PrepareFetchPayload";
 
-  type Response = core_types::StorageCredentials;
+  type Response = models::StorageCredentials;
   type Error = PrepareFetchPayloadError;
-  type State = db::DbConnection;
+  type State = db::TikvDb;
 
   async fn run(self, db: Self::State) -> Result<Self::Response, Self::Error> {
     let PrepareFetchPayloadTask {
@@ -38,9 +38,9 @@ impl rope::Task for PrepareFetchPayloadTask {
     let token_secret = token_secret
       .ok_or(UnauthenticatedStoreAccessError(store_name.clone()))?;
 
-    let required_permission = core_types::Permission::StorePermission {
+    let required_permission = models::Permission::StorePermission {
       store_id:   store.id,
-      permission: core_types::StorePermissionType::Read,
+      permission: models::StorePermissionType::Read,
     };
     let authorized = crate::ConfirmTokenBySecretHasPermissionTask::new(
       token_secret,
@@ -51,8 +51,8 @@ impl rope::Task for PrepareFetchPayloadTask {
     match authorized {
       Ok(true) => (),
       Ok(false) => Err(UnauthorizedStoreAccessError {
-        store_name: store.nickname.clone().into_inner(),
-        permission: core_types::StorePermissionType::Read,
+        store_name: store.name.clone().into_inner(),
+        permission: models::StorePermissionType::Read,
       })?,
       Err(ConfirmTokenBySecretHasPermissionError::NonExistentToken(e)) => {
         Err(e)?

@@ -26,9 +26,13 @@ daemon:
 watch-daemon:
 	bacon -j run -- --bin daemon
 
-# run all tests with nextest
+# run tests with nextest
 test:
     cargo nextest run
+
+# run all tests, including ones that require a running redis instance
+test-all:
+	cargo nextest run --run-ignored all
 
 # run nix checks
 check:
@@ -38,16 +42,12 @@ check:
 clippy:
 	cargo clippy --all-targets
 
-# run surrealdb
-surreal:
-	surreal start file:/tmp/nika_surreal_data --log=info --auth
-# nuke surreal data in /tmp/surreal_data
-wipe-surreal:
-	rm -rf /tmp/nika_surreal_data
-# run surrealdb migrations -- surreal must be running
-apply-surreal:
-	surrealdb-migrations apply
-
 # run redis
 redis: 
 	redis-server
+
+tikv:
+	docker compose -f tikv_compose.yaml up
+
+migrate:
+    cargo run --bin migrator

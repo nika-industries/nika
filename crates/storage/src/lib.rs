@@ -24,7 +24,7 @@ pub trait StorageClientGenerator {
   ) -> impl std::future::Future<Output = miette::Result<DynStorageClient>> + Send;
 }
 
-impl StorageClientGenerator for core_types::StorageCredentials {
+impl StorageClientGenerator for models::StorageCredentials {
   async fn client(&self) -> miette::Result<DynStorageClient> {
     match self {
       Self::Local(local_storage_creds) => Ok(Box::new(

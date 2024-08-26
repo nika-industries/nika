@@ -32,7 +32,7 @@ pub fn ascii_art(input: TokenStream) -> TokenStream {
     .expect("failed to read image file");
 
   // Decode the image
-  let image = image::io::Reader::new(Cursor::new(buffer))
+  let image = image::ImageReader::new(Cursor::new(buffer))
     .with_guessed_format()
     .expect("failed to guess image format")
     .decode()
