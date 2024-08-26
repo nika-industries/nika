@@ -62,10 +62,33 @@ async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
     .context("failed to commit transaction")
 }
 
+/// Errors that can occur when creating a model.
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
+pub enum CreateModelError {
+  /// A model with that ID already exists.
+  #[error("model with that ID already exists")]
+  ModelAlreadyExists,
+  /// An index with that value already exists.
+  #[error("index {index_name:?} with value \"{index_value}\" already exists")]
+  IndexAlreadyExists {
+    /// The name of the index.
+    index_name:  String,
+    /// The value of the index.
+    index_value: Slug,
+  },
+  /// A database error occurred.
+  #[error("db error: {0}")]
+  #[diagnostic_source]
+  DbError(miette::Report),
+}
+
 impl<T: KvTransactional> DbConnection<T> {
   /// Creates a new model.
   #[instrument(skip(self))]
-  pub async fn create_model<M: models::Model>(&self, model: &M) -> Result<()> {
+  pub async fn create_model<M: models::Model>(
+    &self,
+    model: &M,
+  ) -> Result<(), CreateModelError> {
     // the model itself will be stored under [model_name]:[id] -> model
     // and each index will be stored under
     // [model_name]_index_[index_name]:[index_value] -> [id]
@@ -74,24 +97,26 @@ impl<T: KvTransactional> DbConnection<T> {
     let model_key = model_key::<M>(&model.id());
     let id_ulid: models::Ulid = model.id().clone().into();
 
-    // calculate the keys for the indexes
-    let index_keys = M::INDICES
-      .iter()
-      .map(|(index_name, index_fn)| {
-        kv::key::Key::new(model_index_segment::<M>(index_name))
-          .with(Starc::new_owned(index_fn(model)))
-      })
-      .collect::<Vec<_>>();
+    // // calculate the keys for the indexes
+    // let index_keys = M::INDICES
+    //   .iter()
+    //   .map(|(index_name, index_fn)| {
+    //     kv::key::Key::new(model_index_segment::<M>(index_name))
+    //       .with(Starc::new_owned(index_fn(model)))
+    //   })
+    //   .collect::<Vec<_>>();
 
     // serialize the model into bytes
     let model_value = kv::value::Value::serialize(&model)
       .into_diagnostic()
-      .context("failed to serialize model")?;
+      .context("failed to serialize model")
+      .map_err(CreateModelError::DbError)?;
 
     // serialize the id into bytes
     let id_value = kv::value::Value::serialize(&id_ulid)
       .into_diagnostic()
-      .context("failed to serialize id")?;
+      .context("failed to serialize id")
+      .map_err(CreateModelError::DbError)?;
 
     // begin a transaction
     let mut txn = self
@@ -99,32 +124,78 @@ impl<T: KvTransactional> DbConnection<T> {
       .begin_pessimistic_transaction()
       .await
       .into_diagnostic()
-      .context("failed to begin pessimistic transaction")?;
+      .context("failed to begin pessimistic transaction")
+      .map_err(CreateModelError::DbError)?;
 
-    // insert the model and indexes
+    // check if the model exists already
+    match txn
+      .get(&model_key)
+      .await
+      .into_diagnostic()
+      .context("failed to check if model already exists")
+    {
+      Ok(Some(_)) => {
+        rollback(txn).await.map_err(CreateModelError::DbError)?;
+        return Err(CreateModelError::ModelAlreadyExists);
+      }
+      Ok(None) => {}
+      Err(e) => {
+        rollback(txn).await.map_err(CreateModelError::DbError)?;
+        return Err(CreateModelError::DbError(e));
+      }
+    }
+
+    // insert the model
     if let Err(e) = txn
       .insert(&model_key, model_value)
       .await
       .into_diagnostic()
       .context("failed to insert model")
     {
-      rollback(txn).await?;
-      return Err(e);
+      rollback(txn).await.map_err(CreateModelError::DbError)?;
+      return Err(CreateModelError::DbError(e));
     }
 
-    for index_key in index_keys {
+    // insert the indexes
+    for (index_name, index_fn) in M::INDICES.iter() {
+      // calculate the key for the index
+      let index_key = kv::key::Key::new(model_index_segment::<M>(index_name))
+        .with(Starc::new_owned(index_fn(model)));
+
+      // check if the index exists already
+      match txn
+        .get(&index_key)
+        .await
+        .into_diagnostic()
+        .context("failed to check if index already exists")
+      {
+        Ok(Some(_)) => {
+          rollback(txn).await.map_err(CreateModelError::DbError)?;
+          return Err(CreateModelError::IndexAlreadyExists {
+            index_name:  index_name.to_string(),
+            index_value: index_fn(model),
+          });
+        }
+        Ok(None) => {}
+        Err(e) => {
+          rollback(txn).await.map_err(CreateModelError::DbError)?;
+          return Err(CreateModelError::DbError(e));
+        }
+      }
+
+      // insert the index
       if let Err(e) = txn
         .insert(&index_key, id_value.clone())
         .await
         .into_diagnostic()
         .context("failed to insert index")
       {
-        rollback(txn).await?;
-        return Err(e);
+        rollback(txn).await.map_err(CreateModelError::DbError)?;
+        return Err(CreateModelError::DbError(e));
       }
     }
 
-    commit(txn).await?;
+    commit(txn).await.map_err(CreateModelError::DbError)?;
 
     Ok(())
   }

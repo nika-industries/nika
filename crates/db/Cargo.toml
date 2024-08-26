@@ -14,6 +14,7 @@ slugger = { path = "../slugger" }
 
 miette.workspace = true
 tracing.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
