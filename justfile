@@ -46,8 +46,18 @@ clippy:
 redis: 
 	redis-server
 
+# run the tikv stack
 tikv:
-	docker compose -f tikv_compose.yaml up
+	mprocs "just run-tikv" "just run-pd"
+
+# run the tikv server in a container
+run-tikv:
+	nix build .#tikv-image --print-out-paths | xargs cat | docker load
+	docker run --rm --network host tikv-server:8.1.1
+# run the pd server in a container
+run-pd:
+	nix build .#pd-image --print-out-paths | xargs cat | docker load
+	docker run --rm --network host pd-server:8.1.1
 
 migrate:
     cargo run --bin migrator

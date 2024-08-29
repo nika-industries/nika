@@ -78,6 +78,7 @@
           daemon = build-crate "daemon";
         };
 
+        tikv = (import ./nix/tikv.nix) { inherit pkgs; };
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
@@ -87,6 +88,7 @@
             pkg-config
             openssl
 
+            mprocs # parallel process execution
             bacon # change detection
             cargo-nextest # testing
             cargo-deny # package auditing
@@ -100,9 +102,7 @@
             redis
           ];
         };
-        packages = {
-          inherit (crates) fetcher api daemon;
-        };
+        packages = {} // crates // tikv;
         checks = {
           clippy = craneLib.cargoClippy (common-args // {
             inherit cargoArtifacts;
