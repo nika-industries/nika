@@ -25,7 +25,7 @@ impl rope::Task for FetchStoreCredsTask {
         })?
       }
       store_name => {
-        db.fetch_store_by_name(&slugger::Slug::new(store_name))
+        db.fetch_store_by_name(&slugger::StrictSlug::new(store_name))
           .await
           .map_err(|e| {
             CredsFetchingError::SurrealDbStoreRetrievalError(e.to_string())

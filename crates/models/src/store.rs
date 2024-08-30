@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use slugger::Slug;
+use slugger::StrictSlug;
 
 use crate::{Model, OrgRecordId, StorageCredentials};
 
@@ -20,7 +20,7 @@ pub struct Store {
   /// The store's ID.
   pub id:     StoreRecordId,
   /// The store's nickname.
-  pub name:   Slug,
+  pub name:   StrictSlug,
   /// The store's credentials.
   pub config: StorageCredentials,
   /// Whether the store is public.

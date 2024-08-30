@@ -10,14 +10,14 @@ mod user;
 use std::{fmt::Debug, hash::Hash};
 
 use serde::{de::DeserializeOwned, Serialize};
-pub use slugger::Slug;
+pub use slugger::StrictSlug;
 pub use ulid::Ulid;
 
 pub use self::{
   org::*, perms::*, storage_creds::*, store::*, token::*, user::*,
 };
 
-type SlugFieldGetter<T> = fn(&T) -> Slug;
+type SlugFieldGetter<T> = fn(&T) -> StrictSlug;
 
 /// Represents a model in the database.
 pub trait Model:

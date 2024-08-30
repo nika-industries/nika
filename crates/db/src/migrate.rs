@@ -12,7 +12,7 @@ impl<T: KvTransactional> DbConnection<T> {
       id:   models::OrgRecordId(
         models::Ulid::from_str("01J53FHN8TQXTQ2JEHNX56GCTN").unwrap(),
       ),
-      name: models::Slug::new("dev-org".to_string()),
+      name: models::StrictSlug::new("dev-org".to_string()),
     };
 
     let user = models::User {
@@ -32,7 +32,7 @@ impl<T: KvTransactional> DbConnection<T> {
           std::path::PathBuf::from_str("/tmp/albert-store").unwrap(),
         ),
       ),
-      name:   models::Slug::confident("albert".to_string()),
+      name:   models::StrictSlug::confident("albert".to_string()),
       public: false,
       org:    org.id,
     };
@@ -41,8 +41,8 @@ impl<T: KvTransactional> DbConnection<T> {
       id:       models::TokenRecordId(
         models::Ulid::from_str("01J53ZA38PS1P5KWCE4FMG58F0").unwrap(),
       ),
-      nickname: models::Slug::confident("omnitoken".to_string()),
-      secret:   models::Slug::confident(
+      nickname: models::StrictSlug::confident("omnitoken".to_string()),
+      secret:   models::StrictSlug::confident(
         "zvka5d29dgvpujdyqa6ftnkei02i-qm1n-fjzuqfbyrq7avxbzi6ma8flxsuwe4l"
           .to_string(),
       ),

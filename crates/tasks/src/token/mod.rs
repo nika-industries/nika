@@ -31,7 +31,7 @@ impl Task for ConfirmTokenBySecretHasPermissionTask {
     self,
     state: Self::State,
   ) -> Result<Self::Response, Self::Error> {
-    let token_secret_slug = slugger::Slug::new(self.token_secret.clone());
+    let token_secret_slug = slugger::StrictSlug::new(self.token_secret.clone());
 
     // make sure the secret is valid as a token secret
     if !models::validate_token_secret(&token_secret_slug)

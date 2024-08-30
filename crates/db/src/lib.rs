@@ -36,14 +36,20 @@ impl TikvDb {
 }
 
 fn model_key<M: models::Model>(id: &M::Id) -> Key {
-  let model_name_segment = Starc::new_owned(Slug::new(M::TABLE_NAME));
+  let model_name_segment = Starc::new_owned(StrictSlug::new(M::TABLE_NAME));
   let id_ulid: models::Ulid = id.clone().into();
-  let id_segment = Starc::new_owned(Slug::new(id_ulid.to_string()));
+  let id_segment = Starc::new_owned(StrictSlug::new(id_ulid.to_string()));
   Key::new(model_name_segment).with(id_segment)
 }
 
-fn model_index_segment<M: models::Model>(index_name: &str) -> Starc<Slug> {
-  Starc::new_owned(Slug::new(format!("{}_index_{}", M::TABLE_NAME, index_name)))
+fn model_index_segment<M: models::Model>(
+  index_name: &str,
+) -> Starc<StrictSlug> {
+  Starc::new_owned(StrictSlug::new(format!(
+    "{}_index_{}",
+    M::TABLE_NAME,
+    index_name
+  )))
 }
 
 async fn rollback<T: KvTransaction>(mut txn: T) -> Result<()> {
@@ -74,7 +80,7 @@ pub enum CreateModelError {
     /// The name of the index.
     index_name:  String,
     /// The value of the index.
-    index_value: Slug,
+    index_value: StrictSlug,
   },
   /// A database error occurred.
   #[error("db error: {0}")]
@@ -250,7 +256,7 @@ impl<T: KvTransactional> DbConnection<T> {
   pub async fn fetch_model_by_index<M: models::Model>(
     &self,
     index_name: &str,
-    index_value: &Slug,
+    index_value: &StrictSlug,
   ) -> Result<Option<M>> {
     let index_key = kv::key::Key::new(model_index_segment::<M>(index_name))
       .with(Starc::new_owned(index_value.clone()));

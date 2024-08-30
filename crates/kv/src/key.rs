@@ -2,7 +2,7 @@
 
 use std::{fmt, sync::LazyLock};
 
-use slugger::Slug;
+use slugger::StrictSlug;
 use smallvec::SmallVec;
 use starc::Starc;
 
@@ -22,20 +22,20 @@ use starc::Starc;
 
 #[derive(Clone, Debug)]
 pub struct Key {
-  first_segment: Starc<Slug>,
-  segments:      SmallVec<[Starc<Slug>; 6]>,
+  first_segment: Starc<StrictSlug>,
+  segments:      SmallVec<[Starc<StrictSlug>; 6]>,
 }
 
 impl Key {
   /// Create a new key with the given segment.
-  pub fn new(segment: Starc<Slug>) -> Self {
+  pub fn new(segment: Starc<StrictSlug>) -> Self {
     Self {
       first_segment: segment,
       segments:      SmallVec::new(),
     }
   }
   /// Create a new key with the given `LazyLock` segment.
-  pub fn new_lazy(segment: &'static LazyLock<Slug>) -> Self {
+  pub fn new_lazy(segment: &'static LazyLock<StrictSlug>) -> Self {
     Self {
       first_segment: Starc::new_lazy(segment),
       segments:      SmallVec::new(),
@@ -43,23 +43,23 @@ impl Key {
   }
 
   /// Add a new segment onto the key with method chaining.
-  pub fn with(mut self, segment: Starc<Slug>) -> Self {
+  pub fn with(mut self, segment: Starc<StrictSlug>) -> Self {
     self.push(segment);
     self
   }
 
   /// Push a new segment onto the key.
-  pub fn push(&mut self, segment: Starc<Slug>) { self.segments.push(segment); }
+  pub fn push(&mut self, segment: Starc<StrictSlug>) { self.segments.push(segment); }
 
   /// Create a new key by pushing a segment onto the given key.
-  pub fn push_new(&self, segment: Starc<Slug>) -> Self {
+  pub fn push_new(&self, segment: Starc<StrictSlug>) -> Self {
     let mut new_key = self.clone();
     new_key.push(segment);
     new_key
   }
 
   /// Get the segment at the given index, if it exists.
-  pub fn get(&self, index: usize) -> Option<&Starc<Slug>> {
+  pub fn get(&self, index: usize) -> Option<&Starc<StrictSlug>> {
     match index {
       0 => Some(&self.first_segment),
       i => self.segments.get(i - 1),
@@ -67,7 +67,7 @@ impl Key {
   }
 
   /// Get an iterator over the segments of the key.
-  pub fn segments(&self) -> impl Iterator<Item = &Starc<Slug>> {
+  pub fn segments(&self) -> impl Iterator<Item = &Starc<StrictSlug>> {
     std::iter::once(&self.first_segment).chain(self.segments.iter())
   }
 }
@@ -88,9 +88,9 @@ mod tests {
 
   use super::*;
 
-  static A: LazyLock<Slug> = LazyLock::new(|| Slug::new("a"));
-  static B: LazyLock<Slug> = LazyLock::new(|| Slug::new("b"));
-  static C: LazyLock<Slug> = LazyLock::new(|| Slug::new("c"));
+  static A: LazyLock<StrictSlug> = LazyLock::new(|| StrictSlug::new("a"));
+  static B: LazyLock<StrictSlug> = LazyLock::new(|| StrictSlug::new("b"));
+  static C: LazyLock<StrictSlug> = LazyLock::new(|| StrictSlug::new("c"));
 
   #[test]
   fn key_display() {

@@ -10,18 +10,18 @@ use slug::slugify;
     AsRef, Display
   ),
 )]
-pub struct Slug(String);
+pub struct StrictSlug(String);
 
-impl Slug {
+impl StrictSlug {
   /// Creates a new slug, and asserts that no edits are needed.
   ///
   /// This should not be used in production code. It is intended for use with
   /// slugs based off string literals, where constructing the slug with a string
   /// literal often creates a false assumption that the created slug is the same
   /// as what was provided.
-  pub fn confident(s: String) -> Slug {
+  pub fn confident(s: String) -> StrictSlug {
     let slug = slugify(&s);
     assert_eq!(slug, s, "provided string is not already a valid slug");
-    Slug::new(slug)
+    StrictSlug::new(slug)
   }
 }
