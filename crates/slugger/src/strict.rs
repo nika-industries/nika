@@ -1,7 +1,7 @@
 //! Strict slugify implementation
 
-/// Convert any unicode string to an ascii "slug" (useful for file names/url
-/// components)
+/// Convert any unicode string to a "strict slug" (useful for any user-defined
+/// name that might be used in a URL component)
 ///
 /// The returned "slug" will consist of a-z, 0-9, and '-'. Furthermore, a slug
 /// will never contain more than one '-' in a row and will never start or end
@@ -56,12 +56,44 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_strict_slugify() {
-    assert_eq!(strict_slugify("My Test String!!!1!1"), "my-test-string-1-1");
-    assert_eq!(strict_slugify("test\nit   now!"), "test-it-now");
-    assert_eq!(strict_slugify("  --test_-_cool"), "test-cool");
-    assert_eq!(strict_slugify("Æúű--cool?"), "aeuu-cool");
-    assert_eq!(strict_slugify("You & Me"), "you-me");
-    assert_eq!(strict_slugify("user@example.com"), "user-example-com");
+  fn test_strict_slugify_basic() {
+    // Basic ASCII input
+    assert_eq!(strict_slugify("hello-world"), "hello-world");
+    assert_eq!(strict_slugify("Hello World"), "hello-world");
+    assert_eq!(strict_slugify("rust+rocks"), "rust-rocks");
+  }
+
+  #[test]
+  fn test_strict_slugify_unicode() {
+    // Unicode characters that should be replaced with dashes
+    assert_eq!(strict_slugify("你好世界"), "ni-hao-shi-jie");
+    assert_eq!(strict_slugify("こんにちは"), "konnitiha");
+    assert_eq!(strict_slugify("¡Hola!"), "hola");
+  }
+
+  #[test]
+  fn test_strict_slugify_mixed() {
+    // Mixed ASCII and Unicode
+    assert_eq!(strict_slugify("rust编程语言"), "rustbian-cheng-yu-yan");
+    assert_eq!(strict_slugify("Lörem Ipsum"), "lorem-ipsum");
+    assert_eq!(strict_slugify("foo@bar.com"), "foo-bar-com");
+  }
+
+  #[test]
+  fn test_strict_slugify_special_characters() {
+    // Input with special characters
+    assert_eq!(strict_slugify("foo_bar.baz+qux"), "foo-bar-baz-qux");
+    assert_eq!(strict_slugify("foo/bar\\baz"), "foo-bar-baz");
+    assert_eq!(strict_slugify("hello*world"), "hello-world");
+  }
+
+  #[test]
+  fn test_strict_slugify_edge_cases() {
+    // Edge cases
+    assert_eq!(strict_slugify(""), "");
+    assert_eq!(strict_slugify("  "), "");
+    assert_eq!(strict_slugify("..."), "");
+    assert_eq!(strict_slugify("a"), "a");
+    assert_eq!(strict_slugify("-_-"), "");
   }
 }
