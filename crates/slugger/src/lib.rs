@@ -1,5 +1,6 @@
 //! Provides a type-safe slug.
 
+pub mod lax;
 pub mod strict;
 
 /// A slug, as determined by the [`slug`] library.
