@@ -2,9 +2,27 @@
 
 use std::{fmt, sync::LazyLock};
 
-use slugger::StrictSlug;
+use slugger::{LaxSlug, StrictSlug};
 use smallvec::SmallVec;
 use starc::Starc;
+
+/// Either a strict or lax slug.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum EitherSlug {
+  /// A strict slug.
+  Strict(Starc<StrictSlug>),
+  /// A lax slug.
+  Lax(Starc<LaxSlug>),
+}
+
+impl fmt::Display for EitherSlug {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::Strict(slug) => write!(f, "{}", slug),
+      Self::Lax(slug) => write!(f, "{}", slug),
+    }
+  }
+}
 
 /// A key for use with a store, consisting of a collection of segments.
 ///
@@ -19,25 +37,24 @@ use starc::Starc;
 ///
 /// [`Key`] implements [`Display`](fmt::Display), where the key is displayed as
 /// a string with segments separated by colons.
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Key {
-  first_segment: Starc<StrictSlug>,
-  segments:      SmallVec<[Starc<StrictSlug>; 6]>,
+  first_segment: EitherSlug,
+  segments:      SmallVec<[EitherSlug; 6]>,
 }
 
 impl Key {
   /// Create a new key with the given segment.
   pub fn new(segment: impl Into<Starc<StrictSlug>>) -> Self {
     Self {
-      first_segment: segment.into(),
+      first_segment: EitherSlug::Strict(segment.into()),
       segments:      SmallVec::new(),
     }
   }
   /// Create a new key with the given `LazyLock` segment.
   pub fn new_lazy(segment: &'static LazyLock<StrictSlug>) -> Self {
     Self {
-      first_segment: Starc::new_lazy(segment),
+      first_segment: EitherSlug::Strict(Starc::new_lazy(segment)),
       segments:      SmallVec::new(),
     }
   }
@@ -50,7 +67,7 @@ impl Key {
 
   /// Push a new segment onto the key.
   pub fn push(&mut self, segment: impl Into<Starc<StrictSlug>>) {
-    self.segments.push(segment.into());
+    self.segments.push(EitherSlug::Strict(segment.into()));
   }
 
   /// Create a new key by pushing a segment onto the given key.
@@ -61,7 +78,7 @@ impl Key {
   }
 
   /// Get the segment at the given index, if it exists.
-  pub fn get(&self, index: usize) -> Option<&Starc<StrictSlug>> {
+  pub fn get(&self, index: usize) -> Option<&EitherSlug> {
     match index {
       0 => Some(&self.first_segment),
       i => self.segments.get(i - 1),
@@ -69,7 +86,7 @@ impl Key {
   }
 
   /// Get an iterator over the segments of the key.
-  pub fn segments(&self) -> impl Iterator<Item = &Starc<StrictSlug>> {
+  pub fn segments(&self) -> impl Iterator<Item = &EitherSlug> {
     std::iter::once(&self.first_segment).chain(self.segments.iter())
   }
 }
@@ -132,13 +149,13 @@ mod tests {
   #[test]
   fn key_get() {
     let key = Key::new(&A);
-    assert_eq!(key.get(0), Some(&Starc::new_lazy(&A)));
+    assert_eq!(key.get(0), Some(&EitherSlug::Strict(Starc::new_lazy(&A))));
     assert_eq!(key.get(1), None);
 
     let mut key = Key::new(&A);
     key.push(&B);
-    assert_eq!(key.get(0), Some(&Starc::new_lazy(&A)));
-    assert_eq!(key.get(1), Some(&Starc::new_lazy(&B)));
+    assert_eq!(key.get(0), Some(&EitherSlug::Strict(Starc::new_lazy(&A))));
+    assert_eq!(key.get(1), Some(&EitherSlug::Strict(Starc::new_lazy(&B))));
     assert_eq!(key.get(2), None);
   }
 }
