@@ -15,12 +15,10 @@ pub struct StrictSlug(String);
 impl StrictSlug {
   /// Creates a new slug, and asserts that no edits are needed.
   ///
-  /// This should not be used in production code. It is intended for use with
-  /// slugs based off string literals, where constructing the slug with a string
-  /// literal often creates a false assumption that the created slug is the same
-  /// as what was provided.
-  pub fn confident(s: String) -> StrictSlug {
-    let slug = strict::strict_slugify(&s);
+  /// This is intended for use with slugs based off string literals, to make
+  /// sure that the string literal and the produced slug match exactly.
+  pub fn confident(s: &'static str) -> StrictSlug {
+    let slug = strict::strict_slugify(s);
     assert_eq!(slug, s, "provided string is not already a valid slug");
     StrictSlug::new(slug)
   }
