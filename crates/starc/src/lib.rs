@@ -114,3 +114,15 @@ impl<T: ?Sized> From<&'static T> for Starc<T> {
   #[inline]
   fn from(value: &'static T) -> Self { Starc::Static(value) }
 }
+
+impl<T> From<&'static std::sync::LazyLock<T>> for Starc<T> {
+  #[inline]
+  fn from(value: &'static std::sync::LazyLock<T>) -> Self {
+    Starc::new_lazy(value)
+  }
+}
+
+impl<T> From<T> for Starc<T> {
+  #[inline]
+  fn from(value: T) -> Self { Starc::Owned(value.into()) }
+}

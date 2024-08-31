@@ -28,9 +28,9 @@ pub struct Key {
 
 impl Key {
   /// Create a new key with the given segment.
-  pub fn new(segment: Starc<StrictSlug>) -> Self {
+  pub fn new(segment: impl Into<Starc<StrictSlug>>) -> Self {
     Self {
-      first_segment: segment,
+      first_segment: segment.into(),
       segments:      SmallVec::new(),
     }
   }
@@ -43,16 +43,18 @@ impl Key {
   }
 
   /// Add a new segment onto the key with method chaining.
-  pub fn with(mut self, segment: Starc<StrictSlug>) -> Self {
-    self.push(segment);
+  pub fn with(mut self, segment: impl Into<Starc<StrictSlug>>) -> Self {
+    self.push(segment.into());
     self
   }
 
   /// Push a new segment onto the key.
-  pub fn push(&mut self, segment: Starc<StrictSlug>) { self.segments.push(segment); }
+  pub fn push(&mut self, segment: impl Into<Starc<StrictSlug>>) {
+    self.segments.push(segment.into());
+  }
 
   /// Create a new key by pushing a segment onto the given key.
-  pub fn push_new(&self, segment: Starc<StrictSlug>) -> Self {
+  pub fn push_new(&self, segment: impl Into<Starc<StrictSlug>>) -> Self {
     let mut new_key = self.clone();
     new_key.push(segment);
     new_key
@@ -94,47 +96,47 @@ mod tests {
 
   #[test]
   fn key_display() {
-    let key = Key::new(Starc::new_static(&A));
+    let key = Key::new(&A);
     assert_eq!(key.to_string(), "a");
 
-    let mut key = Key::new(Starc::new_lazy(&A));
-    key.push(Starc::new_lazy(&B));
+    let mut key = Key::new(&A);
+    key.push(&B);
     assert_eq!(key.to_string(), "a:b");
 
-    let mut key = Key::new(Starc::new_lazy(&A));
-    key.push(Starc::new_lazy(&B));
-    key.push(Starc::new_lazy(&C));
+    let mut key = Key::new(&A);
+    key.push(&B);
+    key.push(&C);
     assert_eq!(key.to_string(), "a:b:c");
   }
 
   #[test]
   fn key_push() {
-    let mut key = Key::new(Starc::new_lazy(&A));
-    key.push(Starc::new_lazy(&B));
+    let mut key = Key::new(&A);
+    key.push(&B);
     assert_eq!(key.to_string(), "a:b");
 
-    key.push(Starc::new_lazy(&C));
+    key.push(&C);
     assert_eq!(key.to_string(), "a:b:c");
   }
 
   #[test]
   fn key_push_new() {
-    let key = Key::new(Starc::new_lazy(&A));
-    let new_key = key.push_new(Starc::new_lazy(&B));
+    let key = Key::new(&A);
+    let new_key = key.push_new(&B);
     assert_eq!(new_key.to_string(), "a:b");
 
-    let new_key = new_key.push_new(Starc::new_lazy(&C));
+    let new_key = new_key.push_new(&C);
     assert_eq!(new_key.to_string(), "a:b:c");
   }
 
   #[test]
   fn key_get() {
-    let key = Key::new(Starc::new_lazy(&A));
+    let key = Key::new(&A);
     assert_eq!(key.get(0), Some(&Starc::new_lazy(&A)));
     assert_eq!(key.get(1), None);
 
-    let mut key = Key::new(Starc::new_lazy(&A));
-    key.push(Starc::new_lazy(&B));
+    let mut key = Key::new(&A);
+    key.push(&B);
     assert_eq!(key.get(0), Some(&Starc::new_lazy(&A)));
     assert_eq!(key.get(1), Some(&Starc::new_lazy(&B)));
     assert_eq!(key.get(2), None);
