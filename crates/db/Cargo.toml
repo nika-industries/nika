@@ -10,7 +10,6 @@ workspace = true
 [dependencies]
 kv = { path = "../kv", features = [ "tikv" ] }
 models = { path = "../models" }
-slugger = { path = "../slugger" }
 
 miette.workspace = true
 tracing.workspace = true

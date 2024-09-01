@@ -11,3 +11,7 @@ workspace = true
 serde.workspace = true
 nutype = { workspace = true, features = [ "serde" ] }
 deunicode = "1.6.0"
+
+[package.metadata.cargo-machete]
+# `serde` only gets used in `nutype` macros
+ignored = [ "serde" ]

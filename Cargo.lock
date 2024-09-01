@@ -140,8 +140,6 @@ dependencies = [
  "miette",
  "models",
  "mollusk",
- "rope",
- "serde",
  "storage",
  "tasks",
  "thiserror",
@@ -760,7 +758,6 @@ dependencies = [
  "kv",
  "miette",
  "models",
- "slugger",
  "thiserror",
  "tokio",
  "tracing",
@@ -894,7 +891,6 @@ dependencies = [
  "storage",
  "thiserror",
  "tokio",
- "tokio-stream",
  "tokio-util",
  "tracing",
  "tracing-subscriber",
@@ -1540,7 +1536,6 @@ dependencies = [
 name = "kv"
 version = "0.1.0"
 dependencies = [
- "futures",
  "rmp-serde",
  "serde",
  "slugger",

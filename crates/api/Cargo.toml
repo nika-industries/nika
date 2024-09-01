@@ -12,11 +12,10 @@ art = { path = "../art" }
 models = { path = "../models" }
 db = { path = "../db" }
 mollusk = { path = "../mollusk" }
-rope = { path = "../rope" }
 storage = { path = "../storage" }
 tasks = { path = "../tasks" }
 
-serde.workspace = true
+# serde.workspace = true
 thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }
 
