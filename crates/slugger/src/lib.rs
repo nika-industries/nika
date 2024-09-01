@@ -3,10 +3,12 @@
 pub mod lax;
 pub mod strict;
 
+use self::{lax::lax_slugify, strict::strict_slugify};
+
 /// A strict slug that only allows lowercase ASCII letters, numbers, and
 /// hyphens.
 #[nutype::nutype(
-  sanitize(with = |s: String| strict::strict_slugify(&s)),
+  sanitize(with = |s: String| strict_slugify(&s)),
   derive(
     Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash,
     AsRef, Display
@@ -20,7 +22,7 @@ impl StrictSlug {
   /// This is intended for use with slugs based off string literals, to make
   /// sure that the string literal and the produced slug match exactly.
   pub fn confident(s: &'static str) -> StrictSlug {
-    let slug = strict::strict_slugify(s);
+    let slug = strict_slugify(s);
     assert_eq!(slug, s, "provided string is not already a valid slug");
     StrictSlug::new(slug)
   }
@@ -29,7 +31,7 @@ impl StrictSlug {
 /// A lax slug that allows lowercase and uppercase ASCII letters, numbers,
 /// hyphens, underscores, dots, and plus signs.
 #[nutype::nutype(
-  sanitize(with = |s: String| lax::lax_slugify(&s)),
+  sanitize(with = |s: String| lax_slugify(&s)),
   derive(
     Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash,
     AsRef, Display
@@ -43,7 +45,7 @@ impl LaxSlug {
   /// This is intended for use with slugs based off string literals, to make
   /// sure that the string literal and the produced slug match exactly.
   pub fn confident(s: &'static str) -> LaxSlug {
-    let slug = lax::lax_slugify(s);
+    let slug = lax_slugify(s);
     assert_eq!(slug, s, "provided string is not already a valid slug");
     LaxSlug::new(slug)
   }
