@@ -16,7 +16,7 @@ impl Value {
   pub fn serialize<T: Serialize>(
     value: &T,
   ) -> Result<Self, rmp_serde::encode::Error> {
-    Ok(Self(rmp_serde::to_vec(value)?))
+    Ok(Self(rmp_serde::to_vec_named(value)?))
   }
   /// Deserialize a value from a [`Value`], using MessagePack.
   pub fn deserialize<T: DeserializeOwned>(
