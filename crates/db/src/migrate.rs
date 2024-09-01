@@ -12,7 +12,7 @@ impl<T: KvTransactional> DbConnection<T> {
       id:   models::OrgRecordId(
         models::Ulid::from_str("01J53FHN8TQXTQ2JEHNX56GCTN").unwrap(),
       ),
-      name: models::StrictSlug::new("dev-org".to_string()),
+      name: models::StrictSlug::confident("dev-org"),
     };
 
     let user = models::User {
