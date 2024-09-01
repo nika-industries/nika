@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use slugger::Slug;
+use slugger::StrictSlug;
 
 use crate::{Model, OrgRecordId, PermissionSet, UserRecordId};
 
@@ -20,9 +20,9 @@ pub struct Token {
   /// The token's ID.
   pub id:       TokenRecordId,
   /// The token's nickname.
-  pub nickname: Slug,
+  pub nickname: StrictSlug,
   /// The token's secret.
-  pub secret:   Slug,
+  pub secret:   StrictSlug,
   /// The token's permissions.
   pub perms:    PermissionSet,
   /// The token's owner.

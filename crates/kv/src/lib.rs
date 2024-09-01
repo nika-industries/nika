@@ -11,8 +11,7 @@ use self::{key::Key, value::Value};
 
 /// Re-exports commonly used types and traits.
 pub mod prelude {
-  pub use slugger::Slug;
-  pub use starc::Starc;
+  pub use slugger::StrictSlug;
 
   #[cfg(feature = "tikv")]
   pub use crate::tikv::TikvClient;

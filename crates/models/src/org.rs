@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use slugger::Slug;
+use slugger::StrictSlug;
 
 use crate::Model;
 
@@ -20,7 +20,7 @@ pub struct Org {
   /// The org's ID.
   pub id:   OrgRecordId,
   /// The org's name.
-  pub name: Slug,
+  pub name: StrictSlug,
 }
 
 impl Model for Org {

@@ -1,27 +1,50 @@
 //! Provides a type-safe slug.
 
-use slug::slugify;
+pub mod lax;
+pub mod strict;
 
-/// A slug, as determined by the [`slug`] library.
+/// A strict slug that only allows lowercase ASCII letters, numbers, and
+/// hyphens.
 #[nutype::nutype(
-  sanitize(with = |s: String| slugify(&s)),
+  sanitize(with = |s: String| strict::strict_slugify(&s)),
   derive(
     Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash,
     AsRef, Display
   ),
 )]
-pub struct Slug(String);
+pub struct StrictSlug(String);
 
-impl Slug {
+impl StrictSlug {
   /// Creates a new slug, and asserts that no edits are needed.
   ///
-  /// This should not be used in production code. It is intended for use with
-  /// slugs based off string literals, where constructing the slug with a string
-  /// literal often creates a false assumption that the created slug is the same
-  /// as what was provided.
-  pub fn confident(s: String) -> Slug {
-    let slug = slugify(&s);
+  /// This is intended for use with slugs based off string literals, to make
+  /// sure that the string literal and the produced slug match exactly.
+  pub fn confident(s: &'static str) -> StrictSlug {
+    let slug = strict::strict_slugify(s);
     assert_eq!(slug, s, "provided string is not already a valid slug");
-    Slug::new(slug)
+    StrictSlug::new(slug)
+  }
+}
+
+/// A lax slug that allows lowercase and uppercase ASCII letters, numbers,
+/// hyphens, underscores, dots, and plus signs.
+#[nutype::nutype(
+  sanitize(with = |s: String| lax::lax_slugify(&s)),
+  derive(
+    Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash,
+    AsRef, Display
+  ),
+)]
+pub struct LaxSlug(String);
+
+impl LaxSlug {
+  /// Creates a new slug, and asserts that no edits are needed.
+  ///
+  /// This is intended for use with slugs based off string literals, to make
+  /// sure that the string literal and the produced slug match exactly.
+  pub fn confident(s: &'static str) -> LaxSlug {
+    let slug = lax::lax_slugify(s);
+    assert_eq!(slug, s, "provided string is not already a valid slug");
+    LaxSlug::new(slug)
   }
 }

@@ -7,7 +7,10 @@ async fn test_tikv() {
 
   let model = models::Org {
     id:   models::OrgRecordId(models::Ulid::new()),
-    name: models::Slug::new(format!("org-{}", models::Ulid::new().to_string())),
+    name: models::StrictSlug::new(format!(
+      "org-{}",
+      models::Ulid::new().to_string()
+    )),
   };
 
   db.create_model(&model).await.unwrap();

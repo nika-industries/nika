@@ -5,10 +5,10 @@ use kv::{
   KvTransactional,
 };
 use serde::{Deserialize, Serialize};
-use slugger::Slug;
+use slugger::StrictSlug;
 
-static GLOBAL_NS_SEGMENT: LazyLock<Slug> =
-  LazyLock::new(|| Slug::new("nika".to_string()));
+static GLOBAL_NS_SEGMENT: LazyLock<StrictSlug> =
+  LazyLock::new(|| StrictSlug::new("nika".to_string()));
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Foo {
