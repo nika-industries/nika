@@ -84,12 +84,14 @@
       in {
         devShells.default = mkShell {
           nativeBuildInputs = with pkgs; [
+            # toolchain with the current pkgs
             (dev-toolchain pkgs)
 
-            # basic libraries
+            # libraries used in local rust builds
             pkg-config
             openssl
 
+            # dev tools
             mprocs # parallel process execution
             bacon # change detection
             cargo-nextest # testing
@@ -101,7 +103,11 @@
             worker-build
             wasm-pack
 
+            # service runtimes
             redis
+            # we don't use these directly but we keep them here to avoid
+            # garbage collection for the docker images
+            tikv.tikv-server tikv.pd-server
           ];
         };
         packages = {} // crates // tikv;
