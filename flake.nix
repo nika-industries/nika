@@ -13,15 +13,17 @@
     };
     crane.url = "https://flakehub.com/f/ipetkov/crane/0.18.tar.gz";
     nix-filter.url = "github:numtide/nix-filter";
+    mkshell-minimal.url = "github:viperML/mkshell-minimal";
   };
 
-  outputs = { self, nixpkgs, wrangler, rust-overlay, crane, nix-filter, flake-utils }: 
+  outputs = { nixpkgs, wrangler, rust-overlay, crane, nix-filter, mkshell-minimal, flake-utils, ... }: 
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
         };
+        mkShell = mkshell-minimal pkgs;
         filter = nix-filter.lib;
 
         src = filter {
@@ -80,7 +82,7 @@
 
         tikv = (import ./nix/tikv.nix) { inherit pkgs; };
       in {
-        devShells.default = pkgs.mkShell {
+        devShells.default = mkShell {
           nativeBuildInputs = with pkgs; [
             (dev-toolchain pkgs)
 

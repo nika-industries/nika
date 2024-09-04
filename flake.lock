@@ -34,6 +34,21 @@
         "type": "indirect"
       }
     },
+    "mkshell-minimal": {
+      "locked": {
+        "lastModified": 1700988624,
+        "narHash": "sha256-KJyiF67zVYOBkNltKhJATfSj+gfRFX9dSFIWDEBy2nQ=",
+        "owner": "viperML",
+        "repo": "mkshell-minimal",
+        "rev": "6b0868be06da900b5fe6ece05616b84e3cbd7944",
+        "type": "github"
+      },
+      "original": {
+        "owner": "viperML",
+        "repo": "mkshell-minimal",
+        "type": "github"
+      }
+    },
     "nix-filter": {
       "locked": {
         "lastModified": 1710156097,
@@ -85,6 +100,7 @@
       "inputs": {
         "crane": "crane",
         "flake-utils": "flake-utils",
+        "mkshell-minimal": "mkshell-minimal",
         "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs_2",
         "rust-overlay": "rust-overlay",
