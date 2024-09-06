@@ -11,3 +11,4 @@ workspace = true
 db = { path = "../db" }
 miette = { workspace = true, features = ["fancy"] }
 tokio = { workspace = true, features = ["rt"] }
+tracing-subscriber = { workspace = true }

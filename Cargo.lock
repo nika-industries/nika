@@ -1682,6 +1682,7 @@ dependencies = [
  "db",
  "miette",
  "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]
