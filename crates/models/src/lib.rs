@@ -1,5 +1,6 @@
 //! Provides db model types. Used by most crates in the workspace.
 
+mod cache;
 mod org;
 mod perms;
 mod storage_creds;
