@@ -9,5 +9,7 @@ async fn main() -> Result<()> {
   let db = db::TikvDb::new().await?;
   db.migrate().await?;
 
+  tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+
   Ok(())
 }
