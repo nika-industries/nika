@@ -102,12 +102,12 @@ pub enum CreateModelError {
 
 impl<T: KvTransactional> DbConnection<T> {
   /// Creates a new model.
-  #[instrument(skip(self))]
+  #[instrument(skip(self, model))]
   pub async fn create_model<M: models::Model>(
     &self,
     model: &M,
   ) -> Result<(), CreateModelError> {
-    tracing::debug!(
+    tracing::info!(
       "creating model with id `{}` on table {:?}",
       model.id(),
       M::TABLE_NAME
