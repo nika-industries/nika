@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{Model, OrgRecordId};
@@ -11,6 +13,12 @@ pub struct UserRecordId(pub ulid::Ulid);
 
 impl From<UserRecordId> for ulid::Ulid {
   fn from(id: UserRecordId) -> ulid::Ulid { id.0 }
+}
+
+impl fmt::Display for UserRecordId {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
 }
 
 /// A user.

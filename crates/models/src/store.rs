@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 use slugger::StrictSlug;
 
@@ -12,6 +14,12 @@ pub struct StoreRecordId(pub ulid::Ulid);
 
 impl From<StoreRecordId> for ulid::Ulid {
   fn from(id: StoreRecordId) -> ulid::Ulid { id.0 }
+}
+
+impl fmt::Display for StoreRecordId {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
 }
 
 /// A store.

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 use slugger::StrictSlug;
 
@@ -14,6 +16,11 @@ impl From<OrgRecordId> for ulid::Ulid {
   fn from(id: OrgRecordId) -> ulid::Ulid { id.0 }
 }
 
+impl fmt::Display for OrgRecordId {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
 /// An org.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Org {

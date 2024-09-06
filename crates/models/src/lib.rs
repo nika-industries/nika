@@ -7,7 +7,10 @@ mod store;
 mod token;
 mod user;
 
-use std::{fmt::Debug, hash::Hash};
+use std::{
+  fmt::{Debug, Display},
+  hash::Hash,
+};
 
 use serde::{de::DeserializeOwned, Serialize};
 pub use slugger::StrictSlug;
@@ -26,6 +29,7 @@ pub trait Model:
   /// The model's ID type
   type Id: Clone
     + Debug
+    + Display
     + PartialEq
     + Eq
     + Hash
