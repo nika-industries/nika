@@ -10,6 +10,10 @@ fetcher:
 watch-fetcher:
 	bacon -j run -- --bin fetcher
 
+# run the fetcher binary in release mode
+fetcher-release:
+	cargo run --bin fetcher --release
+
 # run the api binary
 api:
 	cargo run --bin api
@@ -18,6 +22,10 @@ api:
 watch-api:
 	bacon -j run -- --bin api
 
+# run the api binary in release mode
+api-release:
+    cargo run --bin api --release
+
 # run the daemon binary
 daemon:
 	cargo run --bin daemon
@@ -25,6 +33,18 @@ daemon:
 # run the daemon binary and watch for changes
 watch-daemon:
 	bacon -j run -- --bin daemon
+
+# run the daemon binary in release mode
+daemon-release:
+    cargo run --bin daemon --release
+
+# run the whole stack
+stack:
+    mprocs "just run-tikv" "just run-pd" "just redis" "just fetcher" "just api" # "just daemon"
+
+# run the whole stack in release mode
+stack-release:
+    mprocs "just run-tikv" "just run-pd" "just redis" "just fetcher-release" "just api-release" # "just daemon"
 
 # run tests with nextest
 test:
@@ -52,11 +72,11 @@ tikv:
 
 # run the tikv server in a container
 run-tikv:
-	nix build .#tikv-image --print-out-paths | xargs cat | docker load
+	cat $(nix build .#tikv-image --print-out-paths) | docker load
 	docker run --rm --network host tikv-server:8.1.1
 # run the pd server in a container
 run-pd:
-	nix build .#pd-image --print-out-paths | xargs cat | docker load
+	cat $(nix build .#pd-image --print-out-paths) | docker load
 	docker run --rm --network host pd-server:8.1.1
 
 migrate:
