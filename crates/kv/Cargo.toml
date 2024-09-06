@@ -13,6 +13,7 @@ starc = { path = "../starc" }
 
 thiserror.workspace = true
 serde.workspace = true
+miette.workspace = true
 
 tikv-client = { version = "0.3", optional = true, default-features = false }
 

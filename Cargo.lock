@@ -1536,6 +1536,7 @@ dependencies = [
 name = "kv"
 version = "0.1.0"
 dependencies = [
+ "miette",
  "rmp-serde",
  "serde",
  "slugger",

@@ -22,7 +22,7 @@ pub mod prelude {
 }
 
 /// Represents errors that can occur when interacting with a key-value store.
-#[derive(Debug, Clone, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error, miette::Diagnostic)]
 pub enum KvError {
   /// An error occurred in the underlying platform.
   #[error("platform error: {0}")]
