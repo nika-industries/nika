@@ -29,12 +29,10 @@
         src = filter {
           root = ./.;
           include = [
-            "crates"
-            "Cargo.toml"
-            "Cargo.lock"
-            (filter.matchExt "toml")
-            ".cargo"
-            "media"
+            "crates" "Cargo.toml" "Cargo.lock" # typical rust source
+            ".cargo" # extra rust config
+            (filter.matchExt "toml") # extra toml used by other projects
+            "media" # static assets
           ];
         };
 
