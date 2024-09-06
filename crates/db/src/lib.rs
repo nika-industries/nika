@@ -46,12 +46,30 @@ fn model_index_segment<M: models::Model>(index_name: &str) -> StrictSlug {
   StrictSlug::new(format!("{}_index_{}", M::TABLE_NAME, index_name))
 }
 
+/// Rollback fn for "recoverable" - effectively, *consumable* - errors.
 async fn rollback<T: KvTransaction>(mut txn: T) -> Result<()> {
   txn
     .rollback()
     .await
     .into_diagnostic()
     .context("failed to rollback transaction")
+}
+
+/// Rollback fn for "unrecoverable" errors (unexpected error paths).
+async fn rollback_error<T: KvTransaction>(
+  txn: T,
+  error: miette::Report,
+  context: &'static str,
+) -> miette::Report {
+  if let Err(e) = rollback(txn).await {
+    tracing::error!("failed to rollback transaction: {:#}", e);
+    return e;
+  }
+  let e = Err::<(), miette::Report>(error)
+    .context(context)
+    .unwrap_err();
+  tracing::error!("{:#}", e);
+  e
 }
 
 async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
@@ -89,6 +107,12 @@ impl<T: KvTransactional> DbConnection<T> {
     &self,
     model: &M,
   ) -> Result<(), CreateModelError> {
+    tracing::debug!(
+      "creating model with id `{}` on table {:?}",
+      model.id(),
+      M::TABLE_NAME
+    );
+
     // the model itself will be stored under [model_name]:[id] -> model
     // and each index will be stored under
     // [model_name]_index_[index_name]:[index_value] -> [id]
@@ -119,32 +143,29 @@ impl<T: KvTransactional> DbConnection<T> {
       .map_err(CreateModelError::DbError)?;
 
     // check if the model exists already
-    match txn
-      .get(&model_key)
-      .await
-      .into_diagnostic()
-      .context("failed to check if model already exists")
-    {
+    match txn.get(&model_key).await {
       Ok(Some(_)) => {
         rollback(txn).await.map_err(CreateModelError::DbError)?;
         return Err(CreateModelError::ModelAlreadyExists);
       }
       Ok(None) => {}
       Err(e) => {
-        rollback(txn).await.map_err(CreateModelError::DbError)?;
-        return Err(CreateModelError::DbError(e));
+        return Err(CreateModelError::DbError(
+          rollback_error(
+            txn,
+            e.into(),
+            "failed to check if model already exists",
+          )
+          .await,
+        ));
       }
     }
 
     // insert the model
-    if let Err(e) = txn
-      .insert(&model_key, model_value)
-      .await
-      .into_diagnostic()
-      .context("failed to insert model")
-    {
-      rollback(txn).await.map_err(CreateModelError::DbError)?;
-      return Err(CreateModelError::DbError(e));
+    if let Err(e) = txn.insert(&model_key, model_value).await {
+      return Err(CreateModelError::DbError(
+        rollback_error(txn, e.into(), "failed to insert model").await,
+      ));
     }
 
     // insert the indexes
@@ -154,12 +175,7 @@ impl<T: KvTransactional> DbConnection<T> {
         .with(index_fn(model));
 
       // check if the index exists already
-      match txn
-        .get(&index_key)
-        .await
-        .into_diagnostic()
-        .context("failed to check if index already exists")
-      {
+      match txn.get(&index_key).await {
         Ok(Some(_)) => {
           rollback(txn).await.map_err(CreateModelError::DbError)?;
           return Err(CreateModelError::IndexAlreadyExists {
@@ -169,20 +185,22 @@ impl<T: KvTransactional> DbConnection<T> {
         }
         Ok(None) => {}
         Err(e) => {
-          rollback(txn).await.map_err(CreateModelError::DbError)?;
-          return Err(CreateModelError::DbError(e));
+          return Err(CreateModelError::DbError(
+            rollback_error(
+              txn,
+              e.into(),
+              "failed to check if index already exists",
+            )
+            .await,
+          ));
         }
       }
 
       // insert the index
-      if let Err(e) = txn
-        .insert(&index_key, id_value.clone())
-        .await
-        .into_diagnostic()
-        .context("failed to insert index")
-      {
-        rollback(txn).await.map_err(CreateModelError::DbError)?;
-        return Err(CreateModelError::DbError(e));
+      if let Err(e) = txn.insert(&index_key, id_value.clone()).await {
+        return Err(CreateModelError::DbError(
+          rollback_error(txn, e.into(), "failed to insert index").await,
+        ));
       }
     }
 
@@ -209,8 +227,7 @@ impl<T: KvTransactional> DbConnection<T> {
     let model_value = match txn.get(&model_key).await {
       Ok(value) => value,
       Err(e) => {
-        rollback(txn).await?;
-        return Err(e).into_diagnostic().context("failed to get model");
+        return Err(rollback_error(txn, e.into(), "failed to get model").await);
       }
     };
 
@@ -221,10 +238,14 @@ impl<T: KvTransactional> DbConnection<T> {
           Ok(Some(value))
         }
         Err(e) => {
-          rollback(txn).await?;
-          Err(e)
-            .into_diagnostic()
-            .context("failed to deserialize model")
+          return Err(
+            rollback_error(
+              txn,
+              Err::<(), _>(e).into_diagnostic().unwrap_err(),
+              "failed to deserialize model",
+            )
+            .await,
+          );
         }
       },
       None => {
@@ -256,8 +277,7 @@ impl<T: KvTransactional> DbConnection<T> {
     let id_value = match txn.get(&index_key).await {
       Ok(value) => value,
       Err(e) => {
-        rollback(txn).await?;
-        return Err(e).into_diagnostic().context("failed to get id");
+        return Err(rollback_error(txn, e.into(), "failed to get id").await);
       }
     };
 
@@ -265,8 +285,14 @@ impl<T: KvTransactional> DbConnection<T> {
       Some(value) => match kv::value::Value::deserialize(value) {
         Ok(value) => value,
         Err(e) => {
-          rollback(txn).await?;
-          return Err(e).into_diagnostic().context("failed to deserialize id");
+          return Err(
+            rollback_error(
+              txn,
+              Err::<(), _>(e).into_diagnostic().unwrap_err(),
+              "failed to deserialize id",
+            )
+            .await,
+          );
         }
       },
       None => {
@@ -278,8 +304,9 @@ impl<T: KvTransactional> DbConnection<T> {
     let model = match self.fetch_model_by_id::<M>(&id).await {
       Ok(value) => value,
       Err(e) => {
-        rollback(txn).await?;
-        return Err(e).context("failed to fetch model by id");
+        return Err(
+          rollback_error(txn, e, "failed to fetch model by id").await,
+        );
       }
     };
 
