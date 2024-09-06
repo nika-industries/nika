@@ -64,7 +64,7 @@ clippy:
 
 # run redis
 redis: 
-	redis-server
+	nix shell nixpkgs#redis -c redis-server
 
 # run the tikv stack
 tikv:

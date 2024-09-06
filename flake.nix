@@ -104,7 +104,7 @@
             wasm-pack
 
             # service runtimes
-            redis
+            # redis
             # we don't use these directly but we keep them here to avoid
             # garbage collection for the docker images
             tikv.tikv-server tikv.pd-server
