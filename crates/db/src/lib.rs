@@ -32,7 +32,10 @@ impl TikvDb {
       .into_diagnostic()
       .wrap_err("missing TIKV_URLS")?;
     let urls = urls.split(',').collect();
-    let client = TikvClient::new(urls).await?;
+    let client = TikvClient::new(urls)
+      .await
+      .into_diagnostic()
+      .context("failed to create tikv client")?;
 
     Ok(DbConnection(Arc::new(client)))
   }
@@ -64,11 +67,11 @@ pub(crate) async fn rollback_error<T: KvTransaction>(
   context: &'static str,
 ) -> miette::Report {
   if let Err(e) = rollback(txn).await {
-    tracing::error!("failed to rollback transaction: {:#}", e);
+    tracing::error!("failed to rollback transaction: {:?}", e);
     return e;
   }
   let e = error.wrap_err(context);
-  tracing::error!("{:#}", e);
+  tracing::error!("{:?}", e);
   e
 }
 
@@ -102,7 +105,7 @@ impl From<miette::Report> for CreateModelError {
 
 impl<T: KvTransactional> DbConnection<T> {
   /// Creates a new model.
-  #[instrument(skip(self, model))]
+  #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
   pub async fn create_model<M: models::Model>(
     &self,
     model: &M,
