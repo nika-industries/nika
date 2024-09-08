@@ -38,7 +38,8 @@ pub struct Entry {
 impl Model for Entry {
   type Id = EntryRecordId;
   const TABLE_NAME: &'static str = ENTRY_TABLE_NAME;
-  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] = &[];
+  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
+    &[("path", |s| s.path.clone().into())];
 
   fn id(&self) -> Self::Id { self.id }
 }
