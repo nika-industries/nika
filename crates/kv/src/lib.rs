@@ -7,8 +7,6 @@ pub mod value;
 
 use std::future::Future;
 
-use miette::IntoDiagnostic;
-
 use self::{key::Key, value::Value};
 
 /// Re-exports commonly used types and traits.
@@ -35,7 +33,7 @@ pub enum KvError {
 #[cfg(feature = "tikv")]
 impl From<tikv_client::Error> for KvError {
   fn from(error: tikv_client::Error) -> Self {
-    KvError::PlatformError(Err::<(), _>(error).into_diagnostic().unwrap_err())
+    KvError::PlatformError(miette::Report::from_err(error))
   }
 }
 

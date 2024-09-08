@@ -2,7 +2,7 @@ use std::{path::Path, sync::Arc};
 
 use bytes_stream::BytesStream;
 use futures::{StreamExt, TryFutureExt, TryStreamExt};
-use miette::{Context, IntoDiagnostic};
+use miette::{Context, IntoDiagnostic, Report};
 use models::R2StorageCredentials;
 use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
@@ -103,10 +103,7 @@ impl StorageClient for S3CompatStorageClient {
 
     let part_stream = bytes_chunks
       .map_err(|e| {
-        Err::<(), _>(e)
-          .into_diagnostic()
-          .wrap_err("failed to get bytes chunk from reader")
-          .unwrap_err()
+        Report::from_err(e).wrap_err("failed to get bytes chunk from reader")
       })
       .map(|r| {
         let value = multipart.clone();
@@ -117,16 +114,11 @@ impl StorageClient for S3CompatStorageClient {
           let mut multipart = value.lock().await;
           let future = multipart
             .put_part(PutPayload::from_bytes(chunk))
-            .map_err(|e| {
-              Err::<(), _>(e)
-                .into_diagnostic()
-                .wrap_err("failed to upload part")
-                .unwrap_err()
-            });
+            .map_err(|e| Report::from_err(e).wrap_err("failed to upload part"));
           drop(multipart);
           future.await?;
 
-          Ok::<_, miette::Report>(())
+          Ok::<_, Report>(())
         }
       })
       .buffered(3);
