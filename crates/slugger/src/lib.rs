@@ -3,6 +3,10 @@
 pub mod lax;
 pub mod strict;
 
+use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
 use self::{lax::lax_slugify, strict::strict_slugify};
 
 /// A strict slug that only allows lowercase ASCII letters, numbers, and
@@ -48,5 +52,33 @@ impl LaxSlug {
     let slug = lax_slugify(s);
     assert_eq!(slug, s, "provided string is not already a valid slug");
     LaxSlug::new(slug)
+  }
+}
+
+/// A slug that can be either strict or lax.
+#[derive(
+  Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash,
+)]
+pub enum EitherSlug {
+  /// A strict slug.
+  Strict(StrictSlug),
+  /// A lax slug.
+  Lax(LaxSlug),
+}
+
+impl From<StrictSlug> for EitherSlug {
+  fn from(slug: StrictSlug) -> Self { Self::Strict(slug) }
+}
+
+impl From<LaxSlug> for EitherSlug {
+  fn from(slug: LaxSlug) -> Self { Self::Lax(slug) }
+}
+
+impl fmt::Display for EitherSlug {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::Strict(slug) => write!(f, "{}", slug),
+      Self::Lax(slug) => write!(f, "{}", slug),
+    }
   }
 }
