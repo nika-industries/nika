@@ -41,7 +41,7 @@ impl Model for Store {
   type Id = StoreRecordId;
   const TABLE_NAME: &'static str = STORE_TABLE_NAME;
   const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
-    &[("name", |s| s.name.clone())];
+    &[("name", |s| s.name.clone().into())];
 
   fn id(&self) -> Self::Id { self.id }
 }

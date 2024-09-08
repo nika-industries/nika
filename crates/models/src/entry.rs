@@ -1,9 +1,9 @@
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
-use slugger::{LaxSlug, StrictSlug};
+use slugger::LaxSlug;
 
-use crate::{cache::CacheRecordId, Model, OrgRecordId, StoreRecordId};
+use crate::{cache::CacheRecordId, Model, OrgRecordId};
 
 /// The [`Entry`] table name.
 pub const ENTRY_TABLE_NAME: &str = "entry";

@@ -15,14 +15,14 @@ use std::{
 };
 
 use serde::{de::DeserializeOwned, Serialize};
-pub use slugger::StrictSlug;
+pub use slugger::*;
 pub use ulid::Ulid;
 
 pub use self::{
   org::*, perms::*, storage_creds::*, store::*, token::*, user::*,
 };
 
-type SlugFieldGetter<T> = fn(&T) -> StrictSlug;
+type SlugFieldGetter<T> = fn(&T) -> EitherSlug;
 
 /// Represents a model in the database.
 pub trait Model:

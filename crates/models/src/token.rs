@@ -43,7 +43,7 @@ impl Model for Token {
   type Id = TokenRecordId;
   const TABLE_NAME: &'static str = TOKEN_TABLE_NAME;
   const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
-    &[("secret", |t| t.secret.clone())];
+    &[("secret", |t| t.secret.clone().into())];
 
   fn id(&self) -> Self::Id { self.id }
 }

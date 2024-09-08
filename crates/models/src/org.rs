@@ -34,7 +34,7 @@ impl Model for Org {
   type Id = OrgRecordId;
   const TABLE_NAME: &'static str = ORG_TABLE_NAME;
   const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
-    &[("name", |org| org.name.clone())];
+    &[("name", |org| org.name.clone().into())];
 
   fn id(&self) -> Self::Id { self.id }
 }

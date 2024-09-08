@@ -2,7 +2,7 @@
 
 use std::{fmt, sync::LazyLock};
 
-use slugger::{LaxSlug, StrictSlug};
+use slugger::{EitherSlug, LaxSlug, StrictSlug};
 use smallvec::SmallVec;
 use starc::Starc;
 
@@ -13,6 +13,15 @@ pub enum Segment {
   Strict(Starc<StrictSlug>),
   /// A lax slug.
   Lax(Starc<LaxSlug>),
+}
+
+impl From<EitherSlug> for Segment {
+  fn from(slug: EitherSlug) -> Self {
+    match slug {
+      EitherSlug::Strict(slug) => Self::Strict(Starc::new_owned(slug)),
+      EitherSlug::Lax(slug) => Self::Lax(Starc::new_owned(slug)),
+    }
+  }
 }
 
 impl fmt::Display for Segment {
@@ -62,6 +71,12 @@ impl Key {
   /// Add a new segment onto the key with method chaining.
   pub fn with(mut self, segment: impl Into<Starc<StrictSlug>>) -> Self {
     self.push(segment.into());
+    self
+  }
+
+  /// Add a new segment that's either strict or lax.
+  pub fn with_either(mut self, segment: impl Into<Segment>) -> Self {
+    self.segments.push(segment.into());
     self
   }
 

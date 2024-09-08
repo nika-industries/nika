@@ -91,7 +91,7 @@ pub enum CreateModelError {
     /// The name of the index.
     index_name:  String,
     /// The value of the index.
-    index_value: StrictSlug,
+    index_value: EitherSlug,
   },
   /// A database error occurred.
   #[error("db error: {0}")]
@@ -162,7 +162,7 @@ impl<T: KvTransactional> DbConnection<T> {
     for (index_name, index_fn) in M::INDICES.iter() {
       // calculate the key for the index
       let index_key = kv::key::Key::new(model_index_segment::<M>(index_name))
-        .with(index_fn(model));
+        .with_either(index_fn(model));
 
       // check if the index exists already
       let (_txn, exists) = txn
