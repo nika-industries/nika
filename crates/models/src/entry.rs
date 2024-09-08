@@ -29,6 +29,8 @@ pub struct Entry {
   pub id:    EntryRecordId,
   /// The entry's path.
   pub path:  LaxSlug,
+  /// The entry's file size
+  pub size:  u64,
   /// The entry's cache.
   pub cache: CacheRecordId,
   /// The [`Org`](crate::Org) the store belongs to.
