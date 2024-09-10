@@ -35,15 +35,6 @@ impl fmt::Display for Segment {
 
 /// A key for use with a store, consisting of a collection of segments.
 ///
-/// Invariants enforced by this type:
-/// - The first segment is always present.
-/// - All segments are [`Slug`]s.
-///
-/// Invariants enforced by the [`Slug`] type:
-/// - Consists of only a-z, 0-9, and ‘-’.
-/// - Never contains more than one ‘-’ in a row.
-/// - Will never start or end with ‘-’.
-///
 /// [`Key`] implements [`Display`](fmt::Display), where the key is displayed as
 /// a string with segments separated by colons.
 #[derive(Clone, Debug, PartialEq, Eq)]
