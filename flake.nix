@@ -116,6 +116,7 @@
           });
           docs = craneLib.cargoDoc (common-args // {
             inherit cargoArtifacts;
+            RUSTDOCFLAGS = "-D warnings";
           });
           nextest = craneLib.cargoNextest (common-args // {
             inherit cargoArtifacts;
