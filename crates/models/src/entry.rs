@@ -41,7 +41,9 @@ impl Model for Entry {
   type Id = EntryRecordId;
   const TABLE_NAME: &'static str = ENTRY_TABLE_NAME;
   const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
-    &[("path", |s| s.path.clone().into())];
+    &[("cache-id-path", |s| {
+      LaxSlug::new(format!("{}-{}", s.cache, s.path)).into()
+    })];
 
   fn id(&self) -> Self::Id { self.id }
 }

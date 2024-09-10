@@ -9,6 +9,8 @@ impl<T: KvTransactional> DbConnection<T> {
     &self,
     secret: &StrictSlug,
   ) -> Result<Option<models::Token>> {
-    self.fetch_model_by_index("secret", secret).await
+    self
+      .fetch_model_by_index("secret", &secret.clone().into())
+      .await
   }
 }

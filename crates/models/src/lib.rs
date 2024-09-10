@@ -19,14 +19,15 @@ pub use slugger::*;
 pub use ulid::Ulid;
 
 pub use self::{
-  org::*, perms::*, storage_creds::*, store::*, token::*, user::*,
+  cache::*, entry::*, org::*, perms::*, storage_creds::*, store::*, token::*,
+  user::*,
 };
 
 type SlugFieldGetter<T> = fn(&T) -> EitherSlug;
 
 /// Represents a model in the database.
 pub trait Model:
-  Clone + Debug + PartialEq + Serialize + DeserializeOwned + 'static
+  Clone + Debug + PartialEq + Serialize + DeserializeOwned + Send + Sync + 'static
 {
   /// The model's ID type
   type Id: Clone
@@ -38,6 +39,8 @@ pub trait Model:
     + Serialize
     + DeserializeOwned
     + Into<Ulid>
+    + Send
+    + Sync
     + 'static;
   /// The table name in the database.
   const TABLE_NAME: &'static str;

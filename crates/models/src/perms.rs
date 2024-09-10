@@ -15,28 +15,28 @@ pub struct PermissionSet(pub HashSet<Permission>);
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Permission {
   /// A store permission.
-  StorePermission {
+  CachePermission {
     /// The store that the permission is for.
     store_id:   StoreRecordId,
     /// The store permission type.
-    permission: StorePermissionType,
+    permission: CachePermissionType,
   },
 }
 
 /// The types of permissions that can be granted to a `User` for a `Store`.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub enum StorePermissionType {
+pub enum CachePermissionType {
   /// The user has read access.
   Read,
   /// The user has write access.
   Write,
 }
 
-impl Display for StorePermissionType {
+impl Display for CachePermissionType {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      StorePermissionType::Read => write!(f, "read"),
-      StorePermissionType::Write => write!(f, "write"),
+      CachePermissionType::Read => write!(f, "read"),
+      CachePermissionType::Write => write!(f, "write"),
     }
   }
 }

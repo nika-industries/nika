@@ -12,11 +12,16 @@ use tasks::Task;
 
 async fn prepare_fetch_payload(
   State(db): State<db::TikvDb>,
-  Json((store_name, token_secret)): Json<(String, Option<String>)>,
+  Json((store_name, path, token_secret)): Json<(
+    String,
+    String,
+    Option<String>,
+  )>,
 ) -> Result<Json<models::StorageCredentials>, mollusk::InternalApiError> {
   Ok(
     tasks::PrepareFetchPayloadTask {
-      store_name,
+      cache_name: store_name,
+      path: models::LaxSlug::new(path),
       token_secret,
     }
     .run(db)
@@ -24,18 +29,6 @@ async fn prepare_fetch_payload(
     .map(Json)?,
   )
 }
-
-// async fn get_store_creds_handler(
-//   State(db): State<db::DbConnection>,
-//   Path(store_name): Path<String>,
-// ) -> Result<Json<models::StorageCredentials>, mollusk::InternalApiError>
-// {   Ok(
-//     tasks::FetchStoreCredsTask { store_name }
-//       .run(db)
-//       .await
-//       .map(Json)?,
-//   )
-// }
 
 #[tracing::instrument(skip(db, payload))]
 async fn naive_upload(

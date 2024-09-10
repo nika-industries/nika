@@ -2,10 +2,9 @@
 
 mod consumptive;
 mod migrate;
-mod store;
 mod token;
 
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
@@ -41,15 +40,22 @@ impl TikvDb {
   }
 }
 
-fn model_key<M: models::Model>(id: &M::Id) -> Key {
-  let model_name_segment = StrictSlug::new(M::TABLE_NAME);
+static INDEX_NS_SEGMENT: LazyLock<StrictSlug> =
+  LazyLock::new(|| StrictSlug::new("index".to_string()));
+static MODEL_NS_SEGMENT: LazyLock<StrictSlug> =
+  LazyLock::new(|| StrictSlug::new("model".to_string()));
+
+fn model_base_key<M: models::Model>(id: &M::Id) -> Key {
   let id_ulid: models::Ulid = id.clone().into();
-  let id_segment = StrictSlug::new(id_ulid.to_string());
-  Key::new(model_name_segment).with(id_segment)
+  Key::new_lazy(&MODEL_NS_SEGMENT)
+    .with(StrictSlug::new(M::TABLE_NAME.to_string()))
+    .with(StrictSlug::new(id_ulid.to_string()))
 }
 
-fn model_index_segment<M: models::Model>(index_name: &str) -> StrictSlug {
-  StrictSlug::new(format!("{}_index_{}", M::TABLE_NAME, index_name))
+fn index_base_key<M: models::Model>(index_name: &str) -> Key {
+  Key::new_lazy(&INDEX_NS_SEGMENT)
+    .with(StrictSlug::new(M::TABLE_NAME.to_string()))
+    .with(StrictSlug::new(index_name))
 }
 
 /// Rollback fn for "recoverable" - effectively, *consumable* - errors.
@@ -121,7 +127,7 @@ impl<T: KvTransactional> DbConnection<T> {
     // [model_name]_index_[index_name]:[index_value] -> [id]
 
     // calculate the key for the model
-    let model_key = model_key::<M>(&model.id());
+    let model_key = model_base_key::<M>(&model.id());
     let id_ulid: models::Ulid = model.id().clone().into();
 
     // serialize the model into bytes
@@ -161,8 +167,8 @@ impl<T: KvTransactional> DbConnection<T> {
     // insert the indexes
     for (index_name, index_fn) in M::INDICES.iter() {
       // calculate the key for the index
-      let index_key = kv::key::Key::new(model_index_segment::<M>(index_name))
-        .with_either(index_fn(model));
+      let index_key =
+        index_base_key::<M>(index_name).with_either(index_fn(model));
 
       // check if the index exists already
       let (_txn, exists) = txn
@@ -195,7 +201,7 @@ impl<T: KvTransactional> DbConnection<T> {
     &self,
     id: &M::Id,
   ) -> Result<Option<M>> {
-    let model_key = model_key::<M>(id);
+    let model_key = model_base_key::<M>(id);
 
     let txn = self
       .0
@@ -221,10 +227,10 @@ impl<T: KvTransactional> DbConnection<T> {
   pub async fn fetch_model_by_index<M: models::Model>(
     &self,
     index_name: &str,
-    index_value: &StrictSlug,
+    index_value: &EitherSlug,
   ) -> Result<Option<M>> {
-    let index_key = kv::key::Key::new(model_index_segment::<M>(index_name))
-      .with(index_value.clone());
+    let index_key =
+      index_base_key::<M>(index_name).with_either(index_value.clone());
 
     let txn = self
       .0
