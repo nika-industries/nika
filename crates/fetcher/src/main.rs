@@ -36,12 +36,13 @@ impl<T, E> UntaggedResult<T, E> {
 
 async fn get_fetch_payload(
   store_name: String,
+  path: String,
   token_secret: Option<String>,
 ) -> Result<models::StorageCredentials, mollusk::PrepareFetchPayloadError> {
   let client = reqwest::Client::new();
   let response = client
     .get("http://localhost:3000/fetch_payload".to_string())
-    .json(&(store_name, token_secret))
+    .json(&(store_name, path, token_secret))
     .send()
     .await
     .unwrap()
@@ -65,7 +66,7 @@ async fn fetch_handler(
     .and_then(|value| value.to_str().ok())
     .map(|value| value.to_string());
 
-  let creds = get_fetch_payload(store_name, token_secret).await?;
+  let creds = get_fetch_payload(store_name, path.clone(), token_secret).await?;
   let client = creds.client().await.map_err(FetcherError::StoreInitError)?;
 
   let response = fetch_path_from_client(&client, path).await?;

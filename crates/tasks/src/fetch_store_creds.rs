@@ -25,15 +25,18 @@ impl rope::Task for FetchStoreCredsTask {
         })?
       }
       store_name => {
-        db.fetch_store_by_name(&slugger::StrictSlug::new(store_name))
-          .await
-          .map_err(|e| {
-            CredsFetchingError::SurrealDbStoreRetrievalError(e.to_string())
-          })?
-          .ok_or_else(|| {
-            CredsFetchingError::NoMatchingStore(store_name.to_string())
-          })?
-          .config
+        db.fetch_model_by_index::<models::Store>(
+          "name",
+          &slugger::StrictSlug::new(store_name).into(),
+        )
+        .await
+        .map_err(|e| {
+          CredsFetchingError::SurrealDbStoreRetrievalError(e.to_string())
+        })?
+        .ok_or_else(|| {
+          CredsFetchingError::NoMatchingStore(store_name.to_string())
+        })?
+        .config
       }
     };
 

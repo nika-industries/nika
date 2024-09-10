@@ -1,5 +1,7 @@
 //! TiKV key-value store implementation.
 
+use std::mem::ManuallyDrop;
+
 use crate::{
   key::Key, value::Value, KvPrimitive, KvResult, KvTransaction, KvTransactional,
 };
@@ -27,18 +29,22 @@ impl KvTransactional for TikvClient {
   async fn begin_optimistic_transaction(
     &self,
   ) -> KvResult<Self::OptimisticTransaction> {
-    Ok(TikvTransaction(self.0.begin_optimistic().await?))
+    Ok(TikvTransaction(ManuallyDrop::new(
+      self.0.begin_optimistic().await?,
+    )))
   }
 
   async fn begin_pessimistic_transaction(
     &self,
   ) -> KvResult<Self::PessimisticTransaction> {
-    Ok(TikvTransaction(self.0.begin_pessimistic().await?))
+    Ok(TikvTransaction(ManuallyDrop::new(
+      self.0.begin_pessimistic().await?,
+    )))
   }
 }
 
 /// TiKV transaction.
-pub struct TikvTransaction(tikv_client::Transaction);
+pub struct TikvTransaction(ManuallyDrop<tikv_client::Transaction>);
 
 impl KvPrimitive for TikvTransaction {
   async fn get(&mut self, key: &Key) -> KvResult<Option<Value>> {

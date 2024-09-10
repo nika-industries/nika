@@ -23,17 +23,27 @@ impl<T: KvTransactional> DbConnection<T> {
       org:  org.id,
     };
 
-    let albert_store = models::Store {
+    let local_file_store = models::Store {
       id:     models::StoreRecordId(
         models::Ulid::from_str("01J53YYCCJW4B4QBM1CG0CHAMP").unwrap(),
       ),
       config: models::StorageCredentials::Local(
         models::LocalStorageCredentials(
-          std::path::PathBuf::from_str("/tmp/albert-store").unwrap(),
+          std::path::PathBuf::from_str("/tmp/local-store").unwrap(),
         ),
+      ),
+      name:   models::StrictSlug::confident("local-file-store"),
+      public: false,
+      org:    org.id,
+    };
+
+    let albert_cache = models::Cache {
+      id:     models::CacheRecordId(
+        models::Ulid::from_str("01J799MSHXPPY5RJ8KGHVR9GWQ").unwrap(),
       ),
       name:   models::StrictSlug::confident("albert"),
       public: false,
+      store:  local_file_store.id,
       org:    org.id,
     };
 
@@ -47,13 +57,13 @@ impl<T: KvTransactional> DbConnection<T> {
       ),
       perms:    models::PermissionSet(
         vec![
-          models::Permission::StorePermission {
-            store_id:   albert_store.id,
-            permission: models::StorePermissionType::Read,
+          models::Permission::CachePermission {
+            store_id:   local_file_store.id,
+            permission: models::CachePermissionType::Read,
           },
-          models::Permission::StorePermission {
-            store_id:   albert_store.id,
-            permission: models::StorePermissionType::Write,
+          models::Permission::CachePermission {
+            store_id:   local_file_store.id,
+            permission: models::CachePermissionType::Write,
           },
         ]
         .into_iter()
@@ -65,7 +75,8 @@ impl<T: KvTransactional> DbConnection<T> {
 
     self.create_model(&org).await?;
     self.create_model(&user).await?;
-    self.create_model(&albert_store).await?;
+    self.create_model(&local_file_store).await?;
+    self.create_model(&albert_cache).await?;
     self.create_model(&omnitoken_token).await?;
 
     Ok(())

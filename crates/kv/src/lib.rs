@@ -11,7 +11,7 @@ use self::{key::Key, value::Value};
 
 /// Re-exports commonly used types and traits.
 pub mod prelude {
-  pub use slugger::StrictSlug;
+  pub use slugger::*;
 
   #[cfg(feature = "tikv")]
   pub use crate::tikv::TikvClient;
@@ -22,17 +22,18 @@ pub mod prelude {
 }
 
 /// Represents errors that can occur when interacting with a key-value store.
-#[derive(Debug, Clone, thiserror::Error)]
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
 pub enum KvError {
   /// An error occurred in the underlying platform.
   #[error("platform error: {0}")]
-  PlatformError(String),
+  #[diagnostic(transparent)]
+  PlatformError(miette::Report),
 }
 
 #[cfg(feature = "tikv")]
 impl From<tikv_client::Error> for KvError {
   fn from(error: tikv_client::Error) -> Self {
-    KvError::PlatformError(error.to_string())
+    KvError::PlatformError(miette::Report::from_err(error))
   }
 }
 

@@ -13,26 +13,26 @@
     };
     crane.url = "https://flakehub.com/f/ipetkov/crane/0.18.tar.gz";
     nix-filter.url = "github:numtide/nix-filter";
+    mkshell-minimal.url = "github:viperML/mkshell-minimal";
   };
 
-  outputs = { self, nixpkgs, wrangler, rust-overlay, crane, nix-filter, flake-utils }: 
+  outputs = { nixpkgs, wrangler, rust-overlay, crane, nix-filter, mkshell-minimal, flake-utils, ... }: 
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
         };
+        mkShell = mkshell-minimal pkgs;
         filter = nix-filter.lib;
 
         src = filter {
           root = ./.;
           include = [
-            "crates"
-            "Cargo.toml"
-            "Cargo.lock"
-            (filter.matchExt "toml")
-            ".cargo"
-            "media"
+            "crates" "Cargo.toml" "Cargo.lock" # typical rust source
+            ".cargo" # extra rust config
+            (filter.matchExt "toml") # extra toml used by other projects
+            "media" # static assets
           ];
         };
 
@@ -41,7 +41,7 @@
         });
         dev-toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
-          targets = [ "wasm32-unknown-unknown" ];
+          # targets = [ "wasm32-unknown-unknown" ];
         });
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
@@ -80,14 +80,16 @@
 
         tikv = (import ./nix/tikv.nix) { inherit pkgs; };
       in {
-        devShells.default = pkgs.mkShell {
+        devShells.default = mkShell {
           nativeBuildInputs = with pkgs; [
+            # toolchain with the current pkgs
             (dev-toolchain pkgs)
 
-            # basic libraries
+            # libraries used in local rust builds
             pkg-config
             openssl
 
+            # dev tools
             mprocs # parallel process execution
             bacon # change detection
             cargo-nextest # testing
@@ -99,7 +101,11 @@
             worker-build
             wasm-pack
 
-            redis
+            # service runtimes
+            # redis
+            # we don't use these directly but we keep them here to avoid
+            # garbage collection for the docker images
+            tikv.tikv-server tikv.pd-server
           ];
         };
         packages = {} // crates // tikv;
@@ -110,6 +116,7 @@
           });
           docs = craneLib.cargoDoc (common-args // {
             inherit cargoArtifacts;
+            RUSTDOCFLAGS = "-D warnings";
           });
           nextest = craneLib.cargoNextest (common-args // {
             inherit cargoArtifacts;

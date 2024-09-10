@@ -2,20 +2,29 @@
 
 use std::{fmt, sync::LazyLock};
 
-use slugger::{LaxSlug, StrictSlug};
+use slugger::{EitherSlug, LaxSlug, StrictSlug};
 use smallvec::SmallVec;
 use starc::Starc;
 
-/// Either a strict or lax slug.
+/// A segment; either a strict or lax slug.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum EitherSlug {
+pub enum Segment {
   /// A strict slug.
   Strict(Starc<StrictSlug>),
   /// A lax slug.
   Lax(Starc<LaxSlug>),
 }
 
-impl fmt::Display for EitherSlug {
+impl From<EitherSlug> for Segment {
+  fn from(slug: EitherSlug) -> Self {
+    match slug {
+      EitherSlug::Strict(slug) => Self::Strict(Starc::new_owned(slug)),
+      EitherSlug::Lax(slug) => Self::Lax(Starc::new_owned(slug)),
+    }
+  }
+}
+
+impl fmt::Display for Segment {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Strict(slug) => write!(f, "{}", slug),
@@ -26,35 +35,26 @@ impl fmt::Display for EitherSlug {
 
 /// A key for use with a store, consisting of a collection of segments.
 ///
-/// Invariants enforced by this type:
-/// - The first segment is always present.
-/// - All segments are [`Slug`]s.
-///
-/// Invariants enforced by the [`Slug`] type:
-/// - Consists of only a-z, 0-9, and ‘-’.
-/// - Never contains more than one ‘-’ in a row.
-/// - Will never start or end with ‘-’.
-///
 /// [`Key`] implements [`Display`](fmt::Display), where the key is displayed as
 /// a string with segments separated by colons.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Key {
-  first_segment: EitherSlug,
-  segments:      SmallVec<[EitherSlug; 6]>,
+  first_segment: Segment,
+  segments:      SmallVec<[Segment; 6]>,
 }
 
 impl Key {
   /// Create a new key with the given segment.
   pub fn new(segment: impl Into<Starc<StrictSlug>>) -> Self {
     Self {
-      first_segment: EitherSlug::Strict(segment.into()),
+      first_segment: Segment::Strict(segment.into()),
       segments:      SmallVec::new(),
     }
   }
   /// Create a new key with the given `LazyLock` segment.
   pub fn new_lazy(segment: &'static LazyLock<StrictSlug>) -> Self {
     Self {
-      first_segment: EitherSlug::Strict(Starc::new_lazy(segment)),
+      first_segment: Segment::Strict(Starc::new_lazy(segment)),
       segments:      SmallVec::new(),
     }
   }
@@ -65,9 +65,15 @@ impl Key {
     self
   }
 
+  /// Add a new segment that's either strict or lax.
+  pub fn with_either(mut self, segment: impl Into<Segment>) -> Self {
+    self.segments.push(segment.into());
+    self
+  }
+
   /// Push a new segment onto the key.
   pub fn push(&mut self, segment: impl Into<Starc<StrictSlug>>) {
-    self.segments.push(EitherSlug::Strict(segment.into()));
+    self.segments.push(Segment::Strict(segment.into()));
   }
 
   /// Create a new key by pushing a segment onto the given key.
@@ -78,7 +84,7 @@ impl Key {
   }
 
   /// Get the segment at the given index, if it exists.
-  pub fn get(&self, index: usize) -> Option<&EitherSlug> {
+  pub fn get(&self, index: usize) -> Option<&Segment> {
     match index {
       0 => Some(&self.first_segment),
       i => self.segments.get(i - 1),
@@ -86,7 +92,7 @@ impl Key {
   }
 
   /// Get an iterator over the segments of the key.
-  pub fn segments(&self) -> impl Iterator<Item = &EitherSlug> {
+  pub fn segments(&self) -> impl Iterator<Item = &Segment> {
     std::iter::once(&self.first_segment).chain(self.segments.iter())
   }
 }
@@ -149,13 +155,13 @@ mod tests {
   #[test]
   fn key_get() {
     let key = Key::new(&A);
-    assert_eq!(key.get(0), Some(&EitherSlug::Strict(Starc::new_lazy(&A))));
+    assert_eq!(key.get(0), Some(&Segment::Strict(Starc::new_lazy(&A))));
     assert_eq!(key.get(1), None);
 
     let mut key = Key::new(&A);
     key.push(&B);
-    assert_eq!(key.get(0), Some(&EitherSlug::Strict(Starc::new_lazy(&A))));
-    assert_eq!(key.get(1), Some(&EitherSlug::Strict(Starc::new_lazy(&B))));
+    assert_eq!(key.get(0), Some(&Segment::Strict(Starc::new_lazy(&A))));
+    assert_eq!(key.get(1), Some(&Segment::Strict(Starc::new_lazy(&B))));
     assert_eq!(key.get(2), None);
   }
 }

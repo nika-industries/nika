@@ -16,6 +16,14 @@ pub enum InternalError {
   /// An error occurred while querying surreal.
   #[error("SurrealDB query error: {0}")]
   SurrealDbQueryError(String),
+  /// The model matching a given ID is missing.
+  #[error("Missing model error: {model_name:?} for {model_id:?} is missing")]
+  MissingModelError {
+    /// The name of the model.
+    model_name: String,
+    /// The ID of the model.
+    model_id:   String,
+  },
 }
 
 impl MolluskError for InternalError {
@@ -27,19 +35,19 @@ impl MolluskError for InternalError {
   }
 }
 
-/// An error that occurs when the store does not exist.
+/// An error that occurs when the cache does not exist.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
-#[error("The store does not exist: {0:?}")]
-pub struct NoMatchingStoreError(pub String);
+#[error("The cache does not exist: {0:?}")]
+pub struct NoMatchingCacheError(pub String);
 
-impl MolluskError for NoMatchingStoreError {
+impl MolluskError for NoMatchingCacheError {
   fn status_code(&self) -> StatusCode { StatusCode::NOT_FOUND }
-  fn slug(&self) -> &'static str { "missing-store" }
+  fn slug(&self) -> &'static str { "missing-cache" }
   fn description(&self) -> String {
-    format!("The store {:?} does not exist.", self.0)
+    format!("The cache {:?} does not exist.", self.0)
   }
   fn tracing(&self) {
-    tracing::warn!("requested store does not exist: {:?}", self.0);
+    tracing::warn!("requested cache does not exist: {:?}", self.0);
   }
 }
 
@@ -71,7 +79,7 @@ pub struct UnauthorizedStoreAccessError {
   /// The name of the store.
   pub store_name: String,
   /// The required permission.
-  pub permission: models::StorePermissionType,
+  pub permission: models::CachePermissionType,
 }
 
 impl MolluskError for UnauthorizedStoreAccessError {
@@ -128,5 +136,24 @@ impl MolluskError for NonExistentTokenError {
   }
   fn tracing(&self) {
     tracing::warn!("supplied token does not exist: {:?}", self.token);
+  }
+}
+
+/// An error that occurs when the path is missing.
+#[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
+#[error("The path is missing: {path:?}")]
+pub struct MissingPathError {
+  /// The missing path.
+  pub path: String,
+}
+
+impl MolluskError for MissingPathError {
+  fn status_code(&self) -> StatusCode { StatusCode::BAD_REQUEST }
+  fn slug(&self) -> &'static str { "missing-path" }
+  fn description(&self) -> String {
+    format!("The path {:?} is missing.", self.path)
+  }
+  fn tracing(&self) {
+    tracing::warn!("missing path: {:?}", self.path);
   }
 }

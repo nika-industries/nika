@@ -3,43 +3,43 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use slugger::StrictSlug;
 
-use crate::{Model, OrgRecordId, StorageCredentials};
+use crate::{Model, OrgRecordId, StoreRecordId};
 
-/// The [`Store`] table name.
-pub const STORE_TABLE_NAME: &str = "store";
+/// The [`Cache`] table name.
+pub const CACHE_TABLE_NAME: &str = "cache";
 
-/// A [`Store`] record ID.
+/// A [`Cache`] record ID.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct StoreRecordId(pub ulid::Ulid);
+pub struct CacheRecordId(pub ulid::Ulid);
 
-impl From<StoreRecordId> for ulid::Ulid {
-  fn from(id: StoreRecordId) -> ulid::Ulid { id.0 }
+impl From<CacheRecordId> for ulid::Ulid {
+  fn from(id: CacheRecordId) -> ulid::Ulid { id.0 }
 }
 
-impl fmt::Display for StoreRecordId {
+impl fmt::Display for CacheRecordId {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
   }
 }
 
-/// A store.
+/// A cache.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Store {
-  /// The store's ID.
-  pub id:     StoreRecordId,
-  /// The store's nickname.
+pub struct Cache {
+  /// The cache's ID.
+  pub id:     CacheRecordId,
+  /// The cache's nickname.
   pub name:   StrictSlug,
-  /// The store's credentials.
-  pub config: StorageCredentials,
   /// Whether the store is public.
   pub public: bool,
+  /// The cache's backing store.
+  pub store:  StoreRecordId,
   /// The [`Org`](crate::Org) the store belongs to.
   pub org:    OrgRecordId,
 }
 
-impl Model for Store {
-  type Id = StoreRecordId;
-  const TABLE_NAME: &'static str = STORE_TABLE_NAME;
+impl Model for Cache {
+  type Id = CacheRecordId;
+  const TABLE_NAME: &'static str = CACHE_TABLE_NAME;
   const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
     &[("name", |s| s.name.clone().into())];
 

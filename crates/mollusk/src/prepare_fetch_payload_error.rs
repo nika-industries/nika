@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
   common::{
-    NoMatchingStoreError, UnauthenticatedStoreAccessError,
+    NoMatchingCacheError, UnauthenticatedStoreAccessError,
     UnauthorizedStoreAccessError,
   },
-  InternalError, MalformedTokenSecretError, MolluskError,
+  InternalError, MalformedTokenSecretError, MissingPathError, MolluskError,
   NonExistentTokenError,
 };
 
@@ -16,7 +16,7 @@ use crate::{
 pub enum PrepareFetchPayloadError {
   /// No matching store was found.
   #[error(transparent)]
-  NoMatchingStore(#[from] NoMatchingStoreError),
+  NoMatchingStore(#[from] NoMatchingCacheError),
   /// The store access was unauthenticated (no token supplied).
   #[error(transparent)]
   UnauthenticatedStoreAccess(#[from] UnauthenticatedStoreAccessError),
@@ -29,6 +29,9 @@ pub enum PrepareFetchPayloadError {
   /// The token secret was malformed.
   #[error(transparent)]
   MalformedTokenSecret(#[from] MalformedTokenSecretError),
+  /// The path is missing.
+  #[error(transparent)]
+  MissingPath(#[from] MissingPathError),
   /// Internal error
   #[error(transparent)]
   InternalError(#[from] InternalError),
@@ -41,5 +44,6 @@ crate::delegate_mollusk_error!(
   UnauthorizedStoreAccess,
   NonExistentToken,
   MalformedTokenSecret,
+  MissingPath,
   InternalError,
 );
