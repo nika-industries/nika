@@ -32,13 +32,13 @@ async fn prepare_fetch_payload(
 
 #[tracing::instrument(skip(db, payload))]
 async fn naive_upload(
-  Path((store_name, path)): Path<(String, String)>,
+  Path((cache_name, path)): Path<(String, String)>,
   State(db): State<db::TikvDb>,
   payload: temp_storage_payload::TempStoragePayload,
 ) -> impl IntoResponse {
   let payload_path = payload.upload().await.unwrap();
   tasks::NaiveUploadTask {
-    store_name,
+    cache_name,
     path: path.into(),
     temp_storage_path: payload_path,
   }
