@@ -2,6 +2,7 @@
   description = "Provides basic Rust toolchain support.";
 
   inputs = {
+    flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     wrangler = {
       url = "github:ulrikstrid/nix-wrangler";
@@ -16,7 +17,7 @@
     mkshell-minimal.url = "github:viperML/mkshell-minimal";
   };
 
-  outputs = { nixpkgs, wrangler, rust-overlay, crane, nix-filter, mkshell-minimal, flake-utils, ... }: 
+  outputs = inputs @ { flake-parts, nixpkgs, wrangler, rust-overlay, crane, nix-filter, mkshell-minimal, flake-utils, ... }: 
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
