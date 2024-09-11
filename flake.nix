@@ -17,15 +17,18 @@
     mkshell-minimal.url = "github:viperML/mkshell-minimal";
   };
 
-  outputs = inputs @ { flake-parts, nixpkgs, wrangler, rust-overlay, crane, nix-filter, mkshell-minimal, flake-utils, ... }: 
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = inputs: 
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "aarch64-linux" ];
+    # flake-utils.lib.eachDefaultSystem (system:
+    perSystem = { config, self', inputs', system, ... }:
       let
-        pkgs = import nixpkgs {
+        pkgs = import inputs.nixpkgs {
           inherit system;
-          overlays = [ (import rust-overlay) ];
+          overlays = [ (import inputs.rust-overlay) ];
         };
-        mkShell = mkshell-minimal pkgs;
-        filter = nix-filter.lib;
+        mkShell = inputs.mkshell-minimal pkgs;
+        filter = inputs.nix-filter.lib;
 
         src = filter {
           root = ./.;
@@ -45,7 +48,7 @@
           # targets = [ "wasm32-unknown-unknown" ];
         });
 
-        craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
+        craneLib = (inputs.crane.mkLib pkgs).overrideToolchain toolchain;
 
         common-args = {
           inherit src;
@@ -98,7 +101,7 @@
 
             # cf worker deployment
             yarn
-            wrangler.packages.${system}.wrangler
+            inputs'.wrangler.packages.wrangler
             worker-build
             wasm-pack
 
@@ -129,5 +132,6 @@
 
           inherit (crates) fetcher api daemon;
         };
-      });
+      };
+    };
 }
