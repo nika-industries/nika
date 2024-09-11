@@ -25,8 +25,8 @@
     in [
       (importApply ./flake-modules/nixpkgs { })
       (importApply ./flake-modules/tikv { })
-      (importApply ./flake-modules/rust-builds { inherit inputs; })
-      (importApply ./flake-modules/devshell { inherit inputs; })
+      (importApply ./flake-modules/rust-builds { })
+      (importApply ./flake-modules/devshell { })
     ];
   });
 }

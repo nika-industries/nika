@@ -1,6 +1,6 @@
-localFlake: { ... }: {
+localFlake: { inputs, ... }: {
   perSystem = { pkgs, inputs', config, ... }: let
-    mkShell = localFlake.inputs.mkshell-minimal pkgs;
+    mkShell = inputs.mkshell-minimal pkgs;
   in {
     devShells.default = mkShell {
       nativeBuildInputs = with pkgs; [
