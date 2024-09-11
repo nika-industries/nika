@@ -18,23 +18,17 @@
   };
 
   outputs = inputs: 
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ flake-parts-lib, withSystem, ... }: {
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ flake-parts-lib, ... }: {
       systems = [ "aarch64-linux" ];
 
       imports = let
-        pkgsSetModule = localFlake: { ... }: {
-          perSystem = { system, ... }: {
-            config._module.args.pkgs = import localFlake.inputs.nixpkgs {
-              inherit system;
-              overlays = [ (import localFlake.inputs.rust-overlay) ];
-            };
-          };
-        };
+        inherit (flake-parts-lib) importApply;
       in [
-        (pkgsSetModule { inherit inputs withSystem; })
+        (importApply ./flake-modules/nixpkgs { })
       ];
       
-      perSystem = { config, self', inputs', system, pkgs, ... }: let
+      # args with a `prime` have the system pre-selected
+      perSystem = { config, inputs, inputs', system, pkgs, ... }: let
         mkShell = inputs.mkshell-minimal pkgs;
         filter = inputs.nix-filter.lib;
 
