@@ -1,6 +1,6 @@
-localFlake: { ... }: {
+localFlake: { inputs, ... }: {
   perSystem = { pkgs, ... }: let
-    filter = localFlake.inputs.nix-filter.lib;
+    filter = inputs.nix-filter.lib;
 
     # configure the source
     src = filter {
@@ -23,7 +23,7 @@ localFlake: { ... }: {
     });
 
     # configure crane to use the CI toolchain
-    craneLib = (localFlake.inputs.crane.mkLib pkgs).overrideToolchain toolchain;
+    craneLib = (inputs.crane.mkLib pkgs).overrideToolchain toolchain;
 
     # arguments shared by all rust packages we build
     common-args = {

@@ -14,7 +14,7 @@
     };
     crane.url = "https://flakehub.com/f/ipetkov/crane/0.18.tar.gz";
     nix-filter.url = "github:numtide/nix-filter";
-    mkshell-minimal.url = "github:viperML/mkshell-minimal";
+    devshell.url = "github:numtide/devshell";
   };
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (top @ { ... }: {
@@ -25,8 +25,8 @@
     in [
       (importApply ./flake-modules/nixpkgs { })
       (importApply ./flake-modules/tikv { })
-      (importApply ./flake-modules/rust-builds { inherit inputs; })
-      (importApply ./flake-modules/devshell { inherit inputs; })
+      (importApply ./flake-modules/rust-builds { })
+      (importApply ./flake-modules/devshell { })
     ];
   });
 }
