@@ -17,6 +17,24 @@
         "url": "https://flakehub.com/f/ipetkov/crane/0.18.tar.gz"
       }
     },
+    "devshell": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1722113426,
+        "narHash": "sha256-Yo/3loq572A8Su6aY5GP56knpuKYRvM2a1meP9oJZCw=",
+        "owner": "numtide",
+        "repo": "devshell",
+        "rev": "67cce7359e4cd3c45296fb4aaf6a19e2a9c757ae",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "devshell",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -32,21 +50,6 @@
       "original": {
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "type": "github"
-      }
-    },
-    "mkshell-minimal": {
-      "locked": {
-        "lastModified": 1700988624,
-        "narHash": "sha256-KJyiF67zVYOBkNltKhJATfSj+gfRFX9dSFIWDEBy2nQ=",
-        "owner": "viperML",
-        "repo": "mkshell-minimal",
-        "rev": "6b0868be06da900b5fe6ece05616b84e3cbd7944",
-        "type": "github"
-      },
-      "original": {
-        "owner": "viperML",
-        "repo": "mkshell-minimal",
         "type": "github"
       }
     },
@@ -95,6 +98,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1722073938,
+        "narHash": "sha256-OpX0StkL8vpXyWOGUD6G+MA26wAXK6SpT94kLJXo6B4=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e36e9f57337d0ff0cf77aceb58af4c805472bfae",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1725534445,
         "narHash": "sha256-Yd0FK9SkWy+ZPuNqUgmVPXokxDgMJoGuNpMEtkfcf84=",
         "owner": "NixOS",
@@ -112,10 +131,10 @@
     "root": {
       "inputs": {
         "crane": "crane",
+        "devshell": "devshell",
         "flake-parts": "flake-parts",
-        "mkshell-minimal": "mkshell-minimal",
         "nix-filter": "nix-filter",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs_3",
         "rust-overlay": "rust-overlay",
         "wrangler": "wrangler"
       }
