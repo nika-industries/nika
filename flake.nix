@@ -18,15 +18,23 @@
   };
 
   outputs = inputs: 
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ flake-parts-lib, withSystem, ... }: {
       systems = [ "aarch64-linux" ];
-    # flake-utils.lib.eachDefaultSystem (system:
-    perSystem = { config, self', inputs', system, ... }:
-      let
-        pkgs = import inputs.nixpkgs {
-          inherit system;
-          overlays = [ (import inputs.rust-overlay) ];
+
+      imports = let
+        pkgsSetModule = localFlake: { ... }: {
+          perSystem = { system, ... }: {
+            config._module.args.pkgs = import localFlake.inputs.nixpkgs {
+              inherit system;
+              overlays = [ (import localFlake.inputs.rust-overlay) ];
+            };
+          };
         };
+      in [
+        (pkgsSetModule { inherit inputs withSystem; })
+      ];
+      
+      perSystem = { config, self', inputs', system, pkgs, ... }: let
         mkShell = inputs.mkshell-minimal pkgs;
         filter = inputs.nix-filter.lib;
 
@@ -133,5 +141,5 @@
           inherit (crates) fetcher api daemon;
         };
       };
-    };
+    });
 }
