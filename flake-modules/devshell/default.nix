@@ -23,10 +23,8 @@ localFlake: { ... }: {
         worker-build
         wasm-pack
 
-        # service runtimes
-        # redis
-        # we don't use these directly but we keep them here to avoid
-        # garbage collection for the docker images
+        # we don't use these from the shell but we keep them here to avoid
+        #   garbage collection for the docker images
         config.packages.tikv-server config.packages.pd-server
       ];
     };
