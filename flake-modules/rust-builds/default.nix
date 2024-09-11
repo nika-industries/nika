@@ -1,5 +1,5 @@
 localFlake: { ... }: {
-  perSystem = { system, pkgs, ... }: let
+  perSystem = { pkgs, ... }: let
     filter = localFlake.inputs.nix-filter.lib;
 
     # configure the source
