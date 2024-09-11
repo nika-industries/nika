@@ -25,6 +25,7 @@
         inherit (top.flake-parts-lib) importApply;
       in [
         (importApply ./flake-modules/nixpkgs { })
+        (importApply ./flake-modules/tikv { })
       ];
       
       # args with a `prime` have the system pre-selected
@@ -84,7 +85,7 @@
           daemon = build-crate "daemon";
         };
 
-        tikv = (import ./nix/tikv.nix) { inherit pkgs; };
+        # tikv = (import ./nix/tikv.nix) { inherit pkgs; };
       in {
         devShells.default = mkShell {
           nativeBuildInputs = with pkgs; [
@@ -111,10 +112,10 @@
             # redis
             # we don't use these directly but we keep them here to avoid
             # garbage collection for the docker images
-            tikv.tikv-server tikv.pd-server
+            config.packages.tikv-server config.packages.pd-server
           ];
         };
-        packages = {} // crates // tikv;
+        packages = {} // crates;
         checks = {
           clippy = craneLib.cargoClippy (common-args // {
             inherit cargoArtifacts;
