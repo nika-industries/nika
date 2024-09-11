@@ -18,17 +18,17 @@
   };
 
   outputs = inputs: 
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ flake-parts-lib, ... }: {
-      systems = [ "aarch64-linux" ];
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (top @ { ... }: {
+      systems = [ "x86_64-linux" "aarch64-linux" ];
 
       imports = let
-        inherit (flake-parts-lib) importApply;
+        inherit (top.flake-parts-lib) importApply;
       in [
         (importApply ./flake-modules/nixpkgs { })
       ];
       
       # args with a `prime` have the system pre-selected
-      perSystem = { config, inputs, inputs', system, pkgs, ... }: let
+      perSystem = { config, inputs', system, pkgs, ... }: let
         mkShell = inputs.mkshell-minimal pkgs;
         filter = inputs.nix-filter.lib;
 
