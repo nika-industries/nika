@@ -20,74 +20,22 @@
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (top @ { ... }: {
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
+    debug = true;
     imports = let
       inherit (top.flake-parts-lib) importApply;
     in [
       (importApply ./flake-modules/nixpkgs { })
       (importApply ./flake-modules/tikv { })
+      (importApply ./flake-modules/rust-builds { inherit inputs; })
     ];
     
     # args with a `prime` have the system pre-selected
     perSystem = { config, inputs', system, pkgs, ... }: let
       mkShell = inputs.mkshell-minimal pkgs;
-      filter = inputs.nix-filter.lib;
-
-      src = filter {
-        root = ./.;
-        include = [
-          "crates" "Cargo.toml" "Cargo.lock" # typical rust source
-          ".cargo" # extra rust config
-          (filter.matchExt "toml") # extra toml used by other projects
-          "media" # static assets
-        ];
-      };
-
-      toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.minimal.override {
-        extensions = [ "rustfmt" "clippy" ];
-      });
-      dev-toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
-        extensions = [ "rust-src" "rust-analyzer" ];
-        # targets = [ "wasm32-unknown-unknown" ];
-      });
-
-      craneLib = (inputs.crane.mkLib pkgs).overrideToolchain toolchain;
-
-      common-args = {
-        inherit src;
-        strictDeps = true;
-
-        pname = "nika";
-        version = "0.1";
-        doCheck = false;
-
-        nativeBuildInputs = with pkgs; [
-          pkg-config
-        ];
-        buildInputs = with pkgs; [
-          openssl
-        ];
-      };
-
-      cargoArtifacts = craneLib.buildDepsOnly common-args;
-
-      individual-crate-args = crate-name: common-args // {
-        inherit cargoArtifacts;
-        pname = crate-name;
-        cargoExtraArgs = "-p ${crate-name}";
-      };
-
-      build-crate = name: craneLib.buildPackage (individual-crate-args name);
-
-      crates = {
-        fetcher = build-crate "fetcher";
-        api = build-crate "api";
-        daemon = build-crate "daemon";
-      };
     in {
       devShells.default = mkShell {
         nativeBuildInputs = with pkgs; [
-          # toolchain with the current pkgs
-          (dev-toolchain pkgs)
+          config.packages.dev-toolchain
 
           # libraries used in local rust builds
           pkg-config
@@ -111,26 +59,6 @@
           # garbage collection for the docker images
           config.packages.tikv-server config.packages.pd-server
         ];
-      };
-      packages = {} // crates;
-      checks = {
-        clippy = craneLib.cargoClippy (common-args // {
-          inherit cargoArtifacts;
-          cargoClippyExtraArgs = "--all-targets -- --deny warnings";
-        });
-        docs = craneLib.cargoDoc (common-args // {
-          inherit cargoArtifacts;
-          RUSTDOCFLAGS = "-D warnings";
-        });
-        nextest = craneLib.cargoNextest (common-args // {
-          inherit cargoArtifacts;
-          partitions = 1;
-          partitionType = "count";
-        });
-        fmt = craneLib.cargoFmt common-args;
-        deny = craneLib.cargoDeny common-args;
-
-        inherit (crates) fetcher api daemon;
       };
     };
   });
