@@ -1,6 +1,11 @@
 localFlake: { ... }: {
   perSystem = { pkgs, inputs', config, ... }: let
     mkShell = pkgs.devshell.mkShell;
+
+    # note; there's a UTF-8 control character in the esc string below
+    esc = "";
+    boldGreen = s: "${esc}[32;1m${s}${esc}[0m";
+    boldRed = s: "${esc}[31;1m${s}${esc}[0m";
   in {
     devShells.default = mkShell {
       packages = with pkgs; [
@@ -35,33 +40,10 @@ localFlake: { ... }: {
       ];
 
       motd = "
-
-    ######################################################################
-    #                                                                    #
-    #                      '0WWk.  ;KWX0:                                #
-    #                      .d00l.  ;XMNKc                                #
-    #                        ..    ;XMNKc                                #
-    #    cc;..;lodol;.      ,cc'   ;XMNKc      ':cc,     .;coodol:'      #
-    #    MMXk0XXXXWMWKc.   .OMMd.  ;XMNKc    'dXWXd'   .oKWWK00KNWNk;    #
-    #    MMMKo,...;xNMNl   .OMMd.  ;XMNKc  'dXWXd'    .kWWO:.  .'xNMX    #
-    #    MMNc      .xMMO.  .OMMd.  ;XMNKl'oXWXx'      .,:;.     .cXMM    #
-    #    MMK,       oWM0'  .OMMd.  ;XMWNXXMMNo.         .,cldxkO0XWMM    #
-    #    MMK,       oWM0'  .OMMd.  ;XMMMW0ONMXo.      .oKWNKkxolcoXMM    #
-    #    MMK,       oWM0'  .OMMd.  ;XMWXd..:0WWO;     oWMKc.     ,KMM    #
-    #    MMK,       oWM0'  .OMMd.  ;XMNKc   .dXMNd.   oWMK;     ,kWMM    #
-    #    MMK,       oWM0'  .OMMd.  ;KMNKc     ;OWW0c. .kNWXOxxxO00NMM    #
-    #    NWO'       lNNO.  .xNNo.  ,0WKO:      'kNNK:  .l0WMMMW0:;ONN    #
-    #                                                                    #
-    ######################################################################
- 
-    Welcome to the nika dev shell! Below are some commands you can run.
-$(type -p menu &>/dev/null && menu)
+  Welcome to the ${boldGreen "nika"} dev shell. Run the ${boldRed "menu"} command to see available actions.
       ";
 
       commands = let
-        # note; there's a UTF-8 control character in the esc string below
-        esc = "";
-        boldRed = s: "${esc}[31;1m${s}${esc}[0m";
         perBinaryCommands = binary: [
           {
             name = binary;
