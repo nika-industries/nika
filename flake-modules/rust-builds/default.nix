@@ -3,7 +3,7 @@ localFlake: { ... }: {
     filter = localFlake.inputs.nix-filter.lib;
 
     src = filter {
-      root = ./.;
+      root = ../../.;
       include = [
         "crates" "Cargo.toml" "Cargo.lock" # typical rust source
         ".cargo" # extra rust config
