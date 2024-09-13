@@ -19,13 +19,21 @@
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (top @ { ... }: {
     systems = [ "x86_64-linux" "aarch64-linux" ];
+    debug = true;
 
     imports = let
       inherit (top.flake-parts-lib) importApply;
     in [
+      # configures an "images" flake output for OCI images
+      (importApply ./flake-modules/images-output { })
+      # configures nixpkgs with overlays
       (importApply ./flake-modules/nixpkgs { })
+      # builds tikv packages and images
       (importApply ./flake-modules/tikv { })
+      # builds workspace rust packages
       (importApply ./flake-modules/rust-builds { })
+      # defines e2e tests as nix checks
+      # defines devshell
       (importApply ./flake-modules/devshell { })
     ];
   });
