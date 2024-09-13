@@ -1,16 +1,17 @@
 localFlake: { ... }: {
   perSystem = { system, pkgs, ... }: let
-    version = "8.1.1";
-    arch = { x86_64-linux = "amd64"; aarch64-linux = "arm64"; }.${system};
-    url = "https://download.pingcap.org/tidb-community-server-v${version}-linux-${arch}.tar.gz";
 
-    full-archive = pkgs.fetchzip {
-      url = url;
-      hash = "sha256-ZtFqm4PllBRIGiRLzBynWvdcmegXD8WMPzknXwJYKBg=";
-    };
-
-    make-binary = name: let
+    makeBinary = name: let
       pname = "${name}-server";
+      version = "8.1.1";
+
+      arch = { x86_64-linux = "amd64"; aarch64-linux = "arm64"; }.${system};
+      url = "https://download.pingcap.org/tidb-community-server-v${version}-linux-${arch}.tar.gz";
+
+      full-archive = pkgs.fetchzip {
+        url = url;
+        hash = "sha256-ZtFqm4PllBRIGiRLzBynWvdcmegXD8WMPzknXwJYKBg=";
+      };
     in pkgs.stdenv.mkDerivation {
       inherit pname version;
     
@@ -31,16 +32,15 @@ localFlake: { ... }: {
       '';
     };
 
-    make-docker-image = name: let
-      binary = make-binary name;
+    makeDockerImage = binary: let
     in pkgs.dockerTools.buildLayeredImage {
-      name = "${name}-server";
-      tag = version;
+      name = "${binary.pname}-server";
+      tag = binary.version;
 
       contents = [ pkgs.tzdata ];
 
       config = {
-        Cmd = [ "${binary}/bin/${name}-server" ];
+        Cmd = [ "${binary}/bin/${binary.pname}-server" ];
         Entrypoint = [ "${pkgs.tini}/bin/tini" ];
         Env = [
           "RUST_BACKTRACE=1"
@@ -48,6 +48,8 @@ localFlake: { ... }: {
         ];
       };
 
+      # tikv and pd need to use the tmp directory, but nothing expects to have
+      # to create it.
       extraCommands = ''
         mkdir tmp/
       '';
@@ -55,12 +57,12 @@ localFlake: { ... }: {
 
   in {
     packages = {
-      tikv = make-binary "tikv";
-      pd = make-binary "pd";
+      tikv = makeBinary "tikv";
+      pd = makeBinary "pd";
     };
     images = {
-      tikv = make-docker-image "tikv";
-      pd = make-docker-image "pd";
+      tikv = makeDockerImage "tikv";
+      pd = makeDockerImage "pd";
     };
   };
 }
