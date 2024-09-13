@@ -1,4 +1,6 @@
-{ withSystem }: { pkgs, lib, config, ... }: {
+{ withSystem }: { pkgs, lib, config, ... }: let
+  module-lib = (import ./module-lib.nix) { inherit lib; };
+in {
   options = {
     services.tikv = {
       enable = lib.mkEnableOption "TiKV";
@@ -24,7 +26,7 @@
 
       statusAddr = lib.mkOption {
         type = lib.types.str;
-        default = "20180";
+        default = "127.0.0.1:20180";
         description = "The port through which the TiKV service status is listened";
       };
 
@@ -75,8 +77,11 @@
   config = let
     cfg = config.services.tikv;
 
-    command = pkgs.writeScript "tikv-command" ''
-      TZ=UTC ${cfg.package}/bin/tikv-server \
+    optional-flag = module-lib.optional-flag cfg;
+    optional-array-flag = module-lib.optional-array-flag cfg;
+
+    command = pkgs.writeShellScript "tikv-command" ''
+      ${cfg.package}/bin/tikv-server \
         --addr=${cfg.addr} \
         --advertise-addr=${cfg.advertiseAddr} \
         --status-addr=${cfg.statusAddr} \
@@ -84,15 +89,10 @@
         --capacity=${cfg.capacity} \
         --data-dir=${cfg.dataDir} \
         --log-level=${cfg.logLevel} \
-        --pd=${lib.concatStringsSep "," cfg.pdServers} \
-        ${lib.strings.optionalString (cfg.config != null) "--config=${cfg.config}"} \
-        ${lib.strings.optionalString (cfg.logFile != null) "--log-file=${cfg.logFile}"}
+        ${optional-array-flag "pd" "pdServers"} \
+        ${optional-flag "config" "config"} \
+        ${optional-flag "log-file" "logFile"}
     '';
-    env = (pkgs.buildFHSEnv {
-      name = "tikv-tzdata-env";
-      targetPkgs = pkgs: [ pkgs.tzdata ];
-      runScript = command;
-    });
   in lib.mkIf cfg.enable {
     systemd.services.tikv = {
       description = "TiKV Server";
@@ -101,14 +101,13 @@
 
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${env}/bin/tikv-tzdata-env";
+        ExecStart = command;
         Restart = "on-failure";
       };
-    };
 
-    environment.systemPackages = [ pkgs.tzdata ];
-    environment.variables = {
-      TZ = "UTC";
+      environment = {
+        TZ = "UTC";
+      };
     };
   };
 }

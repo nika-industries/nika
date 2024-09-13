@@ -1,7 +1,7 @@
 localFlake: { withSystem, ... }: {
   flake.nixosModules = {
     tikv = (import ./nixos-modules/tikv.nix) { inherit withSystem; };
-    # pd = (import ./nixos-modules/pd.nix) { inherit withSystem; };
+    pd = (import ./nixos-modules/pd.nix) { inherit withSystem; };
   };
 
   perSystem = { system, pkgs, ... }: let
