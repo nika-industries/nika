@@ -1,4 +1,9 @@
-localFlake: { ... }: {
+localFlake: { withSystem, ... }: {
+  flake.nixosModules = {
+    tikv = (import ./nixos-modules/tikv.nix) { inherit withSystem; };
+    # pd = (import ./nixos-modules/pd.nix) { inherit withSystem; };
+  };
+
   perSystem = { system, pkgs, ... }: let
     makeTikvBinary = (import ./makeTikvBinary.nix) { inherit system pkgs; };
     makeTikvDockerImage = (import ./makeTikvDockerImage.nix) { inherit pkgs; };

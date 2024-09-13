@@ -1,9 +1,13 @@
-localFlake: { ... }: {
+localFlake: { self, ... }: {
   perSystem = { pkgs, ... }: let 
     nixvm-test-minimal = pkgs.testers.runNixOSTest {
       name = "minimal-test";
 
       nodes.machine = { pkgs, ... }: {
+        imports = [ self.nixosModules.tikv ];
+
+        services.tikv.enable = true;
+      
         environment.systemPackages = with pkgs; [
           cowsay
         ];
@@ -12,7 +16,7 @@ localFlake: { ... }: {
       };
 
       testScript = ''
-        machine.wait_for_unit("default.target")
+        machine.wait_for_unit("tikv.service")
         machine.succeed("su -- root -c 'which cowsay'")
       '';
     };
