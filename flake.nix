@@ -33,6 +33,7 @@
       # builds workspace rust packages
       (importApply ./flake-modules/rust-builds { })
       # defines e2e tests as nix checks
+      (importApply ./flake-modules/e2e { })
       # defines devshell
       (importApply ./flake-modules/devshell { })
     ];

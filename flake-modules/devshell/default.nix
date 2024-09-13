@@ -36,7 +36,7 @@ localFlake: { ... }: {
         
         # we don't use these from the shell but we keep them here to avoid
         #   garbage collection for the docker images
-        config.packages.tikv-server config.packages.pd-server
+        config.packages.tikv config.packages.pd
       ];
 
       motd = "
@@ -68,7 +68,7 @@ localFlake: { ... }: {
         ephemeralDockerCommand = { imageName, imageVersion }: {
           name = "run-${imageName}";
           command = ''
-            ${dockerLoad config.packages."${imageName}-image"} \
+            ${dockerLoad config.images."${imageName}"} \
             && docker run --rm --network host ${imageName}-server:${imageVersion}
           '';
           help = "Run the ${boldRed imageName} server in an ephemeral container";

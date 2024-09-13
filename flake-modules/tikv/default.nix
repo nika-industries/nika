@@ -55,10 +55,12 @@ localFlake: { ... }: {
 
   in {
     packages = {
-      tikv-server = make-binary "tikv";
-      tikv-image = make-docker-image "tikv";
-      pd-server = make-binary "pd";
-      pd-image = make-docker-image "pd";
+      tikv = make-binary "tikv";
+      pd = make-binary "pd";
+    };
+    images = {
+      tikv = make-docker-image "tikv";
+      pd = make-docker-image "pd";
     };
   };
 }
