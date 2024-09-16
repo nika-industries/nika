@@ -1,5 +1,5 @@
 localFlake: { ... }: {
-  perSystem = { pkgs, inputs', config, ... }: let
+  perSystem = ps @ { pkgs, inputs', config, ... }: let
     mkShell = pkgs.devshell.mkShell;
 
     # note; there's a UTF-8 control character in the esc string below
@@ -38,36 +38,7 @@ localFlake: { ... }: {
       motd = "\n  Welcome to the {2}nika{reset} dev shell. Run {1}menu{reset} for commands.\n";
 
       commands = let
-        perBinaryCommands = binary: [
-          {
-            name = binary;
-            command = "cargo run --bin ${binary}";
-            help = "Run the `${bin-hl binary}` binary";
-            category = "[local binary actions]";
-          }
-          {
-            name = "${binary}-release";
-            command = "cargo run --release --bin ${binary}";
-            help = "Run the `${bin-hl binary}` binary in release mode";
-            category = "[local binary actions]";
-          }
-          {
-            name = "${binary}-watch";
-            command = "bacon -j run -- --bin ${binary}";
-            help = "Watch for changes and run the `${bin-hl binary}` binary";
-            category = "[local binary actions]";
-          }
-        ];
-        dockerLoad = imageName: "docker load -i ${imageName}";
-        ephemeralDockerCommand = { imageName, imageVersion }: {
-          name = "run-${imageName}";
-          command = ''
-            ${dockerLoad config.images."${imageName}"} \
-            && docker run --rm --network host ${imageName}-server:${imageVersion}
-          '';
-          help = "Run the ${bin-hl imageName} server in an ephemeral container";
-          category = "[docker actions]";
-        };
+        import-commands-module = path: (import path) (ps // { inherit bin-hl; });
       in [
         {
           name = "test";
@@ -81,46 +52,22 @@ localFlake: { ... }: {
           help = "Run all tests, including ones that require other services";
           category = "[testing]";
         }
-
         {
           name = "clippy";
           command = "cargo clippy --all-targets";
           help = "Run clippy on all targets";
           category = "[cargo actions]";
         }
-
         {
           name = "check";
           command = "nix flake check -L";
           help = "Run nix checks";
           category = "[nix actions]";
         }
-
-        (ephemeralDockerCommand { imageName = "tikv"; imageVersion = "8.1.1"; })
-        (ephemeralDockerCommand { imageName = "pd"; imageVersion = "8.1.1"; })
-
-        {
-          name = "tikv";
-          command = "mprocs \"run-tikv\" \"run-pd\"";
-          help = "Run the ${bin-hl "tikv"} stack";
-          category = "[stack actions]";
-        }
-        {
-          name = "stack";
-          command = "mprocs \"run-tikv\" \"run-pd\" \"redis-server\" \"fetcher\" \"api\"";
-          help = "Run the whole stack";
-          category = "[stack actions]";
-        }
-        {
-          name = "stack-release";
-          command = "mprocs \"run-tikv\" \"run-pd\" \"redis-server\" \"fetcher-release\" \"api-release\"";
-          help = "Run the whole stack in release mode";
-          category = "[stack actions]";
-        }
       ]
-        ++ perBinaryCommands "fetcher"
-        ++ perBinaryCommands "api"
-        ++ perBinaryCommands "daemon";
+        ++ import-commands-module ./bin-commands.nix
+        ++ import-commands-module ./docker-commands.nix
+        ++ import-commands-module ./stack-commands.nix;
     };
   };
 }
