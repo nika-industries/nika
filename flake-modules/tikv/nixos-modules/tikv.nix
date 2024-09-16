@@ -43,8 +43,8 @@ in {
       };
 
       capacity = lib.mkOption {
-        type = lib.types.str;
-        default = "0";
+        type = lib.types.nullOr lib.types.str;
+        default = null;
         description = "The store capacity (0 means unlimited). PD uses this parameter to determine how to balance TiKV servers. (Tip: you can use 10GB instead of 1073741824)";
       };
 
@@ -86,7 +86,7 @@ in {
         --advertise-addr=${cfg.advertiseAddr} \
         --status-addr=${cfg.statusAddr} \
         --advertise-status-addr=${cfg.advertiseStatusAddr} \
-        --capacity=${cfg.capacity} \
+        ${optional-flag "capacity" "capacity"} \
         --data-dir=${cfg.dataDir} \
         --log-level=${cfg.logLevel} \
         ${optional-array-flag "pd" "pdServers"} \
