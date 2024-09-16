@@ -67,7 +67,7 @@ pub(crate) async fn rollback<T: KvTransaction>(mut txn: T) -> Result<()> {
 }
 
 /// Rollback fn for "unrecoverable" errors (unexpected error paths).
-pub(crate) async fn rollback_error<T: KvTransaction>(
+pub(crate) async fn rollback_with_error<T: KvTransaction>(
   txn: T,
   error: miette::Report,
   context: &'static str,

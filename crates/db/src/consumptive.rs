@@ -1,7 +1,7 @@
 use kv::prelude::*;
 use miette::Result;
 
-use crate::rollback_error;
+use crate::rollback_with_error;
 
 pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
   /// Checks if a key exists.
@@ -16,7 +16,7 @@ pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
   async fn csm_insert(mut self, key: &Key, value: Value) -> Result<Self> {
     if let Err(e) = self.insert(key, value).await {
       return Err(
-        rollback_error(self, e.into(), "failed to insert value").await,
+        rollback_with_error(self, e.into(), "failed to insert value").await,
       );
     }
 
@@ -28,7 +28,7 @@ pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
       Ok(v) => v,
       Err(e) => {
         return Err(
-          rollback_error(self, e.into(), "failed to get value").await,
+          rollback_with_error(self, e.into(), "failed to get value").await,
         );
       }
     };
