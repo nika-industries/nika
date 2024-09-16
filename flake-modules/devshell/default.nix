@@ -33,10 +33,6 @@ localFlake: { ... }: {
 
         # service runtimes
         redis
-        
-        # we don't use these from the shell but we keep them here to avoid
-        #   garbage collection for the docker images
-        config.packages.tikv config.packages.pd
       ];
 
       motd = "\n  Welcome to the {2}nika{reset} dev shell. Run {1}menu{reset} for commands.\n";
