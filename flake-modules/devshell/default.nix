@@ -4,8 +4,8 @@ localFlake: { ... }: {
 
     # note; there's a UTF-8 control character in the esc string below
     esc = "";
-    boldGreen = s: "${esc}[32;1m${s}${esc}[0m";
-    boldRed = s: "${esc}[31;1m${s}${esc}[0m";
+    # for highlighting binary names in the help text
+    bin-hl = s: "${esc}[31;1m${s}${esc}[0m";
   in {
     devShells.default = mkShell {
       packages = with pkgs; [
@@ -46,19 +46,19 @@ localFlake: { ... }: {
           {
             name = binary;
             command = "cargo run --bin ${binary}";
-            help = "Run the `${boldRed binary}` binary";
+            help = "Run the `${bin-hl binary}` binary";
             category = "[local binary actions]";
           }
           {
             name = "${binary}-release";
             command = "cargo run --release --bin ${binary}";
-            help = "Run the `${boldRed binary}` binary in release mode";
+            help = "Run the `${bin-hl binary}` binary in release mode";
             category = "[local binary actions]";
           }
           {
             name = "${binary}-watch";
             command = "bacon -j run -- --bin ${binary}";
-            help = "Watch for changes and run the `${boldRed binary}` binary";
+            help = "Watch for changes and run the `${bin-hl binary}` binary";
             category = "[local binary actions]";
           }
         ];
@@ -69,7 +69,7 @@ localFlake: { ... }: {
             ${dockerLoad config.images."${imageName}"} \
             && docker run --rm --network host ${imageName}-server:${imageVersion}
           '';
-          help = "Run the ${boldRed imageName} server in an ephemeral container";
+          help = "Run the ${bin-hl imageName} server in an ephemeral container";
           category = "[docker actions]";
         };
       in [
@@ -106,7 +106,7 @@ localFlake: { ... }: {
         {
           name = "tikv";
           command = "mprocs \"run-tikv\" \"run-pd\"";
-          help = "Run the ${boldRed "tikv"} stack";
+          help = "Run the ${bin-hl "tikv"} stack";
           category = "[stack actions]";
         }
         {
