@@ -77,7 +77,7 @@ pub(crate) async fn rollback_with_error<T: KvTransaction>(
     return e;
   }
   let e = error.wrap_err(context);
-  tracing::error!("{:?}", e);
+  tracing::error!("unrecoverable rollback: {:?}", e);
   e
 }
 
