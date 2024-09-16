@@ -39,9 +39,7 @@ localFlake: { ... }: {
         config.packages.tikv config.packages.pd
       ];
 
-      motd = "
-  Welcome to the ${boldGreen "nika"} dev shell. Run the ${boldRed "menu"} command to see available actions.
-      ";
+      motd = "\n  Welcome to the {2}nika{reset} dev shell. Run {1}menu{reset} for commands.\n";
 
       commands = let
         perBinaryCommands = binary: [
