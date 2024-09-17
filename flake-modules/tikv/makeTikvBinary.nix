@@ -7,14 +7,9 @@
   arch = { x86_64-linux = "amd64"; aarch64-linux = "arm64"; }.${system};
   url = "https://download.pingcap.org/tidb-community-server-v${version}-linux-${arch}.tar.gz";
 
-  hashes = {
-    x86_64-linux = "sha256-ZtFqm4PllBRIGiRLzBynWvdcmegXD8WMPzknXwJYKBg=";
-    aarch64-linux = "sha256-CovqGP4nciRWfB+mGQcCP+VBkVOmC6hzRXO2gvXylpc=";
-  };
-
   full-archive = pkgs.fetchzip {
     url = url;
-    hash = hashes.${system};
+    hash = "sha256-ZtFqm4PllBRIGiRLzBynWvdcmegXD8WMPzknXwJYKBg=";
   };
 in pkgs.stdenv.mkDerivation {
   inherit pname version;
