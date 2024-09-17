@@ -57,6 +57,7 @@ localFlake: { inputs, ... }: {
       fetcher = build-crate "fetcher";
       api = build-crate "api";
       daemon = build-crate "daemon";
+      migrator = build-crate "migrator";
       toolchain = toolchain pkgs;
       dev-toolchain = dev-toolchain pkgs;
     };
