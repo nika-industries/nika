@@ -8,8 +8,8 @@
   url = "https://download.pingcap.org/tidb-community-server-v${version}-linux-${arch}.tar.gz";
 
   hashes = {
-    x86_64-linux = "sha256-ZtFqm4PllBRIGiRLzBynWvdcmegXD8WMPzknXwJYKBg=";
-    aarch64-linux = "sha256-CovqGP4nciRWfB+mGQcCP+VBkVOmC6hzRXO2gvXylpc=";
+    aarch64-linux = "sha256-ZtFqm4PllBRIGiRLzBynWvdcmegXD8WMPzknXwJYKBg=";
+    x86_64-linux = "sha256-CovqGP4nciRWfB+mGQcCP+VBkVOmC6hzRXO2gvXylpc=";
   };
 
   full-archive = pkgs.fetchzip {
