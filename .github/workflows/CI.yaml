@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-check:
-    runs-on: ubuntu-latest-arm
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install Nix
