@@ -19,7 +19,6 @@
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (top @ { ... }: {
     systems = [ "x86_64-linux" "aarch64-linux" ];
-    debug = true;
 
     imports = let
       inherit (top.flake-parts-lib) importApply;
