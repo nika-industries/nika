@@ -14,24 +14,23 @@ impl<T: DatabaseAdapter> Migratable for T {
   /// Applies test data to the database.
   async fn migrate(&self) -> Result<()> {
     let org = models::Org {
-      id:   models::OrgRecordId(
-        models::Ulid::from_str("01J53FHN8TQXTQ2JEHNX56GCTN").unwrap(),
-      ),
+      id:   models::RecordId::<models::Org>::from_str(
+        "01J53FHN8TQXTQ2JEHNX56GCTN",
+      )
+      .unwrap(),
       name: models::StrictSlug::confident("dev-org"),
     };
 
     let user = models::User {
-      id:   models::UserRecordId(
-        models::Ulid::from_str("01J53N6ARQGFTBQ41T25TAJ949").unwrap(),
-      ),
+      id:   models::UserRecordId::from_str("01J53N6ARQGFTBQ41T25TAJ949")
+        .unwrap(),
       name: "John Lewis".to_string(),
       org:  org.id,
     };
 
     let local_file_store = models::Store {
-      id:     models::StoreRecordId(
-        models::Ulid::from_str("01J53YYCCJW4B4QBM1CG0CHAMP").unwrap(),
-      ),
+      id:     models::StoreRecordId::from_str("01J53YYCCJW4B4QBM1CG0CHAMP")
+        .unwrap(),
       config: models::StorageCredentials::Local(
         models::LocalStorageCredentials(
           std::path::PathBuf::from_str("/tmp/local-store").unwrap(),
@@ -43,9 +42,8 @@ impl<T: DatabaseAdapter> Migratable for T {
     };
 
     let albert_cache = models::Cache {
-      id:     models::CacheRecordId(
-        models::Ulid::from_str("01J799MSHXPPY5RJ8KGHVR9GWQ").unwrap(),
-      ),
+      id:     models::CacheRecordId::from_str("01J799MSHXPPY5RJ8KGHVR9GWQ")
+        .unwrap(),
       name:   models::StrictSlug::confident("albert"),
       public: false,
       store:  local_file_store.id,
@@ -53,9 +51,8 @@ impl<T: DatabaseAdapter> Migratable for T {
     };
 
     let omnitoken_token = models::Token {
-      id:       models::TokenRecordId(
-        models::Ulid::from_str("01J53ZA38PS1P5KWCE4FMG58F0").unwrap(),
-      ),
+      id:       models::TokenRecordId::from_str("01J53ZA38PS1P5KWCE4FMG58F0")
+        .unwrap(),
       nickname: models::StrictSlug::confident("omnitoken"),
       secret:   models::StrictSlug::confident(
         "zvka5d29dgvpujdyqa6ftnkei02i-qm1n-fjzuqfbyrq7avxbzi6ma8flxsuwe4l",

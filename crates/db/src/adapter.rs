@@ -13,7 +13,7 @@ pub trait DatabaseAdapter: Send + Sync + 'static {
   /// Fetches a model by its ID.
   fn fetch_model_by_id<M: models::Model>(
     &self,
-    id: &M::Id,
+    id: &models::RecordId<M>,
   ) -> impl Future<Output = Result<Option<M>>> + Send;
   /// Fetches a model by an index.
   ///

@@ -29,8 +29,8 @@ static INDEX_NS_SEGMENT: LazyLock<StrictSlug> =
 static MODEL_NS_SEGMENT: LazyLock<StrictSlug> =
   LazyLock::new(|| StrictSlug::new("model".to_string()));
 
-fn model_base_key<M: models::Model>(id: &M::Id) -> Key {
-  let id_ulid: models::Ulid = id.clone().into();
+fn model_base_key<M: models::Model>(id: &models::RecordId<M>) -> Key {
+  let id_ulid: models::Ulid = (*id).into();
   Key::new_lazy(&MODEL_NS_SEGMENT)
     .with(StrictSlug::new(M::TABLE_NAME.to_string()))
     .with(StrictSlug::new(id_ulid.to_string()))
@@ -87,7 +87,7 @@ impl DatabaseAdapter for TikvAdapter {
 
     // calculate the key for the model
     let model_key = model_base_key::<M>(&model.id());
-    let id_ulid: models::Ulid = model.id().clone().into();
+    let id_ulid: models::Ulid = model.id().into();
 
     // serialize the model into bytes
     let model_value = kv::value::Value::serialize(&model)
@@ -157,7 +157,7 @@ impl DatabaseAdapter for TikvAdapter {
   #[instrument(skip(self))]
   async fn fetch_model_by_id<M: models::Model>(
     &self,
-    id: &M::Id,
+    id: &models::RecordId<M>,
   ) -> Result<Option<M>> {
     let model_key = model_base_key::<M>(id);
 
@@ -198,7 +198,7 @@ impl DatabaseAdapter for TikvAdapter {
     commit(txn).await?;
 
     let id = id_value
-      .map(kv::value::Value::deserialize::<M::Id>)
+      .map(kv::value::Value::deserialize::<models::RecordId<M>>)
       .transpose()
       .into_diagnostic()
       .context("failed to deserialize id")?;

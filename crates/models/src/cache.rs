@@ -1,26 +1,13 @@
-use std::fmt;
-
 use serde::{Deserialize, Serialize};
 use slugger::StrictSlug;
 
-use crate::{Model, OrgRecordId, StoreRecordId};
+use crate::{Model, OrgRecordId, RecordId, StoreRecordId};
 
 /// The [`Cache`] table name.
 pub const CACHE_TABLE_NAME: &str = "cache";
 
-/// A [`Cache`] record ID.
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct CacheRecordId(pub ulid::Ulid);
-
-impl From<CacheRecordId> for ulid::Ulid {
-  fn from(id: CacheRecordId) -> ulid::Ulid { id.0 }
-}
-
-impl fmt::Display for CacheRecordId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
+/// A cache record ID.
+pub type CacheRecordId = RecordId<Cache>;
 
 /// A cache.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -38,10 +25,9 @@ pub struct Cache {
 }
 
 impl Model for Cache {
-  type Id = CacheRecordId;
   const TABLE_NAME: &'static str = CACHE_TABLE_NAME;
   const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
     &[("name", |s| s.name.clone().into())];
 
-  fn id(&self) -> Self::Id { self.id }
+  fn id(&self) -> CacheRecordId { self.id }
 }

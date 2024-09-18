@@ -1,26 +1,13 @@
-use std::fmt;
-
 use serde::{Deserialize, Serialize};
 use slugger::StrictSlug;
 
-use crate::{Model, OrgRecordId, PermissionSet, UserRecordId};
+use crate::{Model, OrgRecordId, PermissionSet, RecordId, UserRecordId};
 
 /// The [`Token`] table name.
 pub const TOKEN_TABLE_NAME: &str = "token";
 
-/// A [`Token`] record ID.
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TokenRecordId(pub ulid::Ulid);
-
-impl From<TokenRecordId> for ulid::Ulid {
-  fn from(id: TokenRecordId) -> ulid::Ulid { id.0 }
-}
-
-impl fmt::Display for TokenRecordId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
+/// A token record ID.
+pub type TokenRecordId = RecordId<Token>;
 
 /// A token.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -33,19 +20,18 @@ pub struct Token {
   pub secret:   StrictSlug,
   /// The token's permissions.
   pub perms:    PermissionSet,
-  /// The token's owner.
+  /// The token's owner (a User).
   pub owner:    UserRecordId,
   /// THe token's org.
   pub org:      OrgRecordId,
 }
 
 impl Model for Token {
-  type Id = TokenRecordId;
   const TABLE_NAME: &'static str = TOKEN_TABLE_NAME;
   const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
     &[("secret", |t| t.secret.clone().into())];
 
-  fn id(&self) -> Self::Id { self.id }
+  fn id(&self) -> TokenRecordId { self.id }
 }
 
 /// Validates a token secret. Returns `true` if the secret is valid.
