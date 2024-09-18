@@ -1,13 +1,18 @@
 use std::str::FromStr;
 
-use kv::prelude::*;
 use miette::Result;
 
-use crate::DbConnection;
+use crate::DatabaseAdapter;
 
-impl<T: KvTransactional> DbConnection<T> {
+/// A trait for migrating the database.
+pub trait Migratable {
+  /// Migrates the database.
+  fn migrate(&self) -> impl std::future::Future<Output = Result<()>> + Send;
+}
+
+impl<T: DatabaseAdapter> Migratable for T {
   /// Applies test data to the database.
-  pub async fn migrate(&self) -> Result<()> {
+  async fn migrate(&self) -> Result<()> {
     let org = models::Org {
       id:   models::OrgRecordId(
         models::Ulid::from_str("01J53FHN8TQXTQ2JEHNX56GCTN").unwrap(),

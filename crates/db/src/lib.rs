@@ -2,42 +2,92 @@
 
 mod consumptive;
 mod migrate;
-mod token;
 
-use std::sync::{Arc, LazyLock};
+use std::{future::Future, sync::LazyLock};
 
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
 
 use self::consumptive::ConsumptiveTransaction;
+pub use self::migrate::Migratable;
 
-/// The shared database type.
-#[derive(Debug)]
-pub struct DbConnection<T>(Arc<T>);
+/// A TiKV-based database adapter.
+pub struct TikvAdapter(kv::tikv::TikvClient);
 
-impl<T> Clone for DbConnection<T> {
-  fn clone(&self) -> Self { Self(self.0.clone()) }
+impl TikvAdapter {
+  /// Creates a new TiKV adapter.
+  pub async fn new(endpoints: Vec<&str>) -> Result<Self> {
+    Ok(Self(kv::tikv::TikvClient::new(endpoints).await?))
+  }
+
+  /// Creates a new TiKV adapter from environment variables.
+  pub async fn new_from_env() -> Result<Self> {
+    Ok(Self(kv::tikv::TikvClient::new_from_env().await?))
+  }
 }
 
-/// A TiKV-backed database client.
-pub type TikvDb = DbConnection<TikvClient>;
+impl KvTransactional for TikvAdapter {
+  type OptimisticTransaction = kv::tikv::TikvTransaction;
+  type PessimisticTransaction = kv::tikv::TikvTransaction;
 
-impl TikvDb {
-  /// Constructs a new [`DbConnection`]`<`[`TikvClient`]`>`.
-  #[instrument]
-  pub async fn new() -> Result<Self> {
-    let urls = std::env::var("TIKV_URLS")
-      .into_diagnostic()
-      .wrap_err("missing TIKV_URLS")?;
-    let urls = urls.split(',').collect();
-    let client = TikvClient::new(urls)
-      .await
-      .into_diagnostic()
-      .context("failed to create tikv client")?;
-
-    Ok(DbConnection(Arc::new(client)))
+  async fn begin_optimistic_transaction(
+    &self,
+  ) -> KvResult<Self::OptimisticTransaction> {
+    self.0.begin_optimistic_transaction().await
   }
+
+  async fn begin_pessimistic_transaction(
+    &self,
+  ) -> KvResult<Self::PessimisticTransaction> {
+    self.0.begin_pessimistic_transaction().await
+  }
+}
+
+/// Errors that can occur when creating a model.
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
+pub enum CreateModelError {
+  /// A model with that ID already exists.
+  #[error("model with that ID already exists")]
+  ModelAlreadyExists,
+  /// An index with that value already exists.
+  #[error("index {index_name:?} with value \"{index_value}\" already exists")]
+  IndexAlreadyExists {
+    /// The name of the index.
+    index_name:  String,
+    /// The value of the index.
+    index_value: EitherSlug,
+  },
+  /// A database error occurred.
+  #[error("db error: {0}")]
+  #[diagnostic_source]
+  DbError(miette::Report),
+}
+
+impl From<miette::Report> for CreateModelError {
+  fn from(e: miette::Report) -> Self { Self::DbError(e) }
+}
+
+/// An adapter for a model-based database.
+pub trait DatabaseAdapter: Send + Sync + 'static {
+  /// Creates a new model.
+  fn create_model<M: models::Model>(
+    &self,
+    model: &M,
+  ) -> impl Future<Output = Result<(), CreateModelError>> + Send;
+  /// Fetches a model by its ID.
+  fn fetch_model_by_id<M: models::Model>(
+    &self,
+    id: &M::Id,
+  ) -> impl Future<Output = Result<Option<M>>> + Send;
+  /// Fetches a model by an index.
+  ///
+  /// Must be a valid index, defined in the model's `INDICES` constant.
+  fn fetch_model_by_index<M: models::Model>(
+    &self,
+    index_name: &str,
+    index_value: &EitherSlug,
+  ) -> impl Future<Output = Result<Option<M>>> + Send;
 }
 
 static INDEX_NS_SEGMENT: LazyLock<StrictSlug> =
@@ -85,34 +135,14 @@ pub(crate) async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
   txn.commit().await.context("failed to commit transaction")
 }
 
-/// Errors that can occur when creating a model.
-#[derive(Debug, thiserror::Error, miette::Diagnostic)]
-pub enum CreateModelError {
-  /// A model with that ID already exists.
-  #[error("model with that ID already exists")]
-  ModelAlreadyExists,
-  /// An index with that value already exists.
-  #[error("index {index_name:?} with value \"{index_value}\" already exists")]
-  IndexAlreadyExists {
-    /// The name of the index.
-    index_name:  String,
-    /// The value of the index.
-    index_value: EitherSlug,
-  },
-  /// A database error occurred.
-  #[error("db error: {0}")]
-  #[diagnostic_source]
-  DbError(miette::Report),
-}
-
-impl From<miette::Report> for CreateModelError {
-  fn from(e: miette::Report) -> Self { Self::DbError(e) }
-}
-
-impl<T: KvTransactional> DbConnection<T> {
-  /// Creates a new model.
+impl<T> DatabaseAdapter for T
+where
+  T: KvTransactional + Send + Sync + 'static,
+  <T as kv::KvTransactional>::OptimisticTransaction: Send,
+  <T as kv::KvTransactional>::PessimisticTransaction: Send,
+{
   #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
-  pub async fn create_model<M: models::Model>(
+  async fn create_model<M: models::Model>(
     &self,
     model: &M,
   ) -> Result<(), CreateModelError> {
@@ -143,7 +173,6 @@ impl<T: KvTransactional> DbConnection<T> {
 
     // begin a transaction
     let txn = self
-      .0
       .begin_pessimistic_transaction()
       .await
       .context("failed to begin pessimistic transaction")
@@ -195,16 +224,14 @@ impl<T: KvTransactional> DbConnection<T> {
     Ok(())
   }
 
-  /// Fetches a model by its ID.
   #[instrument(skip(self))]
-  pub async fn fetch_model_by_id<M: models::Model>(
+  async fn fetch_model_by_id<M: models::Model>(
     &self,
     id: &M::Id,
   ) -> Result<Option<M>> {
     let model_key = model_base_key::<M>(id);
 
     let txn = self
-      .0
       .begin_optimistic_transaction()
       .await
       .context("failed to begin optimistic transaction")?;
@@ -220,11 +247,8 @@ impl<T: KvTransactional> DbConnection<T> {
       .context("failed to deserialize model")
   }
 
-  /// Fetches a model by an index.
-  ///
-  /// Must be a valid index, defined in the model's `INDICES` constant.
   #[instrument(skip(self))]
-  pub async fn fetch_model_by_index<M: models::Model>(
+  async fn fetch_model_by_index<M: models::Model>(
     &self,
     index_name: &str,
     index_value: &EitherSlug,
@@ -233,7 +257,6 @@ impl<T: KvTransactional> DbConnection<T> {
       index_base_key::<M>(index_name).with_either(index_value.clone());
 
     let txn = self
-      .0
       .begin_optimistic_transaction()
       .await
       .context("failed to begin optimistic transaction")?;

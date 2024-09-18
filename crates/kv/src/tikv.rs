@@ -2,6 +2,8 @@
 
 use std::mem::ManuallyDrop;
 
+use miette::{Context, IntoDiagnostic};
+
 use crate::{
   key::Key, value::Value, KvPrimitive, KvResult, KvTransaction, KvTransactional,
 };
@@ -19,6 +21,19 @@ impl TikvClient {
     Ok(TikvClient(
       tikv_client::TransactionClient::new(endpoints).await?,
     ))
+  }
+
+  /// Create a new TiKV client from environment variables.
+  pub async fn new_from_env() -> miette::Result<Self> {
+    let urls = std::env::var("TIKV_URLS")
+      .into_diagnostic()
+      .wrap_err("missing TIKV_URLS")?;
+    let urls = urls.split(',').collect();
+    let client = TikvClient::new(urls)
+      .await
+      .into_diagnostic()
+      .context("failed to create tikv client")?;
+    Ok(client)
   }
 }
 
