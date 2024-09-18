@@ -3,7 +3,10 @@
 mod consumptive;
 mod migrate;
 
-use std::{future::Future, sync::LazyLock};
+use std::{
+  future::Future,
+  sync::{Arc, LazyLock},
+};
 
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
@@ -13,17 +16,17 @@ use self::consumptive::ConsumptiveTransaction;
 pub use self::migrate::Migratable;
 
 /// A TiKV-based database adapter.
-pub struct TikvAdapter(kv::tikv::TikvClient);
+pub struct TikvAdapter(Arc<kv::tikv::TikvClient>);
 
 impl TikvAdapter {
   /// Creates a new TiKV adapter.
   pub async fn new(endpoints: Vec<&str>) -> Result<Self> {
-    Ok(Self(kv::tikv::TikvClient::new(endpoints).await?))
+    Ok(Self(Arc::new(kv::tikv::TikvClient::new(endpoints).await?)))
   }
 
   /// Creates a new TiKV adapter from environment variables.
   pub async fn new_from_env() -> Result<Self> {
-    Ok(Self(kv::tikv::TikvClient::new_from_env().await?))
+    Ok(Self(Arc::new(kv::tikv::TikvClient::new_from_env().await?)))
   }
 }
 
