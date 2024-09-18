@@ -30,23 +30,6 @@ impl TikvAdapter {
   }
 }
 
-impl KvTransactional for TikvAdapter {
-  type OptimisticTransaction = kv::tikv::TikvTransaction;
-  type PessimisticTransaction = kv::tikv::TikvTransaction;
-
-  async fn begin_optimistic_transaction(
-    &self,
-  ) -> KvResult<Self::OptimisticTransaction> {
-    self.0.begin_optimistic_transaction().await
-  }
-
-  async fn begin_pessimistic_transaction(
-    &self,
-  ) -> KvResult<Self::PessimisticTransaction> {
-    self.0.begin_pessimistic_transaction().await
-  }
-}
-
 /// Errors that can occur when creating a model.
 #[derive(Debug, thiserror::Error, miette::Diagnostic)]
 pub enum CreateModelError {
@@ -138,12 +121,7 @@ pub(crate) async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
   txn.commit().await.context("failed to commit transaction")
 }
 
-impl<T> DatabaseAdapter for T
-where
-  T: KvTransactional + Send + Sync + 'static,
-  <T as kv::KvTransactional>::OptimisticTransaction: Send,
-  <T as kv::KvTransactional>::PessimisticTransaction: Send,
-{
+impl DatabaseAdapter for TikvAdapter {
   #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
   async fn create_model<M: models::Model>(
     &self,
@@ -176,6 +154,7 @@ where
 
     // begin a transaction
     let txn = self
+      .0
       .begin_pessimistic_transaction()
       .await
       .context("failed to begin pessimistic transaction")
@@ -235,6 +214,7 @@ where
     let model_key = model_base_key::<M>(id);
 
     let txn = self
+      .0
       .begin_optimistic_transaction()
       .await
       .context("failed to begin optimistic transaction")?;
@@ -260,6 +240,7 @@ where
       index_base_key::<M>(index_name).with_either(index_value.clone());
 
     let txn = self
+      .0
       .begin_optimistic_transaction()
       .await
       .context("failed to begin optimistic transaction")?;
