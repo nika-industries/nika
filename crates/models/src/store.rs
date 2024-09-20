@@ -26,7 +26,7 @@ pub struct Store {
 
 impl Model for Store {
   const TABLE_NAME: &'static str = STORE_TABLE_NAME;
-  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
+  const UNIQUE_INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
     &[("name", |s| s.name.clone().into())];
 
   fn id(&self) -> StoreRecordId { self.id }

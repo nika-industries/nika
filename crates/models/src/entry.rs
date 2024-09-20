@@ -26,7 +26,7 @@ pub struct Entry {
 
 impl Model for Entry {
   const TABLE_NAME: &'static str = ENTRY_TABLE_NAME;
-  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
+  const UNIQUE_INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
     &[("cache-id-path", |s| {
       LaxSlug::new(format!("{}-{}", s.cache, s.path)).into()
     })];

@@ -26,7 +26,7 @@ pub struct Cache {
 
 impl Model for Cache {
   const TABLE_NAME: &'static str = CACHE_TABLE_NAME;
-  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
+  const UNIQUE_INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
     &[("name", |s| s.name.clone().into())];
 
   fn id(&self) -> CacheRecordId { self.id }

@@ -17,7 +17,8 @@ pub trait DatabaseAdapter: Clone + Send + Sync + 'static {
   ) -> impl Future<Output = Result<Option<M>>> + Send;
   /// Fetches a model by an index.
   ///
-  /// Must be a valid index, defined in the model's `INDICES` constant.
+  /// Must be a valid index, defined in the model's
+  /// [`UNIQUE_INDICES`](models::Model::UNIQUE_INDICES) constant.
   fn fetch_model_by_index<M: models::Model>(
     &self,
     index_name: &str,

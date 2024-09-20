@@ -30,9 +30,11 @@ pub trait Model:
   /// The table name in the database.
   const TABLE_NAME: &'static str;
 
-  /// The model's indices, an array of tuples containing the index name and a
-  /// function that returns the index value.
-  const INDICES: &'static [(&'static str, SlugFieldGetter<Self>)];
+  /// The model's unique indices.
+  ///
+  /// An array of tuples containing the index name and a function that returns
+  /// the index value. The produced value must be unique for each record.
+  const UNIQUE_INDICES: &'static [(&'static str, SlugFieldGetter<Self>)];
 
   /// Returns the model's ID.
   fn id(&self) -> RecordId<Self>;

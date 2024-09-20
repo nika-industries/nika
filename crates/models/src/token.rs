@@ -28,8 +28,10 @@ pub struct Token {
 
 impl Model for Token {
   const TABLE_NAME: &'static str = TOKEN_TABLE_NAME;
-  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
-    &[("secret", |t| t.secret.clone().into())];
+  const UNIQUE_INDICES: &'static [(
+    &'static str,
+    crate::SlugFieldGetter<Self>,
+  )] = &[("secret", |t| t.secret.clone().into())];
 
   fn id(&self) -> TokenRecordId { self.id }
 }

@@ -125,7 +125,7 @@ impl DatabaseAdapter for TikvAdapter {
       .context("failed to insert model")?;
 
     // insert the indexes
-    for (index_name, index_fn) in M::INDICES.iter() {
+    for (index_name, index_fn) in M::UNIQUE_INDICES.iter() {
       // calculate the key for the index
       let index_key =
         index_base_key::<M>(index_name).with_either(index_fn(model));

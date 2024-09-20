@@ -20,8 +20,10 @@ pub struct Org {
 
 impl Model for Org {
   const TABLE_NAME: &'static str = ORG_TABLE_NAME;
-  const INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] =
-    &[("name", |org| org.name.clone().into())];
+  const UNIQUE_INDICES: &'static [(
+    &'static str,
+    crate::SlugFieldGetter<Self>,
+  )] = &[("name", |org| org.name.clone().into())];
 
   fn id(&self) -> OrgRecordId { self.id }
 }
