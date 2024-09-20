@@ -1,12 +1,12 @@
-use db::TikvDb;
+use db::{DatabaseAdapter, TikvAdapter};
 
 #[tokio::test]
 #[ignore]
 async fn test_tikv() {
-  let db = TikvDb::new().await.unwrap();
+  let db = TikvAdapter::new_from_env().await.unwrap();
 
   let model = models::Org {
-    id:   models::OrgRecordId(models::Ulid::new()),
+    id:   models::OrgRecordId::new(),
     name: models::StrictSlug::new(format!(
       "org-{}",
       models::Ulid::new().to_string()
