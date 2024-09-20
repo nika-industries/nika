@@ -10,6 +10,7 @@ use self::consumptive::ConsumptiveTransaction;
 use crate::{CreateModelError, DatabaseAdapter};
 
 /// A TiKV-based database adapter.
+#[derive(Clone)]
 pub struct TikvAdapter(Arc<kv::tikv::TikvClient>);
 
 impl TikvAdapter {

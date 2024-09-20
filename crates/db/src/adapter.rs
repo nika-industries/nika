@@ -4,7 +4,7 @@ use kv::prelude::*;
 use miette::Result;
 
 /// An adapter for a model-based database.
-pub trait DatabaseAdapter: Send + Sync + 'static {
+pub trait DatabaseAdapter: Clone + Send + Sync + 'static {
   /// Creates a new model.
   fn create_model<M: models::Model>(
     &self,
