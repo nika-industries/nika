@@ -13,7 +13,7 @@ async fn test_tikv() {
     )),
   };
 
-  db.create_model(&model).await.unwrap();
+  db.create_model(model.clone()).await.unwrap();
 
   let id = model.id;
 

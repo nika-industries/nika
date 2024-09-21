@@ -74,7 +74,7 @@ impl DatabaseAdapter for TikvAdapter {
   #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
   async fn create_model<M: models::Model>(
     &self,
-    model: &M,
+    model: M,
   ) -> Result<(), CreateModelError> {
     tracing::info!(
       "creating model with id `{}` on table {:?}",
@@ -128,7 +128,7 @@ impl DatabaseAdapter for TikvAdapter {
     for (index_name, index_fn) in M::UNIQUE_INDICES.iter() {
       // calculate the key for the index
       let index_key =
-        index_base_key::<M>(index_name).with_either(index_fn(model));
+        index_base_key::<M>(index_name).with_either(index_fn(&model));
 
       // check if the index exists already
       let (_txn, exists) = txn
@@ -139,7 +139,7 @@ impl DatabaseAdapter for TikvAdapter {
       if exists {
         return Err(CreateModelError::IndexAlreadyExists {
           index_name:  index_name.to_string(),
-          index_value: index_fn(model),
+          index_value: index_fn(&model),
         });
       }
 

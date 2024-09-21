@@ -11,12 +11,16 @@ use slugger::EitherSlug;
 pub trait ModelRepository: Clone + Send + Sync + 'static {
   /// The model type.
   type Model: models::Model;
+  /// The request type for creating a model.
+  type ModelCreateRequest: std::fmt::Debug + Send + Sync + 'static;
+  /// The error type for creating a model.
+  type CreateError: std::error::Error + Send + Sync + 'static;
 
   /// Creates a new model.
   fn create_model(
     &self,
-    model: &Self::Model,
-  ) -> impl Future<Output = Result<(), db::CreateModelError>> + Send;
+    input: Self::ModelCreateRequest,
+  ) -> impl Future<Output = Result<(), Self::CreateError>> + Send;
 
   /// Fetches a model by its ID.
   fn fetch_model_by_id(

@@ -9,31 +9,63 @@ use crate::ModelRepository;
 /// This is private and cannot be used directly. Each model's implementation
 /// of `ModelRepository` needs to be a concrete type, even if it's just a
 /// shell for this type, so that extra logic can be added later if needed.
-#[derive(Clone)]
-pub(crate) struct BaseRepository<M: models::Model, DB: db::DatabaseAdapter> {
+pub(crate) struct BaseRepository<
+  M: models::Model + From<MR>,
+  MR: std::fmt::Debug + Send + Sync + 'static,
+  DB: db::DatabaseAdapter,
+> {
   db_adapter: DB,
   _phantom:   PhantomData<M>,
+  _phantom2:  PhantomData<MR>,
 }
 
-impl<M: models::Model, DB: db::DatabaseAdapter> BaseRepository<M, DB> {
-  pub fn new(db_adapter: DB) -> Self {
+impl<
+    M: models::Model + From<MR>,
+    MR: std::fmt::Debug + Send + Sync + 'static,
+    DB: db::DatabaseAdapter,
+  > Clone for BaseRepository<M, MR, DB>
+{
+  fn clone(&self) -> Self {
     Self {
-      db_adapter,
-      _phantom: PhantomData,
+      db_adapter: self.db_adapter.clone(),
+      _phantom:   PhantomData,
+      _phantom2:  PhantomData,
     }
   }
 }
 
-impl<M: models::Model, DB: db::DatabaseAdapter> ModelRepository
-  for BaseRepository<M, DB>
+impl<
+    M: models::Model + From<MR>,
+    MR: std::fmt::Debug + Send + Sync + 'static,
+    DB: db::DatabaseAdapter,
+  > BaseRepository<M, MR, DB>
+{
+  pub fn new(db_adapter: DB) -> Self {
+    Self {
+      db_adapter,
+      _phantom: PhantomData,
+      _phantom2: PhantomData,
+    }
+  }
+}
+
+impl<
+    M: models::Model + From<MR>,
+    MR: std::fmt::Debug + Send + Sync + 'static,
+    DB: db::DatabaseAdapter,
+  > ModelRepository for BaseRepository<M, MR, DB>
 {
   type Model = M;
+  type ModelCreateRequest = MR;
+  type CreateError = db::CreateModelError;
 
   fn create_model(
     &self,
-    model: &Self::Model,
+    input: Self::ModelCreateRequest,
   ) -> impl Future<Output = Result<(), db::CreateModelError>> + Send {
-    self.db_adapter.create_model(model)
+    self
+      .db_adapter
+      .create_model::<Self::Model>(Self::Model::from(input))
   }
 
   fn fetch_model_by_id(

@@ -8,7 +8,7 @@ pub trait DatabaseAdapter: Clone + Send + Sync + 'static {
   /// Creates a new model.
   fn create_model<M: models::Model>(
     &self,
-    model: &M,
+    model: M,
   ) -> impl Future<Output = Result<(), CreateModelError>> + Send;
   /// Fetches a model by its ID.
   fn fetch_model_by_id<M: models::Model>(

@@ -75,11 +75,11 @@ impl<T: DatabaseAdapter> Migratable for T {
       org:      org.id,
     };
 
-    self.create_model(&org).await?;
-    self.create_model(&user).await?;
-    self.create_model(&local_file_store).await?;
-    self.create_model(&albert_cache).await?;
-    self.create_model(&omnitoken_token).await?;
+    self.create_model(org).await?;
+    self.create_model(user).await?;
+    self.create_model(local_file_store).await?;
+    self.create_model(albert_cache).await?;
+    self.create_model(omnitoken_token).await?;
 
     Ok(())
   }
