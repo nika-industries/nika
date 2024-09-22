@@ -24,6 +24,8 @@ localFlake: { ... }: {
         bacon # change detection
         cargo-nextest # testing
         cargo-deny # package auditing
+        cargo-depgraph # dependency graphing
+        graphviz # graphviz
 
         # cf worker deployment
         yarn
@@ -63,6 +65,12 @@ localFlake: { ... }: {
           command = "nix flake check -L";
           help = "Run nix checks";
           category = "[nix actions]";
+        }
+
+        {
+          name = "update-crate-graph";
+          command = "cargo depgraph --workspace-only | dot -Tpng > $PRJ_ROOT/media/crate-graph.png";
+          help = "Update the crate graph";
         }
       ]
         ++ import-commands-module ./bin-commands.nix
