@@ -6,20 +6,20 @@ pub trait StoreService: Clone + Send + Sync + 'static {}
 
 /// Canonical service for the [`Store`] domain model.
 pub struct StoreServiceCanonical<R: StoreRepository> {
-  cache_repo: R,
+  store_repo: R,
 }
 
 impl<R: StoreRepository> Clone for StoreServiceCanonical<R> {
   fn clone(&self) -> Self {
     Self {
-      cache_repo: self.cache_repo.clone(),
+      store_repo: self.store_repo.clone(),
     }
   }
 }
 
 impl<R: StoreRepository> StoreServiceCanonical<R> {
   /// Create a new instance of the canonical [`Store`] service.
-  pub fn new(cache_repo: R) -> Self { Self { cache_repo } }
+  pub fn new(store_repo: R) -> Self { Self { store_repo } }
 }
 
 impl<R: StoreRepository> StoreService for StoreServiceCanonical<R> {}
