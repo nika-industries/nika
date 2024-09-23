@@ -1,5 +1,6 @@
 //! Provides a repository for the [`Cache`] domain model.
 
+use models::StrictSlug;
 pub use models::{Cache, CacheCreateRequest};
 
 use super::*;
@@ -10,6 +11,16 @@ use crate::base::{BaseRepository, DatabaseAdapter};
 pub trait CacheRepository:
   ModelRepository<Model = Cache, ModelCreateRequest = CacheCreateRequest>
 {
+  /// Find a [`Cache`] by its name.
+  fn find_by_name(
+    &self,
+    name: &str,
+  ) -> impl Future<Output = Result<Option<Cache>>> + Send {
+    self.fetch_model_by_index(
+      "name".to_string(),
+      EitherSlug::Strict(StrictSlug::new(name.to_string())),
+    )
+  }
 }
 
 impl<T> CacheRepository for T where
