@@ -2051,6 +2051,7 @@ dependencies = [
  "miette",
  "models",
  "repos",
+ "thiserror",
 ]
 
 [[package]]

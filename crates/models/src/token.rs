@@ -36,6 +36,13 @@ impl Model for Token {
   fn id(&self) -> TokenRecordId { self.id }
 }
 
+impl Token {
+  /// Check if the token has the given permissions.
+  pub fn authorized(&self, perms: &PermissionSet) -> bool {
+    self.perms.contains_set(perms)
+  }
+}
+
 /// A token create request.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TokenCreateRequest {
@@ -61,46 +68,5 @@ impl From<TokenCreateRequest> for Token {
       owner:    input.owner,
       org:      input.org,
     }
-  }
-}
-
-/// Validates a token secret. Returns `true` if the secret is valid.
-pub fn validate_token_secret(input: impl AsRef<str>) -> bool {
-  let secret = input.as_ref();
-  if secret.len() != 64 {
-    return false;
-  }
-  secret
-    .chars()
-    .all(|c| c.is_ascii_alphanumeric() || c == '-')
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn test_valid_secret() {
-    let secret =
-      "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6-7-8-9-abcde";
-    assert!(validate_token_secret(secret));
-  }
-
-  #[test]
-  fn test_invalid_secret_length() {
-    let secret = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6-7-8-";
-    assert!(!validate_token_secret(secret));
-  }
-
-  #[test]
-  fn test_invalid_secret_characters() {
-    let secret = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6-7-8-@";
-    assert!(!validate_token_secret(secret));
-  }
-
-  #[test]
-  fn test_empty_secret() {
-    let secret = "";
-    assert!(!validate_token_secret(secret));
   }
 }

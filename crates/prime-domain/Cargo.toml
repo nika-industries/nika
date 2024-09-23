@@ -8,6 +8,7 @@ publish = false
 repos = { path = "../repos" }
 models = { path = "../models" }
 
+thiserror.workspace = true
 miette.workspace = true
 
 [lints]
