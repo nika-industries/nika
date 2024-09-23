@@ -2,7 +2,7 @@ use std::future::Future;
 
 pub use models::Token;
 use models::{StrictSlug, TokenRecordId};
-use repos::{FetchModelError, TokenRepository};
+use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
 
 /// The error type for token verification.
 #[derive(Debug, thiserror::Error, miette::Diagnostic)]
@@ -20,13 +20,9 @@ pub enum TokenVerifyError {
 }
 
 /// The definition for the [`Token`] domain model service.
-pub trait TokenService: Clone + Send + Sync + 'static {
-  /// Fetch a [`Token`] by its ID.
-  fn fetch(
-    &self,
-    id: TokenRecordId,
-  ) -> impl Future<Output = Result<Option<Token>, FetchModelError>> + Send;
-
+pub trait TokenService:
+  ModelRepositoryFetcher<Model = Token> + Clone + Send + Sync + 'static
+{
   /// Verifies that the supplied token ID and secret are valid and exist.
   fn verify_token_id_and_secret(
     &self,
@@ -53,14 +49,18 @@ impl<R: TokenRepository> TokenServiceCanonical<R> {
   pub fn new(token_repo: R) -> Self { Self { token_repo } }
 }
 
-impl<R: TokenRepository> TokenService for TokenServiceCanonical<R> {
-  async fn fetch(
+impl<R: TokenRepository> ModelRepositoryFetcher for TokenServiceCanonical<R> {
+  type Model = Token;
+
+  fn fetch(
     &self,
     id: TokenRecordId,
-  ) -> Result<Option<Token>, FetchModelError> {
-    self.token_repo.fetch_model_by_id(id).await
+  ) -> impl Future<Output = Result<Option<Token>, FetchModelError>> + Send {
+    self.token_repo.fetch_model_by_id(id)
   }
+}
 
+impl<R: TokenRepository> TokenService for TokenServiceCanonical<R> {
   async fn verify_token_id_and_secret(
     &self,
     id: TokenRecordId,

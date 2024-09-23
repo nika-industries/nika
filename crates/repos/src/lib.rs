@@ -43,3 +43,15 @@ pub trait ModelRepository: Clone + Send + Sync + 'static {
     index_value: EitherSlug,
   ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelByIndexError>> + Send;
 }
+
+/// Defines a repository fetcher interface for models.
+pub trait ModelRepositoryFetcher: Clone + Send + Sync + 'static {
+  /// The model type.
+  type Model: models::Model;
+
+  /// Fetches a model by its ID.
+  fn fetch(
+    &self,
+    id: models::RecordId<Self::Model>,
+  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send;
+}
