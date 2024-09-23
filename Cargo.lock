@@ -2047,6 +2047,11 @@ dependencies = [
 [[package]]
 name = "prime-domain"
 version = "0.1.0"
+dependencies = [
+ "miette",
+ "models",
+ "repos",
+]
 
 [[package]]
 name = "proc-macro2"

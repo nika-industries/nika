@@ -1,17 +1,28 @@
 //! Provides a repository for the [`Cache`] domain model.
 
-pub use models::Cache;
+pub use models::{Cache, CacheCreateRequest};
 
 use super::*;
 pub use crate::base::CreateModelError;
 use crate::base::{BaseRepository, DatabaseAdapter};
 
-/// The repository for the [`Cache`] domain model.
-pub struct CacheRepository<DB: DatabaseAdapter> {
-  base_repo: BaseRepository<Cache, Cache, DB>,
+/// Descriptor trait for repositories that handle [`Cache`] domain model.
+pub trait CacheRepository:
+  ModelRepository<Model = Cache, ModelCreateRequest = CacheCreateRequest>
+{
 }
 
-impl<DB: DatabaseAdapter> Clone for CacheRepository<DB> {
+impl<T> CacheRepository for T where
+  T: ModelRepository<Model = Cache, ModelCreateRequest = CacheCreateRequest>
+{
+}
+
+/// The repository for the [`Cache`] domain model.
+pub struct CacheRepositoryCanonical<DB: DatabaseAdapter> {
+  base_repo: BaseRepository<Cache, DB>,
+}
+
+impl<DB: DatabaseAdapter> Clone for CacheRepositoryCanonical<DB> {
   fn clone(&self) -> Self {
     Self {
       base_repo: self.base_repo.clone(),
@@ -19,7 +30,7 @@ impl<DB: DatabaseAdapter> Clone for CacheRepository<DB> {
   }
 }
 
-impl<DB: DatabaseAdapter> CacheRepository<DB> {
+impl<DB: DatabaseAdapter> CacheRepositoryCanonical<DB> {
   /// Create a new instance of the [`Cache`] repository.
   pub fn new(db_adapter: DB) -> Self {
     Self {
@@ -28,16 +39,16 @@ impl<DB: DatabaseAdapter> CacheRepository<DB> {
   }
 }
 
-impl<DB: DatabaseAdapter> ModelRepository for CacheRepository<DB> {
+impl<DB: DatabaseAdapter> ModelRepository for CacheRepositoryCanonical<DB> {
   type Model = Cache;
-  type ModelCreateRequest = Cache;
+  type ModelCreateRequest = CacheCreateRequest;
   type CreateError = CreateModelError;
 
   fn create_model(
     &self,
     input: Self::ModelCreateRequest,
   ) -> impl Future<Output = Result<(), Self::CreateError>> + Send {
-    self.base_repo.create_model(input)
+    self.base_repo.create_model(input.into())
   }
 
   fn fetch_model_by_id(
