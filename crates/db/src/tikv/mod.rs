@@ -7,7 +7,10 @@ use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
 
 use self::consumptive::ConsumptiveTransaction;
-use crate::{CreateModelError, DatabaseAdapter};
+use crate::{
+  adapter::{FetchModelByIndexError, FetchModelError},
+  CreateModelError, DatabaseAdapter,
+};
 
 /// A TiKV-based database adapter.
 #[derive(Clone)]
@@ -94,12 +97,13 @@ impl DatabaseAdapter for TikvAdapter {
     let model_value = kv::value::Value::serialize(&model)
       .into_diagnostic()
       .context("failed to serialize model")
-      .map_err(CreateModelError::DbError)?;
+      .map_err(CreateModelError::Serde)?;
 
     // serialize the id into bytes
     let id_value = kv::value::Value::serialize(&id_ulid)
       .into_diagnostic()
-      .context("failed to serialize id")?;
+      .context("failed to serialize id")
+      .map_err(CreateModelError::Serde)?;
 
     // begin a transaction
     let txn = self
@@ -107,13 +111,14 @@ impl DatabaseAdapter for TikvAdapter {
       .begin_pessimistic_transaction()
       .await
       .context("failed to begin pessimistic transaction")
-      .map_err(CreateModelError::DbError)?;
+      .map_err(CreateModelError::Db)?;
 
     // check if the model exists
     let (txn, exists) = txn
       .csm_exists(&model_key)
       .await
-      .context("failed to check if model exists")?;
+      .context("failed to check if model exists")
+      .map_err(CreateModelError::Db)?;
     if exists {
       return Err(CreateModelError::ModelAlreadyExists);
     }
@@ -122,7 +127,8 @@ impl DatabaseAdapter for TikvAdapter {
     let mut txn = txn
       .csm_insert(&model_key, model_value)
       .await
-      .context("failed to insert model")?;
+      .context("failed to insert model")
+      .map_err(CreateModelError::Db)?;
 
     // insert the indexes
     for (index_name, index_fn) in M::UNIQUE_INDICES.iter() {
@@ -134,7 +140,8 @@ impl DatabaseAdapter for TikvAdapter {
       let (_txn, exists) = txn
         .csm_exists(&index_key)
         .await
-        .context("failed to check if index exists")?;
+        .context("failed to check if index exists")
+        .map_err(CreateModelError::Db)?;
       txn = _txn;
       if exists {
         return Err(CreateModelError::IndexAlreadyExists {
@@ -147,10 +154,13 @@ impl DatabaseAdapter for TikvAdapter {
       txn = txn
         .csm_insert(&index_key, id_value.clone())
         .await
-        .context("failed to insert index")?;
+        .context("failed to insert index")
+        .map_err(CreateModelError::Db)?;
     }
 
-    commit(txn).await?;
+    commit(txn)
+      .await
+      .map_err(CreateModelError::RetryableTransaction)?;
 
     Ok(())
   }
@@ -159,24 +169,29 @@ impl DatabaseAdapter for TikvAdapter {
   async fn fetch_model_by_id<M: models::Model>(
     &self,
     id: models::RecordId<M>,
-  ) -> Result<Option<M>> {
+  ) -> Result<Option<M>, FetchModelError> {
     let model_key = model_base_key::<M>(&id);
 
     let txn = self
       .0
       .begin_optimistic_transaction()
       .await
-      .context("failed to begin optimistic transaction")?;
+      .context("failed to begin optimistic transaction")
+      .map_err(FetchModelError::RetryableTransaction)?;
 
-    let (txn, model_value) = txn.csm_get(&model_key).await?;
+    let (txn, model_value) =
+      txn.csm_get(&model_key).await.map_err(FetchModelError::Db)?;
 
-    commit(txn).await?;
+    commit(txn)
+      .await
+      .map_err(FetchModelError::RetryableTransaction)?;
 
     model_value
       .map(|value| kv::value::Value::deserialize(value))
       .transpose()
       .into_diagnostic()
       .context("failed to deserialize model")
+      .map_err(FetchModelError::Serde)
   }
 
   #[instrument(skip(self))]
@@ -184,7 +199,7 @@ impl DatabaseAdapter for TikvAdapter {
     &self,
     index_name: String,
     index_value: EitherSlug,
-  ) -> Result<Option<M>> {
+  ) -> Result<Option<M>, FetchModelByIndexError> {
     let index_key =
       index_base_key::<M>(&index_name).with_either(index_value.clone());
 
@@ -192,31 +207,41 @@ impl DatabaseAdapter for TikvAdapter {
       .0
       .begin_optimistic_transaction()
       .await
-      .context("failed to begin optimistic transaction")?;
+      .context("failed to begin optimistic transaction")
+      .map_err(FetchModelByIndexError::RetryableTransaction)?;
 
-    let (txn, id_value) = txn.csm_get(&index_key).await?;
+    let (txn, id_value) = txn
+      .csm_get(&index_key)
+      .await
+      .map_err(FetchModelByIndexError::Db)?;
 
-    commit(txn).await?;
+    commit(txn)
+      .await
+      .map_err(FetchModelByIndexError::RetryableTransaction)?;
 
     let id = id_value
       .map(kv::value::Value::deserialize::<models::RecordId<M>>)
       .transpose()
       .into_diagnostic()
-      .context("failed to deserialize id")?;
+      .context("failed to deserialize id")
+      .map_err(FetchModelByIndexError::Serde)?;
 
     let id = match id {
       Some(id) => id,
       None => return Ok(None),
     };
 
-    let model = match self.fetch_model_by_id::<M>(id).await? {
+    let model = match self
+      .fetch_model_by_id::<M>(id)
+      .await
+      .map_err(FetchModelByIndexError::from)?
+    {
       Some(model) => model,
       None => {
-        miette::bail!(
-          "model with id `{}` not found, but index {:?} exists",
-          id,
-          index_name
-        );
+        return Err(FetchModelByIndexError::IndexMalformed {
+          index_name,
+          index_value,
+        });
       }
     };
 
