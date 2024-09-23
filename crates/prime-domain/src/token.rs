@@ -1,6 +1,7 @@
 use std::{future::Future, str::FromStr};
 
 pub use models::Token;
+use models::{StrictSlug, TokenRecordId};
 use repos::{FetchModelError, TokenRepository};
 
 /// The error type for token verification.
@@ -26,6 +27,12 @@ pub enum TokenVerifyError {
 
 /// The definition for the [`Token`] domain model service.
 pub trait TokenService: Clone + Send + Sync + 'static {
+  /// Fetch a [`Token`] by its ID.
+  fn fetch(
+    &self,
+    id: TokenRecordId,
+  ) -> impl Future<Output = Result<Option<Token>, FetchModelError>> + Send;
+
   /// Verifies that the supplied token ID and secret are valid and exist.
   fn verify_token_id_and_secret(
     &self,
@@ -53,6 +60,13 @@ impl<R: TokenRepository> TokenServiceCanonical<R> {
 }
 
 impl<R: TokenRepository> TokenService for TokenServiceCanonical<R> {
+  async fn fetch(
+    &self,
+    id: TokenRecordId,
+  ) -> Result<Option<Token>, FetchModelError> {
+    self.token_repo.fetch_model_by_id(id).await
+  }
+
   async fn verify_token_id_and_secret(
     &self,
     token_id: String,
