@@ -2,5 +2,6 @@
 //! business logic.
 
 mod cache;
+mod store;
 
-pub use self::cache::*;
+pub use self::{cache::*, store::*};
