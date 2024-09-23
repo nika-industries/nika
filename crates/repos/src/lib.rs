@@ -1,11 +1,14 @@
 //! Provides repository traits and implementors.
 
 mod base;
+mod cache;
 
 use std::future::Future;
 
 use miette::Result;
 use slugger::EitherSlug;
+
+pub use self::cache::*;
 
 /// Defines a repository interface for models.
 pub trait ModelRepository: Clone + Send + Sync + 'static {

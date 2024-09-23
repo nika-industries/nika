@@ -1,5 +1,7 @@
 use std::{future::Future, marker::PhantomData};
 
+pub use db::CreateModelError;
+pub(crate) use db::DatabaseAdapter;
 use miette::Result;
 
 use crate::ModelRepository;
@@ -12,7 +14,7 @@ use crate::ModelRepository;
 pub(crate) struct BaseRepository<
   M: models::Model + From<MR>,
   MR: std::fmt::Debug + Send + Sync + 'static,
-  DB: db::DatabaseAdapter,
+  DB: DatabaseAdapter,
 > {
   db_adapter: DB,
   _phantom:   PhantomData<M>,
@@ -22,7 +24,7 @@ pub(crate) struct BaseRepository<
 impl<
     M: models::Model + From<MR>,
     MR: std::fmt::Debug + Send + Sync + 'static,
-    DB: db::DatabaseAdapter,
+    DB: DatabaseAdapter,
   > Clone for BaseRepository<M, MR, DB>
 {
   fn clone(&self) -> Self {
@@ -37,7 +39,7 @@ impl<
 impl<
     M: models::Model + From<MR>,
     MR: std::fmt::Debug + Send + Sync + 'static,
-    DB: db::DatabaseAdapter,
+    DB: DatabaseAdapter,
   > BaseRepository<M, MR, DB>
 {
   pub fn new(db_adapter: DB) -> Self {
@@ -52,17 +54,17 @@ impl<
 impl<
     M: models::Model + From<MR>,
     MR: std::fmt::Debug + Send + Sync + 'static,
-    DB: db::DatabaseAdapter,
+    DB: DatabaseAdapter,
   > ModelRepository for BaseRepository<M, MR, DB>
 {
   type Model = M;
   type ModelCreateRequest = MR;
-  type CreateError = db::CreateModelError;
+  type CreateError = CreateModelError;
 
   fn create_model(
     &self,
     input: Self::ModelCreateRequest,
-  ) -> impl Future<Output = Result<(), db::CreateModelError>> + Send {
+  ) -> impl Future<Output = Result<(), CreateModelError>> + Send {
     self
       .db_adapter
       .create_model::<Self::Model>(Self::Model::from(input))
