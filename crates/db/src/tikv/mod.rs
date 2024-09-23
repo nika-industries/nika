@@ -200,6 +200,15 @@ impl DatabaseAdapter for TikvAdapter {
     index_name: String,
     index_value: EitherSlug,
   ) -> Result<Option<M>, FetchModelByIndexError> {
+    if !M::UNIQUE_INDICES
+      .iter()
+      .any(|(name, _)| name == &index_name)
+    {
+      return Err(FetchModelByIndexError::IndexDoesNotExistOnModel {
+        index_name,
+      });
+    }
+
     let index_key =
       index_base_key::<M>(&index_name).with_either(index_value.clone());
 
