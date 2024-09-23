@@ -2,6 +2,7 @@
 
 mod base;
 mod cache;
+mod entry;
 mod store;
 mod token;
 
@@ -11,7 +12,7 @@ pub use db::{FetchModelByIndexError, FetchModelError};
 use miette::Result;
 use slugger::EitherSlug;
 
-pub use self::{cache::*, store::*, token::*};
+pub use self::{cache::*, entry::*, store::*, token::*};
 
 /// Defines a repository interface for models.
 pub trait ModelRepository: Clone + Send + Sync + 'static {

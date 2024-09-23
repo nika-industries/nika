@@ -2,7 +2,8 @@
 //! business logic.
 
 mod cache;
+mod entry;
 mod store;
 mod token;
 
-pub use self::{cache::*, store::*, token::*};
+pub use self::{cache::*, entry::*, store::*, token::*};
