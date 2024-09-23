@@ -1,28 +1,28 @@
-//! Provides a repository for the [`Store`] domain model.
+//! Provides a repository for the [`Token`] domain model.
 
-pub use models::{Store, StoreCreateRequest};
+pub use models::{Token, TokenCreateRequest};
 
 use super::*;
 pub use crate::base::CreateModelError;
 use crate::base::{BaseRepository, DatabaseAdapter};
 
-/// Descriptor trait for repositories that handle [`Store`] domain model.
-pub trait StoreRepository:
-  ModelRepository<Model = Store, ModelCreateRequest = StoreCreateRequest>
+/// Descriptor trait for repositories that handle [`Token`] domain model.
+pub trait TokenRepository:
+  ModelRepository<Model = Token, ModelCreateRequest = TokenCreateRequest>
 {
 }
 
-impl<T> StoreRepository for T where
-  T: ModelRepository<Model = Store, ModelCreateRequest = StoreCreateRequest>
+impl<T> TokenRepository for T where
+  T: ModelRepository<Model = Token, ModelCreateRequest = TokenCreateRequest>
 {
 }
 
-/// The repository for the [`Store`] domain model.
-pub struct StoreRepositoryCanonical<DB: DatabaseAdapter> {
-  base_repo: BaseRepository<Store, DB>,
+/// The repository for the [`Token`] domain model.
+pub struct TokenRepositoryCanonical<DB: DatabaseAdapter> {
+  base_repo: BaseRepository<Token, DB>,
 }
 
-impl<DB: DatabaseAdapter> Clone for StoreRepositoryCanonical<DB> {
+impl<DB: DatabaseAdapter> Clone for TokenRepositoryCanonical<DB> {
   fn clone(&self) -> Self {
     Self {
       base_repo: self.base_repo.clone(),
@@ -30,8 +30,8 @@ impl<DB: DatabaseAdapter> Clone for StoreRepositoryCanonical<DB> {
   }
 }
 
-impl<DB: DatabaseAdapter> StoreRepositoryCanonical<DB> {
-  /// Create a new instance of the [`Store`] repository.
+impl<DB: DatabaseAdapter> TokenRepositoryCanonical<DB> {
+  /// Create a new instance of the [`Token`] repository.
   pub fn new(db_adapter: DB) -> Self {
     Self {
       base_repo: BaseRepository::new(db_adapter),
@@ -39,9 +39,9 @@ impl<DB: DatabaseAdapter> StoreRepositoryCanonical<DB> {
   }
 }
 
-impl<DB: DatabaseAdapter> ModelRepository for StoreRepositoryCanonical<DB> {
-  type Model = Store;
-  type ModelCreateRequest = StoreCreateRequest;
+impl<DB: DatabaseAdapter> ModelRepository for TokenRepositoryCanonical<DB> {
+  type Model = Token;
+  type ModelCreateRequest = TokenCreateRequest;
   type CreateError = CreateModelError;
 
   fn create_model(

@@ -36,6 +36,34 @@ impl Model for Token {
   fn id(&self) -> TokenRecordId { self.id }
 }
 
+/// A token create request.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TokenCreateRequest {
+  /// The token's nickname.
+  pub nickname: StrictSlug,
+  /// The token's secret.
+  pub secret:   StrictSlug,
+  /// The token's permissions.
+  pub perms:    PermissionSet,
+  /// The token's owner (a User).
+  pub owner:    UserRecordId,
+  /// The token's org.
+  pub org:      OrgRecordId,
+}
+
+impl From<TokenCreateRequest> for Token {
+  fn from(input: TokenCreateRequest) -> Self {
+    Self {
+      id:       TokenRecordId::default(),
+      nickname: input.nickname,
+      secret:   input.secret,
+      perms:    input.perms,
+      owner:    input.owner,
+      org:      input.org,
+    }
+  }
+}
+
 /// Validates a token secret. Returns `true` if the secret is valid.
 pub fn validate_token_secret(input: impl AsRef<str>) -> bool {
   let secret = input.as_ref();

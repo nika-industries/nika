@@ -3,6 +3,7 @@
 mod base;
 mod cache;
 mod store;
+mod token;
 
 use std::future::Future;
 
@@ -10,7 +11,7 @@ pub use db::{FetchModelByIndexError, FetchModelError};
 use miette::Result;
 use slugger::EitherSlug;
 
-pub use self::{cache::*, store::*};
+pub use self::{cache::*, store::*, token::*};
 
 /// Defines a repository interface for models.
 pub trait ModelRepository: Clone + Send + Sync + 'static {

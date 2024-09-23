@@ -3,5 +3,6 @@
 
 mod cache;
 mod store;
+mod token;
 
-pub use self::{cache::*, store::*};
+pub use self::{cache::*, store::*, token::*};
