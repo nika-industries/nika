@@ -13,7 +13,7 @@ pub trait DatabaseAdapter: Clone + Send + Sync + 'static {
   /// Fetches a model by its ID.
   fn fetch_model_by_id<M: models::Model>(
     &self,
-    id: &models::RecordId<M>,
+    id: models::RecordId<M>,
   ) -> impl Future<Output = Result<Option<M>>> + Send;
   /// Fetches a model by an index.
   ///
@@ -21,8 +21,8 @@ pub trait DatabaseAdapter: Clone + Send + Sync + 'static {
   /// [`UNIQUE_INDICES`](models::Model::UNIQUE_INDICES) constant.
   fn fetch_model_by_index<M: models::Model>(
     &self,
-    index_name: &str,
-    index_value: &EitherSlug,
+    index_name: String,
+    index_value: EitherSlug,
   ) -> impl Future<Output = Result<Option<M>>> + Send;
 }
 

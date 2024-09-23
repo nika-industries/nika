@@ -18,7 +18,7 @@ async fn test_tikv() {
   let id = model.id;
 
   let new_model = db
-    .fetch_model_by_id::<models::Org>(&id)
+    .fetch_model_by_id::<models::Org>(id)
     .await
     .unwrap()
     .unwrap();
@@ -27,7 +27,10 @@ async fn test_tikv() {
 
   // fetch by index this time
   let new_model = db
-    .fetch_model_by_index::<models::Org>("name", &model.name.clone().into())
+    .fetch_model_by_index::<models::Org>(
+      "name".to_string(),
+      model.name.clone().into(),
+    )
     .await
     .unwrap()
     .unwrap();

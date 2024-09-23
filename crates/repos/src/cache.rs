@@ -53,15 +53,15 @@ impl<DB: DatabaseAdapter> ModelRepository for CacheRepositoryCanonical<DB> {
 
   fn fetch_model_by_id(
     &self,
-    id: &models::RecordId<Self::Model>,
+    id: models::RecordId<Self::Model>,
   ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
     self.base_repo.fetch_model_by_id(id)
   }
 
   fn fetch_model_by_index(
     &self,
-    index_name: &str,
-    index_value: &EitherSlug,
+    index_name: String,
+    index_value: EitherSlug,
   ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
     self.base_repo.fetch_model_by_index(index_name, index_value)
   }

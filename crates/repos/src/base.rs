@@ -50,15 +50,15 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
 
   fn fetch_model_by_id(
     &self,
-    id: &models::RecordId<Self::Model>,
+    id: models::RecordId<Self::Model>,
   ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
     self.db_adapter.fetch_model_by_id(id)
   }
 
   fn fetch_model_by_index(
     &self,
-    index_name: &str,
-    index_value: &slugger::EitherSlug,
+    index_name: String,
+    index_value: slugger::EitherSlug,
   ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
     self
       .db_adapter

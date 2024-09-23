@@ -158,9 +158,9 @@ impl DatabaseAdapter for TikvAdapter {
   #[instrument(skip(self))]
   async fn fetch_model_by_id<M: models::Model>(
     &self,
-    id: &models::RecordId<M>,
+    id: models::RecordId<M>,
   ) -> Result<Option<M>> {
-    let model_key = model_base_key::<M>(id);
+    let model_key = model_base_key::<M>(&id);
 
     let txn = self
       .0
@@ -182,11 +182,11 @@ impl DatabaseAdapter for TikvAdapter {
   #[instrument(skip(self))]
   async fn fetch_model_by_index<M: models::Model>(
     &self,
-    index_name: &str,
-    index_value: &EitherSlug,
+    index_name: String,
+    index_value: EitherSlug,
   ) -> Result<Option<M>> {
     let index_key =
-      index_base_key::<M>(index_name).with_either(index_value.clone());
+      index_base_key::<M>(&index_name).with_either(index_value.clone());
 
     let txn = self
       .0
@@ -209,7 +209,7 @@ impl DatabaseAdapter for TikvAdapter {
       None => return Ok(None),
     };
 
-    let model = match self.fetch_model_by_id::<M>(&id).await? {
+    let model = match self.fetch_model_by_id::<M>(id).await? {
       Some(model) => model,
       None => {
         miette::bail!(
