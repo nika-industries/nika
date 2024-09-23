@@ -1,4 +1,4 @@
-use std::{future::Future, str::FromStr};
+use std::future::Future;
 
 pub use models::Token;
 use models::{StrictSlug, TokenRecordId};
@@ -7,15 +7,9 @@ use repos::{FetchModelError, TokenRepository};
 /// The error type for token verification.
 #[derive(Debug, thiserror::Error, miette::Diagnostic)]
 pub enum TokenVerifyError {
-  /// The token ID is invalid.
-  #[error("invalid token ID")]
-  InvalidId,
   /// The token ID was not found.
   #[error("token ID not found")]
   IdNotFound,
-  /// The token secret is invalid.
-  #[error("invalid token secret")]
-  InvalidSecret,
   /// The token secret does not match the expected secret.
   #[error("token secret mismatch")]
   SecretMismatch,
@@ -36,8 +30,8 @@ pub trait TokenService: Clone + Send + Sync + 'static {
   /// Verifies that the supplied token ID and secret are valid and exist.
   fn verify_token_id_and_secret(
     &self,
-    token_id: String,
-    token_secret: String,
+    id: TokenRecordId,
+    secret: StrictSlug,
   ) -> impl Future<Output = Result<Token, TokenVerifyError>>;
 }
 
@@ -69,26 +63,16 @@ impl<R: TokenRepository> TokenService for TokenServiceCanonical<R> {
 
   async fn verify_token_id_and_secret(
     &self,
-    token_id: String,
-    token_secret: String,
+    id: TokenRecordId,
+    secret: StrictSlug,
   ) -> Result<Token, TokenVerifyError> {
-    let token_id = models::TokenRecordId::from_str(&token_id)
-      .map_err(|_| TokenVerifyError::InvalidId)?;
-
     let token = self
-      .token_repo
-      .fetch_model_by_id(token_id)
+      .fetch(id)
       .await
-      .map_err(TokenVerifyError::FetchError)?;
+      .map_err(TokenVerifyError::FetchError)?
+      .ok_or(TokenVerifyError::IdNotFound)?;
 
-    let token = token.ok_or(TokenVerifyError::IdNotFound)?;
-
-    let token_secret_slug = models::StrictSlug::new(token_secret.clone());
-    if token_secret_slug.clone().into_inner() != token_secret {
-      return Err(TokenVerifyError::InvalidSecret);
-    }
-
-    if token.secret != token_secret_slug {
+    if token.secret != secret {
       return Err(TokenVerifyError::SecretMismatch);
     }
 
