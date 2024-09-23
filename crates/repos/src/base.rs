@@ -1,7 +1,7 @@
 use std::{future::Future, marker::PhantomData};
 
 pub use db::CreateModelError;
-pub(crate) use db::DatabaseAdapter;
+pub(crate) use db::{DatabaseAdapter, FetchModelByIndexError, FetchModelError};
 use miette::Result;
 
 use crate::ModelRepository;
@@ -51,7 +51,8 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
   fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
-  ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
+  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send
+  {
     self.db_adapter.fetch_model_by_id(id)
   }
 
@@ -59,7 +60,8 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
     &self,
     index_name: String,
     index_value: slugger::EitherSlug,
-  ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
+  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelByIndexError>> + Send
+  {
     self
       .db_adapter
       .fetch_model_by_index(index_name, index_value)

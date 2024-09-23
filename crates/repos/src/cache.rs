@@ -15,7 +15,8 @@ pub trait CacheRepository:
   fn find_by_name(
     &self,
     name: &str,
-  ) -> impl Future<Output = Result<Option<Cache>>> + Send {
+  ) -> impl Future<Output = Result<Option<Cache>, FetchModelByIndexError>> + Send
+  {
     self.fetch_model_by_index(
       "name".to_string(),
       EitherSlug::Strict(StrictSlug::new(name.to_string())),
@@ -65,7 +66,8 @@ impl<DB: DatabaseAdapter> ModelRepository for CacheRepositoryCanonical<DB> {
   fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
-  ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
+  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send
+  {
     self.base_repo.fetch_model_by_id(id)
   }
 
@@ -73,7 +75,8 @@ impl<DB: DatabaseAdapter> ModelRepository for CacheRepositoryCanonical<DB> {
     &self,
     index_name: String,
     index_value: EitherSlug,
-  ) -> impl Future<Output = Result<Option<Self::Model>>> + Send {
+  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelByIndexError>> + Send
+  {
     self.base_repo.fetch_model_by_index(index_name, index_value)
   }
 }

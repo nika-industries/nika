@@ -4,8 +4,4 @@ mod adapter;
 mod migrate;
 mod tikv;
 
-pub use self::{
-  adapter::{CreateModelError, DatabaseAdapter},
-  migrate::Migratable,
-  tikv::TikvAdapter,
-};
+pub use self::{adapter::*, migrate::Migratable, tikv::TikvAdapter};

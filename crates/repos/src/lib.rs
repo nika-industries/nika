@@ -6,6 +6,7 @@ mod store;
 
 use std::future::Future;
 
+pub use db::{FetchModelByIndexError, FetchModelError};
 use miette::Result;
 use slugger::EitherSlug;
 
@@ -30,7 +31,7 @@ pub trait ModelRepository: Clone + Send + Sync + 'static {
   fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
-  ) -> impl Future<Output = Result<Option<Self::Model>>> + Send;
+  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send;
 
   /// Fetches a model by an index.
   ///
@@ -39,5 +40,5 @@ pub trait ModelRepository: Clone + Send + Sync + 'static {
     &self,
     index_name: String,
     index_value: EitherSlug,
-  ) -> impl Future<Output = Result<Option<Self::Model>>> + Send;
+  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelByIndexError>> + Send;
 }
