@@ -11,6 +11,7 @@ pub use ulid::Ulid;
 #[derive(Serialize, Deserialize)]
 pub struct RecordId<T> {
   id: Ulid,
+  #[serde(skip)]
   _m: PhantomData<T>,
 }
 
