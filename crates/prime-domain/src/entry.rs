@@ -1,13 +1,31 @@
 use std::future::Future;
 
 pub use models::Entry;
-use models::EntryRecordId;
-use repos::{EntryRepository, FetchModelError, ModelRepositoryFetcher};
+use models::{CacheRecordId, EntryRecordId, LaxSlug};
+use repos::{
+  CreateModelError, EntryCreateRequest, EntryRepository,
+  FetchModelByIndexError, FetchModelError, ModelRepositoryCreator,
+  ModelRepositoryFetcher,
+};
 
 /// The definition for the [`Entry`] domain model service.
 pub trait EntryService:
-  ModelRepositoryFetcher<Model = Entry> + Clone + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Entry>
+  + ModelRepositoryCreator<
+    Model = Entry,
+    ModelCreateRequest = EntryCreateRequest,
+    CreateError = CreateModelError,
+  > + Clone
+  + Send
+  + Sync
+  + 'static
 {
+  /// Find an [`Entry`] by its cache ID and path.
+  fn find_by_entry_id_and_path(
+    &self,
+    cache_id: CacheRecordId,
+    path: LaxSlug,
+  ) -> impl Future<Output = Result<Option<Entry>, FetchModelByIndexError>> + Send;
 }
 
 /// Canonical service for the [`Entry`] domain model.
@@ -39,4 +57,29 @@ impl<R: EntryRepository> ModelRepositoryFetcher for EntryServiceCanonical<R> {
   }
 }
 
-impl<R: EntryRepository> EntryService for EntryServiceCanonical<R> {}
+impl<R: EntryRepository> ModelRepositoryCreator for EntryServiceCanonical<R> {
+  type Model = Entry;
+  type ModelCreateRequest = EntryCreateRequest;
+  type CreateError = CreateModelError;
+
+  async fn create_model(
+    &self,
+    input: EntryCreateRequest,
+  ) -> Result<(), Self::CreateError> {
+    self.entry_repo.create_model(input).await
+  }
+}
+
+impl<R: EntryRepository> EntryService for EntryServiceCanonical<R> {
+  /// Find an [`Entry`] by its cache ID and path.
+  async fn find_by_entry_id_and_path(
+    &self,
+    cache_id: CacheRecordId,
+    path: LaxSlug,
+  ) -> Result<Option<Entry>, FetchModelByIndexError> {
+    self
+      .entry_repo
+      .find_by_entry_id_and_path(cache_id, path)
+      .await
+  }
+}

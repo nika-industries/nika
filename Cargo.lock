@@ -3002,6 +3002,8 @@ dependencies = [
  "miette",
  "models",
  "mollusk",
+ "prime-domain",
+ "repos",
  "rope",
  "serde",
  "slugger",

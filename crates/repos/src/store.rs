@@ -8,12 +8,20 @@ use crate::base::{BaseRepository, DatabaseAdapter};
 
 /// Descriptor trait for repositories that handle [`Store`] domain model.
 pub trait StoreRepository:
-  ModelRepository<Model = Store, ModelCreateRequest = StoreCreateRequest>
+  ModelRepository<
+  Model = Store,
+  ModelCreateRequest = StoreCreateRequest,
+  CreateError = CreateModelError,
+>
 {
 }
 
 impl<T> StoreRepository for T where
-  T: ModelRepository<Model = Store, ModelCreateRequest = StoreCreateRequest>
+  T: ModelRepository<
+    Model = Store,
+    ModelCreateRequest = StoreCreateRequest,
+    CreateError = CreateModelError,
+  >
 {
 }
 

@@ -20,6 +20,12 @@ impl PermissionSet {
   }
 }
 
+impl FromIterator<Permission> for PermissionSet {
+  fn from_iter<T: IntoIterator<Item = Permission>>(iter: T) -> Self {
+    Self(iter.into_iter().collect())
+  }
+}
+
 /// A permission.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Permission {

@@ -9,6 +9,8 @@ workspace = true
 
 [dependencies]
 models = { path = "../models" }
+prime-domain = { path = "../prime-domain" }
+repos = { path = "../repos" }
 db = { path = "../db" }
 mollusk = { path = "../mollusk" }
 rope = { path = "../rope" }

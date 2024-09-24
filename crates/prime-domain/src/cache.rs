@@ -2,7 +2,7 @@ use std::future::Future;
 
 use miette::Result;
 pub use models::Cache;
-use models::CacheRecordId;
+use models::{CacheRecordId, StrictSlug};
 use repos::{
   CacheRepository, FetchModelByIndexError, FetchModelError,
   ModelRepositoryFetcher,
@@ -10,12 +10,12 @@ use repos::{
 
 /// The definition for the [`Cache`] domain model service.
 pub trait CacheService:
-  ModelRepositoryFetcher<Model = Cache> + Clone + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Cache> + Send + Sync + 'static
 {
   /// Find a [`Cache`] by its name.
   fn find_by_name(
     &self,
-    name: &str,
+    name: StrictSlug,
   ) -> impl Future<Output = Result<Option<Cache>, FetchModelByIndexError>> + Send;
 }
 
@@ -51,7 +51,7 @@ impl<R: CacheRepository> ModelRepositoryFetcher for CacheServiceCanonical<R> {
 impl<R: CacheRepository> CacheService for CacheServiceCanonical<R> {
   async fn find_by_name(
     &self,
-    name: &str,
+    name: StrictSlug,
   ) -> Result<Option<Cache>, FetchModelByIndexError> {
     self.cache_repo.find_by_name(name).await
   }

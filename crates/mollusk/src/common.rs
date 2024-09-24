@@ -6,25 +6,8 @@ use crate::MolluskError;
 
 /// An unrecoverable internal error.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
-pub enum InternalError {
-  /// Temp storage credentials could not be fetched.
-  #[error("Failed to fetch temp storage credentials")]
-  TempStorageCredsError(String),
-  /// An error occurred while connecting to surreal.
-  #[error("SurrealDB connection error: {0}")]
-  SurrealDbConnectionError(String),
-  /// An error occurred while querying surreal.
-  #[error("SurrealDB query error: {0}")]
-  SurrealDbQueryError(String),
-  /// The model matching a given ID is missing.
-  #[error("Missing model error: {model_name:?} for {model_id:?} is missing")]
-  MissingModelError {
-    /// The name of the model.
-    model_name: String,
-    /// The ID of the model.
-    model_id:   String,
-  },
-}
+#[error("internal error: {0:?}")]
+pub struct InternalError(pub String);
 
 impl MolluskError for InternalError {
   fn status_code(&self) -> StatusCode { StatusCode::INTERNAL_SERVER_ERROR }

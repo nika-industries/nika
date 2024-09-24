@@ -9,23 +9,28 @@ use crate::base::{BaseRepository, DatabaseAdapter};
 
 /// Descriptor trait for repositories that handle [`Cache`] domain model.
 pub trait CacheRepository:
-  ModelRepository<Model = Cache, ModelCreateRequest = CacheCreateRequest>
+  ModelRepository<
+  Model = Cache,
+  ModelCreateRequest = CacheCreateRequest,
+  CreateError = CreateModelError,
+>
 {
   /// Find a [`Cache`] by its name.
   fn find_by_name(
     &self,
-    name: &str,
+    name: StrictSlug,
   ) -> impl Future<Output = Result<Option<Cache>, FetchModelByIndexError>> + Send
   {
-    self.fetch_model_by_index(
-      "name".to_string(),
-      EitherSlug::Strict(StrictSlug::new(name.to_string())),
-    )
+    self.fetch_model_by_index("name".to_string(), EitherSlug::Strict(name))
   }
 }
 
 impl<T> CacheRepository for T where
-  T: ModelRepository<Model = Cache, ModelCreateRequest = CacheCreateRequest>
+  T: ModelRepository<
+    Model = Cache,
+    ModelCreateRequest = CacheCreateRequest,
+    CreateError = CreateModelError,
+  >
 {
 }
 

@@ -1,5 +1,6 @@
 //! Provides a repository for the [`Entry`] domain model.
 
+use models::{CacheRecordId, LaxSlug};
 pub use models::{Entry, EntryCreateRequest};
 
 use super::*;
@@ -8,13 +9,39 @@ use crate::base::{BaseRepository, DatabaseAdapter};
 
 /// Descriptor trait for repositories that handle [`Entry`] domain model.
 pub trait EntryRepository:
-  ModelRepository<Model = Entry, ModelCreateRequest = EntryCreateRequest>
+  ModelRepository<
+  Model = Entry,
+  ModelCreateRequest = EntryCreateRequest,
+  CreateError = CreateModelError,
+>
 {
+  /// Find an [`Entry`] by its cache ID and path.
+  fn find_by_entry_id_and_path(
+    &self,
+    cache_id: CacheRecordId,
+    path: LaxSlug,
+  ) -> impl Future<Output = Result<Option<Entry>, FetchModelByIndexError>> + Send;
 }
 
-impl<T> EntryRepository for T where
-  T: ModelRepository<Model = Entry, ModelCreateRequest = EntryCreateRequest>
+impl<T> EntryRepository for T
+where
+  T: ModelRepository<
+    Model = Entry,
+    ModelCreateRequest = EntryCreateRequest,
+    CreateError = CreateModelError,
+  >,
 {
+  /// Find an [`Entry`] by its cache ID and path.
+  async fn find_by_entry_id_and_path(
+    &self,
+    cache_id: CacheRecordId,
+    path: LaxSlug,
+  ) -> Result<Option<Entry>, FetchModelByIndexError> {
+    let index_value = LaxSlug::new(format!("{cache_id}-{path}"));
+    self
+      .fetch_model_by_index("cache-id-path".into(), index_value.into())
+      .await
+  }
 }
 
 /// The repository for the [`Entry`] domain model.

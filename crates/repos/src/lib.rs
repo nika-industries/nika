@@ -56,3 +56,19 @@ pub trait ModelRepositoryFetcher: Clone + Send + Sync + 'static {
     id: models::RecordId<Self::Model>,
   ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send;
 }
+
+/// Defines a repository interface for creating models.
+pub trait ModelRepositoryCreator: Clone + Send + Sync + 'static {
+  /// The model type.
+  type Model: models::Model;
+  /// The request type for creating a model.
+  type ModelCreateRequest: std::fmt::Debug + Send + Sync + 'static;
+  /// The error type for creating a model.
+  type CreateError: std::error::Error + Send + Sync + 'static;
+
+  /// Creates a new model.
+  fn create_model(
+    &self,
+    input: Self::ModelCreateRequest,
+  ) -> impl Future<Output = Result<(), Self::CreateError>> + Send;
+}

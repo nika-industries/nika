@@ -8,12 +8,20 @@ use crate::base::{BaseRepository, DatabaseAdapter};
 
 /// Descriptor trait for repositories that handle [`Token`] domain model.
 pub trait TokenRepository:
-  ModelRepository<Model = Token, ModelCreateRequest = TokenCreateRequest>
+  ModelRepository<
+  Model = Token,
+  ModelCreateRequest = TokenCreateRequest,
+  CreateError = CreateModelError,
+>
 {
 }
 
 impl<T> TokenRepository for T where
-  T: ModelRepository<Model = Token, ModelCreateRequest = TokenCreateRequest>
+  T: ModelRepository<
+    Model = Token,
+    ModelCreateRequest = TokenCreateRequest,
+    CreateError = CreateModelError,
+  >
 {
 }
 
