@@ -17,7 +17,7 @@ thiserror = { version = "1" }
 
 # errors
 # miette = { version = "7", default-features = false, features = [ "derive" ] }
-miette = { git = "https://github.com/zkat/miette", branch ="main", default-features = false, features = ["derive"] }
+miette = { git = "https://github.com/zkat/miette", rev = "93d3bd118a072c35aa761f0ec74317166ec08113", default-features = false, features = ["derive"] }
 
 # mainline application
 axum = { version = "0.7" }
