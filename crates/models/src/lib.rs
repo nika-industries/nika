@@ -13,7 +13,7 @@ mod user;
 use std::fmt::Debug;
 
 use serde::{de::DeserializeOwned, Serialize};
-pub use slugger::*;
+pub use slugger::{self, EitherSlug, LaxSlug, StrictSlug};
 pub use ulid::Ulid;
 
 pub use self::{
