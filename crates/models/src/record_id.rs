@@ -9,21 +9,18 @@ pub use ulid::Ulid;
 
 /// A record ID for a [`Model`](crate::Model) implementer.
 #[derive(Serialize, Deserialize)]
-pub struct RecordId<T> {
-  id: Ulid,
-  #[serde(skip)]
-  _m: PhantomData<T>,
-}
+#[serde(transparent)]
+pub struct RecordId<T>(Ulid, #[serde(skip)] PhantomData<T>);
 
 impl<T> fmt::Debug for RecordId<T> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_tuple("RecordId").field(&self.id).finish()
+    f.debug_tuple("RecordId").field(&self.0).finish()
   }
 }
 
 impl<T> fmt::Display for RecordId<T> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.id)
+    write!(f, "{}", self.0)
   }
 }
 
@@ -34,13 +31,13 @@ impl<T> Clone for RecordId<T> {
 impl<T> Copy for RecordId<T> {}
 
 impl<T> PartialEq<Self> for RecordId<T> {
-  fn eq(&self, other: &Self) -> bool { self.id.eq(&other.id) }
+  fn eq(&self, other: &Self) -> bool { self.0.eq(&other.0) }
 }
 
 impl<T> Eq for RecordId<T> {}
 
 impl<T> Hash for RecordId<T> {
-  fn hash<H: std::hash::Hasher>(&self, state: &mut H) { self.id.hash(state) }
+  fn hash<H: std::hash::Hasher>(&self, state: &mut H) { self.0.hash(state) }
 }
 
 impl<T> PartialOrd for RecordId<T> {
@@ -50,38 +47,25 @@ impl<T> PartialOrd for RecordId<T> {
 }
 
 impl<T> Ord for RecordId<T> {
-  fn cmp(&self, other: &Self) -> std::cmp::Ordering { self.id.cmp(&other.id) }
+  fn cmp(&self, other: &Self) -> std::cmp::Ordering { self.0.cmp(&other.0) }
 }
 
 impl<T> RecordId<T> {
   /// Creates a new [`RecordId`].
-  pub fn new() -> Self {
-    Self {
-      id: Ulid::new(),
-      _m: PhantomData,
-    }
-  }
+  pub fn new() -> Self { Self(Ulid::new(), PhantomData) }
   /// Creates a new [`RecordId`] from a [`Ulid`].
-  pub fn from_ulid(ulid: Ulid) -> Self {
-    Self {
-      id: ulid,
-      _m: PhantomData,
-    }
-  }
+  pub fn from_ulid(ulid: Ulid) -> Self { Self(ulid, PhantomData) }
 }
 
 impl<T> FromStr for RecordId<T> {
   type Err = ulid::DecodeError;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(Self {
-      id: Ulid::from_str(s)?,
-      _m: PhantomData,
-    })
+    Ok(Self(Ulid::from_str(s)?, PhantomData))
   }
 }
 
 impl<T> From<RecordId<T>> for Ulid {
-  fn from(id: RecordId<T>) -> Ulid { id.id }
+  fn from(id: RecordId<T>) -> Ulid { id.0 }
 }
 
 impl<T> Default for RecordId<T> {
