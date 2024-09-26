@@ -11,6 +11,21 @@ use crate::StoreRecordId;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PermissionSet(pub HashSet<Permission>);
 
+impl PermissionSet {
+  /// Check if the permission set contains the given permission.
+  pub fn contains(&self, perm: &Permission) -> bool { self.0.contains(perm) }
+  /// Check if the permission set contains all the permissions in the given set.
+  pub fn contains_set(&self, perms: &PermissionSet) -> bool {
+    perms.0.iter().all(|perm| self.contains(perm))
+  }
+}
+
+impl FromIterator<Permission> for PermissionSet {
+  fn from_iter<T: IntoIterator<Item = Permission>>(iter: T) -> Self {
+    Self(iter.into_iter().collect())
+  }
+}
+
 /// A permission.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Permission {

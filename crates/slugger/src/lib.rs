@@ -9,8 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use self::{lax::lax_slugify, strict::strict_slugify};
 
-/// A strict slug that only allows lowercase ASCII letters, numbers, and
-/// hyphens.
+/// A strict slug, meant for user-supplied data used in URLs and entity names.
 #[nutype::nutype(
   sanitize(with = |s: String| strict_slugify(&s)),
   derive(
@@ -32,8 +31,7 @@ impl StrictSlug {
   }
 }
 
-/// A lax slug that allows lowercase and uppercase ASCII letters, numbers,
-/// hyphens, underscores, dots, and plus signs.
+/// A lax slug, meant to accomodate Nix store paths.
 #[nutype::nutype(
   sanitize(with = |s: String| lax_slugify(&s)),
   derive(

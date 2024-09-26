@@ -1,24 +1,24 @@
-use db::TikvDb;
+use db::{DatabaseAdapter, TikvAdapter};
 
 #[tokio::test]
 #[ignore]
 async fn test_tikv() {
-  let db = TikvDb::new().await.unwrap();
+  let db = TikvAdapter::new_from_env().await.unwrap();
 
   let model = models::Org {
-    id:   models::OrgRecordId(models::Ulid::new()),
+    id:   models::OrgRecordId::new(),
     name: models::StrictSlug::new(format!(
       "org-{}",
       models::Ulid::new().to_string()
     )),
   };
 
-  db.create_model(&model).await.unwrap();
+  db.create_model(model.clone()).await.unwrap();
 
   let id = model.id;
 
   let new_model = db
-    .fetch_model_by_id::<models::Org>(&id)
+    .fetch_model_by_id::<models::Org>(id)
     .await
     .unwrap()
     .unwrap();
@@ -27,7 +27,10 @@ async fn test_tikv() {
 
   // fetch by index this time
   let new_model = db
-    .fetch_model_by_index::<models::Org>("name", &model.name.clone().into())
+    .fetch_model_by_index::<models::Org>(
+      "name".to_string(),
+      model.name.clone().into(),
+    )
     .await
     .unwrap()
     .unwrap();

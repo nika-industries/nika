@@ -1,0 +1,16 @@
+[package]
+name = "repos"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+models = { path = "../models" }
+db = { path = "../db" }
+slugger = { path = "../slugger" }
+
+async-trait.workspace = true
+miette.workspace = true
+
+[lints]
+workspace = true

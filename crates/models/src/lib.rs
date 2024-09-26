@@ -4,23 +4,21 @@ mod cache;
 mod entry;
 mod org;
 mod perms;
+mod record_id;
 mod storage_creds;
 mod store;
 mod token;
 mod user;
 
-use std::{
-  fmt::{Debug, Display},
-  hash::Hash,
-};
+use std::fmt::Debug;
 
 use serde::{de::DeserializeOwned, Serialize};
-pub use slugger::*;
+pub use slugger::{self, EitherSlug, LaxSlug, StrictSlug};
 pub use ulid::Ulid;
 
 pub use self::{
-  cache::*, entry::*, org::*, perms::*, storage_creds::*, store::*, token::*,
-  user::*,
+  cache::*, entry::*, org::*, perms::*, record_id::RecordId, storage_creds::*,
+  store::*, token::*, user::*,
 };
 
 type SlugFieldGetter<T> = fn(&T) -> EitherSlug;
@@ -29,26 +27,15 @@ type SlugFieldGetter<T> = fn(&T) -> EitherSlug;
 pub trait Model:
   Clone + Debug + PartialEq + Serialize + DeserializeOwned + Send + Sync + 'static
 {
-  /// The model's ID type
-  type Id: Clone
-    + Debug
-    + Display
-    + PartialEq
-    + Eq
-    + Hash
-    + Serialize
-    + DeserializeOwned
-    + Into<Ulid>
-    + Send
-    + Sync
-    + 'static;
   /// The table name in the database.
   const TABLE_NAME: &'static str;
 
-  /// The model's indices, an array of tuples containing the index name and a
-  /// function that returns the index value.
-  const INDICES: &'static [(&'static str, SlugFieldGetter<Self>)];
+  /// The model's unique indices.
+  ///
+  /// An array of tuples containing the index name and a function that returns
+  /// the index value. The produced value must be unique for each record.
+  const UNIQUE_INDICES: &'static [(&'static str, SlugFieldGetter<Self>)];
 
   /// Returns the model's ID.
-  fn id(&self) -> Self::Id;
+  fn id(&self) -> RecordId<Self>;
 }

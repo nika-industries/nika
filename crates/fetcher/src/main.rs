@@ -37,12 +37,13 @@ impl<T, E> UntaggedResult<T, E> {
 async fn get_fetch_payload(
   store_name: String,
   path: String,
+  token_id: Option<String>,
   token_secret: Option<String>,
 ) -> Result<models::StorageCredentials, mollusk::PrepareFetchPayloadError> {
   let client = reqwest::Client::new();
   let response = client
     .get("http://localhost:3000/fetch_payload".to_string())
-    .json(&(store_name, path, token_secret))
+    .json(&(store_name, path, token_id, token_secret))
     .send()
     .await
     .unwrap()
@@ -61,12 +62,18 @@ async fn fetch_handler(
   Path((store_name, path)): Path<(String, String)>,
   headers: HeaderMap,
 ) -> Result<Response, ExternalApiError> {
-  let token_secret = headers
+  let token_id_secret_pair = headers
     .get("authorization")
     .and_then(|value| value.to_str().ok())
     .map(|value| value.to_string());
+  let token_id = token_id_secret_pair
+    .clone()
+    .and_then(|pair| pair.split(':').next().map(|s| s.to_string()));
+  let token_secret = token_id_secret_pair
+    .and_then(|pair| pair.split(':').nth(1).map(|s| s.to_string()));
 
-  let creds = get_fetch_payload(store_name, path.clone(), token_secret).await?;
+  let creds =
+    get_fetch_payload(store_name, path.clone(), token_id, token_secret).await?;
   let client = creds.client().await.map_err(FetcherError::StoreInitError)?;
 
   let response = fetch_path_from_client(&client, path).await?;

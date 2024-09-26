@@ -1,6 +1,6 @@
 //! TiKV key-value store implementation.
 
-use std::mem::ManuallyDrop;
+use miette::{Context, IntoDiagnostic};
 
 use crate::{
   key::Key, value::Value, KvPrimitive, KvResult, KvTransaction, KvTransactional,
@@ -20,6 +20,19 @@ impl TikvClient {
       tikv_client::TransactionClient::new(endpoints).await?,
     ))
   }
+
+  /// Create a new TiKV client from environment variables.
+  pub async fn new_from_env() -> miette::Result<Self> {
+    let urls = std::env::var("TIKV_URLS")
+      .into_diagnostic()
+      .wrap_err("missing TIKV_URLS")?;
+    let urls = urls.split(',').collect();
+    let client = TikvClient::new(urls)
+      .await
+      .into_diagnostic()
+      .context("failed to create tikv client")?;
+    Ok(client)
+  }
 }
 
 impl KvTransactional for TikvClient {
@@ -29,22 +42,18 @@ impl KvTransactional for TikvClient {
   async fn begin_optimistic_transaction(
     &self,
   ) -> KvResult<Self::OptimisticTransaction> {
-    Ok(TikvTransaction(ManuallyDrop::new(
-      self.0.begin_optimistic().await?,
-    )))
+    Ok(TikvTransaction(self.0.begin_optimistic().await?))
   }
 
   async fn begin_pessimistic_transaction(
     &self,
   ) -> KvResult<Self::PessimisticTransaction> {
-    Ok(TikvTransaction(ManuallyDrop::new(
-      self.0.begin_pessimistic().await?,
-    )))
+    Ok(TikvTransaction(self.0.begin_pessimistic().await?))
   }
 }
 
 /// TiKV transaction.
-pub struct TikvTransaction(ManuallyDrop<tikv_client::Transaction>);
+pub struct TikvTransaction(tikv_client::Transaction);
 
 impl KvPrimitive for TikvTransaction {
   async fn get(&mut self, key: &Key) -> KvResult<Option<Value>> {

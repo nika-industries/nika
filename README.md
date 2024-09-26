@@ -4,6 +4,29 @@ Welcome to the `nika` monorepo. Feel free to look around.
 
 - See the [ROADMAP](./ROADMAP.md) for project direction and status.
 
+## Crate Map
+![Crate Graph](./media/crate-graph.png)
+
+- `api` (bin) - main action entrypoint over HTTP.
+- `art` - macro-based ascii art.
+- `cli` (bin) - command line interface (mostly useless right now).
+- `daemon` (bin) - task runner daemon.
+- `db` - model-based database adapter interface, and TiKV implementer.
+- `fetcher` - temporary binary for the fetch pathway.
+- `kv` - key-value store interface and types, and TiKV implementer.
+- `migrator` (bin) - database migration tool.
+- `models` - primary db model types.
+- `mollusk` - interfaces for HTTP errors, public and private.
+- `names` - name generator.
+- `nasty` - nix daemon interactions.
+- `prime-domain` - service-level entrypoints for logic in the prime domain.
+- `repos` - repository interfaces and implementers.
+- `rope` - persistent distributed task interface.
+- `slugger` - slug types.
+- `starc` - smart pointer for static, owned, or ref-counted data.
+- `storage` - storage interface and implementers.
+- `tasks` - task types and logic.
+
 ## License
 
 This project is licensed under the AGPL-3.0 with an addendum restricting direct competition. 

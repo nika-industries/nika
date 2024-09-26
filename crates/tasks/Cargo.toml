@@ -8,15 +8,12 @@ publish = false
 workspace = true
 
 [dependencies]
-models = { path = "../models" }
-db = { path = "../db" }
+prime-domain = { path = "../prime-domain" }
 mollusk = { path = "../mollusk" }
 rope = { path = "../rope" }
-slugger = { path = "../slugger" }
 storage = { path = "../storage" }
 
 async-trait.workspace = true
-miette.workspace = true
 serde.workspace = true
 
 tracing.workspace = true

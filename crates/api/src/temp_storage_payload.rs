@@ -10,6 +10,7 @@ use axum::{
   extract::{FromRequest, Request},
   response::Response,
 };
+use prime_domain::models;
 use storage::{temp::TempStoragePath, StorageClientGenerator};
 use tokio_stream::StreamExt;
 

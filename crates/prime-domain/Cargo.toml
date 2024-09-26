@@ -1,0 +1,16 @@
+[package]
+name = "prime-domain"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+repos = { path = "../repos" }
+models = { path = "../models" }
+
+async-trait.workspace = true
+thiserror.workspace = true
+miette.workspace = true
+
+[lints]
+workspace = true

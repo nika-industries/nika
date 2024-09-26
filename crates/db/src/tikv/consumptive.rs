@@ -1,7 +1,7 @@
 use kv::prelude::*;
 use miette::Result;
 
-use crate::rollback_with_error;
+use super::rollback_with_error;
 
 pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
   /// Checks if a key exists.

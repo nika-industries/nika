@@ -2,54 +2,75 @@
 
 mod temp_storage_payload;
 
+use std::sync::Arc;
+
 use axum::{
   extract::{FromRef, Path, State},
   response::IntoResponse,
   routing::{get, post},
   Json, Router,
 };
+use prime_domain::{
+  models, CacheService, EntryService, StoreService, TokenService,
+};
 use tasks::Task;
 
+#[tracing::instrument(skip(app_state))]
 async fn prepare_fetch_payload(
-  State(db): State<db::TikvDb>,
-  Json((store_name, path, token_secret)): Json<(
+  State(app_state): State<AppState>,
+  Json((cache_name, path, token_id, token_secret)): Json<(
     String,
     String,
+    Option<String>,
     Option<String>,
   )>,
 ) -> Result<Json<models::StorageCredentials>, mollusk::InternalApiError> {
   Ok(
     tasks::PrepareFetchPayloadTask {
-      cache_name: store_name,
-      path: models::LaxSlug::new(path),
-      token_secret,
+      cache_name:   models::StrictSlug::new(cache_name),
+      token_id:     token_id
+        .and_then(|s| models::TokenRecordId::try_from(s).ok()),
+      token_secret: token_secret.map(models::StrictSlug::new),
+      path:         models::LaxSlug::new(path),
     }
-    .run(db)
+    .run((
+      app_state.cache_service.clone(),
+      app_state.store_service.clone(),
+      app_state.token_service.clone(),
+      app_state.entry_service.clone(),
+    ))
     .await
     .map(Json)?,
   )
 }
 
-#[tracing::instrument(skip(db, payload))]
+#[tracing::instrument(skip(app_state, payload))]
 async fn naive_upload(
+  State(app_state): State<AppState>,
   Path((cache_name, path)): Path<(String, String)>,
-  State(db): State<db::TikvDb>,
   payload: temp_storage_payload::TempStoragePayload,
 ) -> impl IntoResponse {
   let payload_path = payload.upload().await.unwrap();
   tasks::NaiveUploadTask {
-    cache_name,
-    path: path.into(),
+    cache_name:        models::StrictSlug::new(cache_name),
+    path:              path.into(),
     temp_storage_path: payload_path,
   }
-  .run(db)
+  .run((
+    app_state.cache_service.clone(),
+    app_state.store_service.clone(),
+    app_state.entry_service.clone(),
+  ))
   .await
   .unwrap();
 }
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  db: db::TikvDb,
+  cache_service: Arc<Box<dyn CacheService>>,
+  store_service: Arc<Box<dyn StoreService>>,
+  token_service: Arc<Box<dyn TokenService>>,
+  entry_service: Arc<Box<dyn EntryService>>,
 }
 
 #[tokio::main]
@@ -58,8 +79,21 @@ async fn main() -> miette::Result<()> {
 
   println!(art::ascii_art!("../../media/ascii_logo.png"));
 
+  let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
+  let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
+  let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
+  let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
+  let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
+  let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
+  let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
+  let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
+  let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
+
   let state = AppState {
-    db: db::DbConnection::new().await?,
+    cache_service: Arc::new(Box::new(cache_service)),
+    store_service: Arc::new(Box::new(store_service)),
+    token_service: Arc::new(Box::new(token_service)),
+    entry_service: Arc::new(Box::new(entry_service)),
   };
 
   let app = Router::new()
