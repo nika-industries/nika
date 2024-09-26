@@ -21,7 +21,10 @@ pub struct User {
 
 impl Model for User {
   const TABLE_NAME: &'static str = USER_TABLE_NAME;
-  const UNIQUE_INDICES: &'static [(&'static str, crate::SlugFieldGetter<Self>)] = &[];
+  const UNIQUE_INDICES: &'static [(
+    &'static str,
+    crate::SlugFieldGetter<Self>,
+  )] = &[];
 
   fn id(&self) -> RecordId<User> { self.id }
 }
