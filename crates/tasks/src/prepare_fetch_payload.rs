@@ -13,7 +13,7 @@ pub struct PrepareFetchPayloadTask {
   /// The name of the cache to fetch from.
   pub cache_name:   StrictSlug,
   /// The token being used to fetch the path.
-  pub token_id:     TokenRecordId,
+  pub token_id:     Option<TokenRecordId>,
   /// The secret of the token being used to fetch the path.
   pub token_secret: Option<StrictSlug>,
   /// The path to fetch from the cache.
@@ -60,6 +60,8 @@ impl rope::Task for PrepareFetchPayloadTask {
     // run through authentication
     if !cache.public {
       // if the store is not public, we must have a token
+      let token_id = token_id
+        .ok_or(UnauthenticatedStoreAccessError(cache_name.to_string()))?;
       let token_secret = token_secret
         .ok_or(UnauthenticatedStoreAccessError(cache_name.to_string()))?;
 

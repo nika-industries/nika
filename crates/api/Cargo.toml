@@ -9,11 +9,12 @@ workspace = true
 
 [dependencies]
 art = { path = "../art" }
-models = { path = "../models" }
+repos = { path = "../repos" }
 db = { path = "../db" }
 mollusk = { path = "../mollusk" }
 storage = { path = "../storage" }
 tasks = { path = "../tasks" }
+prime-domain = { path = "../prime-domain" }
 
 # serde.workspace = true
 thiserror.workspace = true

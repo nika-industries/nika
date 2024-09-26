@@ -138,8 +138,9 @@ dependencies = [
  "axum 0.7.5",
  "db",
  "miette",
- "models",
  "mollusk",
+ "prime-domain",
+ "repos",
  "storage",
  "tasks",
  "thiserror",
@@ -755,6 +756,7 @@ dependencies = [
 name = "db"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "kv",
  "miette",
  "models",

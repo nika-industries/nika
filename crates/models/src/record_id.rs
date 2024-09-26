@@ -50,6 +50,13 @@ impl<T> Ord for RecordId<T> {
   fn cmp(&self, other: &Self) -> std::cmp::Ordering { self.0.cmp(&other.0) }
 }
 
+impl<T> TryFrom<String> for RecordId<T> {
+  type Error = ulid::DecodeError;
+  fn try_from(value: String) -> Result<Self, Self::Error> {
+    Ulid::from_str(&value).map(Self::from_ulid)
+  }
+}
+
 impl<T> RecordId<T> {
   /// Creates a new [`RecordId`].
   pub fn new() -> Self { Self(Ulid::new(), PhantomData) }
