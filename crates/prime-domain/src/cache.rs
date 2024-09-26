@@ -1,8 +1,7 @@
 use std::future::Future;
 
 use miette::Result;
-pub use models::Cache;
-use models::{CacheRecordId, StrictSlug};
+use models::{Cache, CacheRecordId, StrictSlug};
 use repos::{
   CacheRepository, FetchModelByIndexError, FetchModelError,
   ModelRepositoryFetcher,

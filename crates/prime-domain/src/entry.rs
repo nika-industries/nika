@@ -1,7 +1,6 @@
 use std::future::Future;
 
-pub use models::Entry;
-use models::{CacheRecordId, EntryRecordId, LaxSlug};
+use models::{CacheRecordId, Entry, EntryRecordId, LaxSlug};
 use repos::{
   CreateModelError, EntryCreateRequest, EntryRepository,
   FetchModelByIndexError, FetchModelError, ModelRepositoryCreator,

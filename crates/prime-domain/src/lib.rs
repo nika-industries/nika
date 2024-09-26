@@ -6,4 +6,11 @@ mod entry;
 mod store;
 mod token;
 
-pub use self::{cache::*, entry::*, store::*, token::*};
+pub use models;
+
+pub use self::{
+  cache::{CacheService, CacheServiceCanonical},
+  entry::{EntryService, EntryServiceCanonical},
+  store::{StoreService, StoreServiceCanonical},
+  token::{TokenService, TokenServiceCanonical},
+};

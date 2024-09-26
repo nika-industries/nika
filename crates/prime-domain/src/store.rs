@@ -1,7 +1,6 @@
 use std::future::Future;
 
-pub use models::Store;
-use models::StoreRecordId;
+use models::{Store, StoreRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, StoreRepository};
 
 /// The definition for the [`Store`] domain model service.

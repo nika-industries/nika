@@ -1,7 +1,6 @@
 use std::future::Future;
 
-pub use models::Token;
-use models::{StrictSlug, TokenRecordId};
+use models::{StrictSlug, Token, TokenRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
 
 /// The error type for token verification.
