@@ -1,29 +1,59 @@
-use std::future::Future;
+use std::sync::Arc;
 
 use kv::prelude::*;
 use miette::Result;
 
 /// An adapter for a model-based database.
-pub trait DatabaseAdapter: Clone + Send + Sync + 'static {
+#[async_trait::async_trait]
+pub trait DatabaseAdapter: Send + Sync + 'static {
   /// Creates a new model.
-  fn create_model<M: models::Model>(
+  async fn create_model<M: models::Model>(
     &self,
     model: M,
-  ) -> impl Future<Output = Result<(), CreateModelError>> + Send;
+  ) -> Result<(), CreateModelError>;
   /// Fetches a model by its ID.
-  fn fetch_model_by_id<M: models::Model>(
+  async fn fetch_model_by_id<M: models::Model>(
     &self,
     id: models::RecordId<M>,
-  ) -> impl Future<Output = Result<Option<M>, FetchModelError>> + Send;
+  ) -> Result<Option<M>, FetchModelError>;
   /// Fetches a model by an index.
   ///
   /// Must be a valid index, defined in the model's
   /// [`UNIQUE_INDICES`](models::Model::UNIQUE_INDICES) constant.
-  fn fetch_model_by_index<M: models::Model>(
+  async fn fetch_model_by_index<M: models::Model>(
     &self,
     index_name: String,
     index_value: EitherSlug,
-  ) -> impl Future<Output = Result<Option<M>, FetchModelByIndexError>> + Send;
+  ) -> Result<Option<M>, FetchModelByIndexError>;
+}
+
+// impl for Arc
+#[async_trait::async_trait]
+impl<T: DatabaseAdapter> DatabaseAdapter for Arc<T> {
+  async fn create_model<M: models::Model>(
+    &self,
+    model: M,
+  ) -> Result<(), CreateModelError> {
+    self.as_ref().create_model(model).await
+  }
+
+  async fn fetch_model_by_id<M: models::Model>(
+    &self,
+    id: models::RecordId<M>,
+  ) -> Result<Option<M>, FetchModelError> {
+    self.as_ref().fetch_model_by_id(id).await
+  }
+
+  async fn fetch_model_by_index<M: models::Model>(
+    &self,
+    index_name: String,
+    index_value: EitherSlug,
+  ) -> Result<Option<M>, FetchModelByIndexError> {
+    self
+      .as_ref()
+      .fetch_model_by_index(index_name, index_value)
+      .await
+  }
 }
 
 /// Errors that can occur when creating a model.

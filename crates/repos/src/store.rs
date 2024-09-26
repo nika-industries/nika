@@ -31,7 +31,7 @@ pub struct StoreRepositoryCanonical<DB: DatabaseAdapter> {
   base_repo: BaseRepository<Store, DB>,
 }
 
-impl<DB: DatabaseAdapter> Clone for StoreRepositoryCanonical<DB> {
+impl<DB: DatabaseAdapter + Clone> Clone for StoreRepositoryCanonical<DB> {
   fn clone(&self) -> Self {
     Self {
       base_repo: self.base_repo.clone(),

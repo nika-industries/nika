@@ -73,6 +73,7 @@ pub(crate) async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
   txn.commit().await.context("failed to commit transaction")
 }
 
+#[async_trait::async_trait]
 impl DatabaseAdapter for TikvAdapter {
   #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
   async fn create_model<M: models::Model>(

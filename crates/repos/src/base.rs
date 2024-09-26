@@ -16,7 +16,9 @@ pub(crate) struct BaseRepository<M: models::Model, DB: DatabaseAdapter> {
   _phantom:   PhantomData<M>,
 }
 
-impl<M: models::Model, DB: DatabaseAdapter> Clone for BaseRepository<M, DB> {
+impl<M: models::Model, DB: DatabaseAdapter + Clone> Clone
+  for BaseRepository<M, DB>
+{
   fn clone(&self) -> Self {
     Self {
       db_adapter: self.db_adapter.clone(),

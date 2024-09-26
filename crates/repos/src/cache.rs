@@ -42,7 +42,7 @@ pub struct CacheRepositoryCanonical<DB: DatabaseAdapter> {
   base_repo: BaseRepository<Cache, DB>,
 }
 
-impl<DB: DatabaseAdapter> Clone for CacheRepositoryCanonical<DB> {
+impl<DB: DatabaseAdapter + Clone> Clone for CacheRepositoryCanonical<DB> {
   fn clone(&self) -> Self {
     Self {
       base_repo: self.base_repo.clone(),

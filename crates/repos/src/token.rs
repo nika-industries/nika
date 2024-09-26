@@ -31,7 +31,7 @@ pub struct TokenRepositoryCanonical<DB: DatabaseAdapter> {
   base_repo: BaseRepository<Token, DB>,
 }
 
-impl<DB: DatabaseAdapter> Clone for TokenRepositoryCanonical<DB> {
+impl<DB: DatabaseAdapter + Clone> Clone for TokenRepositoryCanonical<DB> {
   fn clone(&self) -> Self {
     Self {
       base_repo: self.base_repo.clone(),
