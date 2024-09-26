@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use models::{CacheRecordId, Entry, EntryRecordId, LaxSlug};
 use repos::{
   CreateModelError, EntryCreateRequest, EntryRepository,
@@ -8,23 +6,23 @@ use repos::{
 };
 
 /// The definition for the [`Entry`] domain model service.
+#[async_trait::async_trait]
 pub trait EntryService:
   ModelRepositoryFetcher<Model = Entry>
   + ModelRepositoryCreator<
     Model = Entry,
     ModelCreateRequest = EntryCreateRequest,
     CreateError = CreateModelError,
-  > + Clone
-  + Send
+  > + Send
   + Sync
   + 'static
 {
   /// Find an [`Entry`] by its cache ID and path.
-  fn find_by_entry_id_and_path(
+  async fn find_by_entry_id_and_path(
     &self,
     cache_id: CacheRecordId,
     path: LaxSlug,
-  ) -> impl Future<Output = Result<Option<Entry>, FetchModelByIndexError>> + Send;
+  ) -> Result<Option<Entry>, FetchModelByIndexError>;
 }
 
 /// Canonical service for the [`Entry`] domain model.
@@ -32,7 +30,7 @@ pub struct EntryServiceCanonical<R: EntryRepository> {
   entry_repo: R,
 }
 
-impl<R: EntryRepository> Clone for EntryServiceCanonical<R> {
+impl<R: EntryRepository + Clone> Clone for EntryServiceCanonical<R> {
   fn clone(&self) -> Self {
     Self {
       entry_repo: self.entry_repo.clone(),
@@ -45,17 +43,19 @@ impl<R: EntryRepository> EntryServiceCanonical<R> {
   pub fn new(entry_repo: R) -> Self { Self { entry_repo } }
 }
 
+#[async_trait::async_trait]
 impl<R: EntryRepository> ModelRepositoryFetcher for EntryServiceCanonical<R> {
   type Model = Entry;
 
-  fn fetch(
+  async fn fetch(
     &self,
     id: EntryRecordId,
-  ) -> impl Future<Output = Result<Option<Entry>, FetchModelError>> + Send {
-    self.entry_repo.fetch_model_by_id(id)
+  ) -> Result<Option<Entry>, FetchModelError> {
+    self.entry_repo.fetch_model_by_id(id).await
   }
 }
 
+#[async_trait::async_trait]
 impl<R: EntryRepository> ModelRepositoryCreator for EntryServiceCanonical<R> {
   type Model = Entry;
   type ModelCreateRequest = EntryCreateRequest;
@@ -69,6 +69,7 @@ impl<R: EntryRepository> ModelRepositoryCreator for EntryServiceCanonical<R> {
   }
 }
 
+#[async_trait::async_trait]
 impl<R: EntryRepository> EntryService for EntryServiceCanonical<R> {
   /// Find an [`Entry`] by its cache ID and path.
   async fn find_by_entry_id_and_path(

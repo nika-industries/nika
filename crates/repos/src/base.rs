@@ -1,4 +1,4 @@
-use std::{future::Future, marker::PhantomData};
+use std::marker::PhantomData;
 
 pub use db::CreateModelError;
 pub(crate) use db::{DatabaseAdapter, FetchModelByIndexError, FetchModelError};
@@ -34,6 +34,7 @@ impl<M: models::Model, DB: DatabaseAdapter> BaseRepository<M, DB> {
   }
 }
 
+#[async_trait::async_trait]
 impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
   for BaseRepository<M, DB>
 {
@@ -41,29 +42,28 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
   type ModelCreateRequest = M;
   type CreateError = CreateModelError;
 
-  fn create_model(
+  async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
-  ) -> impl Future<Output = Result<(), CreateModelError>> + Send {
-    self.db_adapter.create_model::<Self::Model>(input)
+  ) -> Result<(), CreateModelError> {
+    self.db_adapter.create_model::<Self::Model>(input).await
   }
 
-  fn fetch_model_by_id(
+  async fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
-  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send
-  {
-    self.db_adapter.fetch_model_by_id(id)
+  ) -> Result<Option<Self::Model>, FetchModelError> {
+    self.db_adapter.fetch_model_by_id(id).await
   }
 
-  fn fetch_model_by_index(
+  async fn fetch_model_by_index(
     &self,
     index_name: String,
     index_value: slugger::EitherSlug,
-  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelByIndexError>> + Send
-  {
+  ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
     self
       .db_adapter
       .fetch_model_by_index(index_name, index_value)
+      .await
   }
 }

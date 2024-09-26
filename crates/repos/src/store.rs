@@ -7,6 +7,7 @@ pub use crate::base::CreateModelError;
 use crate::base::{BaseRepository, DatabaseAdapter};
 
 /// Descriptor trait for repositories that handle [`Store`] domain model.
+#[async_trait::async_trait]
 pub trait StoreRepository:
   ModelRepository<
   Model = Store,
@@ -47,32 +48,34 @@ impl<DB: DatabaseAdapter> StoreRepositoryCanonical<DB> {
   }
 }
 
+#[async_trait::async_trait]
 impl<DB: DatabaseAdapter> ModelRepository for StoreRepositoryCanonical<DB> {
   type Model = Store;
   type ModelCreateRequest = StoreCreateRequest;
   type CreateError = CreateModelError;
 
-  fn create_model(
+  async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
-  ) -> impl Future<Output = Result<(), Self::CreateError>> + Send {
-    self.base_repo.create_model(input.into())
+  ) -> Result<(), Self::CreateError> {
+    self.base_repo.create_model(input.into()).await
   }
 
-  fn fetch_model_by_id(
+  async fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
-  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send
-  {
-    self.base_repo.fetch_model_by_id(id)
+  ) -> Result<Option<Self::Model>, FetchModelError> {
+    self.base_repo.fetch_model_by_id(id).await
   }
 
-  fn fetch_model_by_index(
+  async fn fetch_model_by_index(
     &self,
     index_name: String,
     index_value: EitherSlug,
-  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelByIndexError>> + Send
-  {
-    self.base_repo.fetch_model_by_index(index_name, index_value)
+  ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
+    self
+      .base_repo
+      .fetch_model_by_index(index_name, index_value)
+      .await
   }
 }

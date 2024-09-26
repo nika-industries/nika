@@ -9,6 +9,7 @@ models = { path = "../models" }
 db = { path = "../db" }
 slugger = { path = "../slugger" }
 
+async-trait.workspace = true
 miette.workspace = true
 
 [lints]

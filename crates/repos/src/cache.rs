@@ -8,6 +8,7 @@ pub use crate::base::CreateModelError;
 use crate::base::{BaseRepository, DatabaseAdapter};
 
 /// Descriptor trait for repositories that handle [`Cache`] domain model.
+#[async_trait::async_trait]
 pub trait CacheRepository:
   ModelRepository<
   Model = Cache,
@@ -16,15 +17,17 @@ pub trait CacheRepository:
 >
 {
   /// Find a [`Cache`] by its name.
-  fn find_by_name(
+  async fn find_by_name(
     &self,
     name: StrictSlug,
-  ) -> impl Future<Output = Result<Option<Cache>, FetchModelByIndexError>> + Send
-  {
-    self.fetch_model_by_index("name".to_string(), EitherSlug::Strict(name))
+  ) -> Result<Option<Cache>, FetchModelByIndexError> {
+    self
+      .fetch_model_by_index("name".to_string(), EitherSlug::Strict(name))
+      .await
   }
 }
 
+#[async_trait::async_trait]
 impl<T> CacheRepository for T where
   T: ModelRepository<
     Model = Cache,
@@ -56,32 +59,34 @@ impl<DB: DatabaseAdapter> CacheRepositoryCanonical<DB> {
   }
 }
 
+#[async_trait::async_trait]
 impl<DB: DatabaseAdapter> ModelRepository for CacheRepositoryCanonical<DB> {
   type Model = Cache;
   type ModelCreateRequest = CacheCreateRequest;
   type CreateError = CreateModelError;
 
-  fn create_model(
+  async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
-  ) -> impl Future<Output = Result<(), Self::CreateError>> + Send {
-    self.base_repo.create_model(input.into())
+  ) -> Result<(), Self::CreateError> {
+    self.base_repo.create_model(input.into()).await
   }
 
-  fn fetch_model_by_id(
+  async fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
-  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelError>> + Send
-  {
-    self.base_repo.fetch_model_by_id(id)
+  ) -> Result<Option<Self::Model>, FetchModelError> {
+    self.base_repo.fetch_model_by_id(id).await
   }
 
-  fn fetch_model_by_index(
+  async fn fetch_model_by_index(
     &self,
     index_name: String,
     index_value: EitherSlug,
-  ) -> impl Future<Output = Result<Option<Self::Model>, FetchModelByIndexError>> + Send
-  {
-    self.base_repo.fetch_model_by_index(index_name, index_value)
+  ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
+    self
+      .base_repo
+      .fetch_model_by_index(index_name, index_value)
+      .await
   }
 }
