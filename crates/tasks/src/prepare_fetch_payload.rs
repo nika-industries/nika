@@ -1,13 +1,9 @@
-use db::TikvAdapter;
-use models::{LaxSlug, StrictSlug, TokenRecordId};
+use std::sync::Arc;
+
 use mollusk::*;
 use prime_domain::{
-  CacheService, CacheServiceCanonical, EntryService, EntryServiceCanonical,
-  StoreServiceCanonical, TokenService, TokenServiceCanonical,
-};
-use repos::{
-  CacheRepositoryCanonical, EntryRepositoryCanonical, ModelRepositoryFetcher,
-  StoreRepositoryCanonical, TokenRepositoryCanonical,
+  models::{self, LaxSlug, StrictSlug, TokenRecordId},
+  CacheService, EntryService, StoreService, TokenService,
 };
 use serde::{Deserialize, Serialize};
 
@@ -31,10 +27,10 @@ impl rope::Task for PrepareFetchPayloadTask {
   type Response = models::StorageCredentials;
   type Error = PrepareFetchPayloadError;
   type State = (
-    CacheServiceCanonical<CacheRepositoryCanonical<TikvAdapter>>,
-    StoreServiceCanonical<StoreRepositoryCanonical<TikvAdapter>>,
-    TokenServiceCanonical<TokenRepositoryCanonical<TikvAdapter>>,
-    EntryServiceCanonical<EntryRepositoryCanonical<TikvAdapter>>,
+    Arc<Box<dyn CacheService>>,
+    Arc<Box<dyn StoreService>>,
+    Arc<Box<dyn TokenService>>,
+    Arc<Box<dyn EntryService>>,
   );
 
   async fn run(self, db: Self::State) -> Result<Self::Response, Self::Error> {

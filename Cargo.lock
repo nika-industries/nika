@@ -3000,15 +3000,10 @@ name = "tasks"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "db",
- "miette",
- "models",
  "mollusk",
  "prime-domain",
- "repos",
  "rope",
  "serde",
- "slugger",
  "storage",
  "tracing",
 ]

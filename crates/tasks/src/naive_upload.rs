@@ -1,14 +1,8 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
-use db::TikvAdapter;
-use models::StrictSlug;
 use prime_domain::{
-  CacheService, CacheServiceCanonical, EntryServiceCanonical,
-  StoreServiceCanonical,
-};
-use repos::{
-  CacheRepositoryCanonical, EntryRepositoryCanonical, ModelRepositoryCreator,
-  ModelRepositoryFetcher, StoreRepositoryCanonical,
+  models::{self, StrictSlug},
+  CacheService, EntryService, StoreService,
 };
 use serde::{Deserialize, Serialize};
 use storage::StorageClientGenerator;
@@ -31,9 +25,9 @@ impl rope::Task for NaiveUploadTask {
   type Response = ();
   type Error = ();
   type State = (
-    CacheServiceCanonical<CacheRepositoryCanonical<TikvAdapter>>,
-    StoreServiceCanonical<StoreRepositoryCanonical<TikvAdapter>>,
-    EntryServiceCanonical<EntryRepositoryCanonical<TikvAdapter>>,
+    Arc<Box<dyn CacheService>>,
+    Arc<Box<dyn StoreService>>,
+    Arc<Box<dyn EntryService>>,
   );
 
   async fn run(
