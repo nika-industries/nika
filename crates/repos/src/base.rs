@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 pub use db::CreateModelError;
 pub(crate) use db::{DatabaseAdapter, FetchModelByIndexError, FetchModelError};
 use miette::Result;
+use tracing::instrument;
 
 use crate::ModelRepository;
 
@@ -29,6 +30,11 @@ impl<M: models::Model, DB: DatabaseAdapter + Clone> Clone
 
 impl<M: models::Model, DB: DatabaseAdapter> BaseRepository<M, DB> {
   pub fn new(db_adapter: DB) -> Self {
+    tracing::info!(
+      "creating new `BaseRepository<{:?}>` instance",
+      M::TABLE_NAME
+    );
+
     Self {
       db_adapter,
       _phantom: PhantomData,
@@ -44,6 +50,7 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
   type ModelCreateRequest = M;
   type CreateError = CreateModelError;
 
+  #[instrument(skip(self))]
   async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
@@ -51,6 +58,7 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
     self.db_adapter.create_model::<Self::Model>(input).await
   }
 
+  #[instrument(skip(self))]
   async fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
@@ -58,6 +66,7 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
     self.db_adapter.fetch_model_by_id(id).await
   }
 
+  #[instrument(skip(self))]
   async fn fetch_model_by_index(
     &self,
     index_name: String,

@@ -1,6 +1,7 @@
 //! Provides a repository for the [`Store`] domain model.
 
 pub use models::{Store, StoreCreateRequest};
+use tracing::instrument;
 
 use super::*;
 pub use crate::base::CreateModelError;
@@ -42,6 +43,7 @@ impl<DB: DatabaseAdapter + Clone> Clone for StoreRepositoryCanonical<DB> {
 impl<DB: DatabaseAdapter> StoreRepositoryCanonical<DB> {
   /// Create a new instance of the [`Store`] repository.
   pub fn new(db_adapter: DB) -> Self {
+    tracing::info!("creating new `StoreRepositoryCanonical` instance");
     Self {
       base_repo: BaseRepository::new(db_adapter),
     }
@@ -54,6 +56,7 @@ impl<DB: DatabaseAdapter> ModelRepository for StoreRepositoryCanonical<DB> {
   type ModelCreateRequest = StoreCreateRequest;
   type CreateError = CreateModelError;
 
+  #[instrument(skip(self))]
   async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
@@ -61,6 +64,7 @@ impl<DB: DatabaseAdapter> ModelRepository for StoreRepositoryCanonical<DB> {
     self.base_repo.create_model(input.into()).await
   }
 
+  #[instrument(skip(self))]
   async fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
@@ -68,6 +72,7 @@ impl<DB: DatabaseAdapter> ModelRepository for StoreRepositoryCanonical<DB> {
     self.base_repo.fetch_model_by_id(id).await
   }
 
+  #[instrument(skip(self))]
   async fn fetch_model_by_index(
     &self,
     index_name: String,

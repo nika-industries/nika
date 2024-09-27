@@ -2,6 +2,7 @@
 
 use models::{CacheRecordId, LaxSlug};
 pub use models::{Entry, EntryCreateRequest};
+use tracing::instrument;
 
 use super::*;
 pub use crate::base::CreateModelError;
@@ -17,6 +18,7 @@ pub trait EntryRepository:
 >
 {
   /// Find an [`Entry`] by its cache ID and path.
+  #[instrument(skip(self))]
   async fn find_by_entry_id_and_path(
     &self,
     cache_id: CacheRecordId,
@@ -54,6 +56,7 @@ impl<DB: DatabaseAdapter + Clone> Clone for EntryRepositoryCanonical<DB> {
 impl<DB: DatabaseAdapter> EntryRepositoryCanonical<DB> {
   /// Create a new instance of the [`Entry`] repository.
   pub fn new(db_adapter: DB) -> Self {
+    tracing::info!("creating new `EntryRepositoryCanonical` instance");
     Self {
       base_repo: BaseRepository::new(db_adapter),
     }
@@ -66,6 +69,7 @@ impl<DB: DatabaseAdapter> ModelRepository for EntryRepositoryCanonical<DB> {
   type ModelCreateRequest = EntryCreateRequest;
   type CreateError = CreateModelError;
 
+  #[instrument(skip(self))]
   async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
@@ -73,6 +77,7 @@ impl<DB: DatabaseAdapter> ModelRepository for EntryRepositoryCanonical<DB> {
     self.base_repo.create_model(input.into()).await
   }
 
+  #[instrument(skip(self))]
   async fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
@@ -80,6 +85,7 @@ impl<DB: DatabaseAdapter> ModelRepository for EntryRepositoryCanonical<DB> {
     self.base_repo.fetch_model_by_id(id).await
   }
 
+  #[instrument(skip(self))]
   async fn fetch_model_by_index(
     &self,
     index_name: String,
