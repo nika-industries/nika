@@ -5,12 +5,12 @@ use std::path::PathBuf;
 use miette::IntoDiagnostic;
 use serde::{Deserialize, Serialize};
 
-/// Error type for [`get_temp_storage_creds`].
+/// Error type for [`TempStorageCreds::new_from_env()`].
 #[derive(thiserror::Error, Debug, miette::Diagnostic)]
-#[error("failed to fetch temp storage credentials: {error}")]
-pub struct TempStorageCredsError {
-  #[diagnostic(transparent)]
-  error: miette::Report,
+pub enum TempStorageCredsError {
+  /// An environment variable is missing.
+  #[error("failed to read environment variable: {0:?}")]
+  MissingEnvVar(String),
 }
 
 /// Temporary storage credentials.
@@ -43,16 +43,26 @@ impl TempStorageCreds {
     Ok(Self {
       access_key:        std::env::var("R2_TEMP_ACCESS_KEY")
         .into_diagnostic()
-        .map_err(|error| TempStorageCredsError { error })?,
+        .map_err(|_| {
+          TempStorageCredsError::MissingEnvVar("R2_TEMP_ACCESS_KEY".into())
+        })?,
       secret_access_key: std::env::var("R2_TEMP_SECRET_ACCESS_KEY")
         .into_diagnostic()
-        .map_err(|error| TempStorageCredsError { error })?,
+        .map_err(|_| {
+          TempStorageCredsError::MissingEnvVar(
+            "R2_TEMP_SECRET_ACCESS_KEY".into(),
+          )
+        })?,
       endpoint:          std::env::var("R2_TEMP_ENDPOINT")
         .into_diagnostic()
-        .map_err(|error| TempStorageCredsError { error })?,
+        .map_err(|_| {
+          TempStorageCredsError::MissingEnvVar("R2_TEMP_ENDPOINT".into())
+        })?,
       bucket:            std::env::var("R2_TEMP_BUCKET")
         .into_diagnostic()
-        .map_err(|error| TempStorageCredsError { error })?,
+        .map_err(|_| {
+          TempStorageCredsError::MissingEnvVar("R2_TEMP_BUCKET".into())
+        })?,
     })
   }
 
