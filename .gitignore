@@ -2,3 +2,4 @@ target/
 .env
 *.rdb
 tikv_data/
+trace-*.json

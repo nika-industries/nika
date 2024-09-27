@@ -47,7 +47,12 @@ struct NarExtractArgs {
 }
 
 fn main() {
-  tracing_subscriber::fmt().without_time().init();
+  let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+    .unwrap_or(tracing_subscriber::EnvFilter::new("info"));
+  tracing_subscriber::fmt()
+    .without_time()
+    .with_env_filter(filter)
+    .init();
 
   let args = Cli::parse();
 

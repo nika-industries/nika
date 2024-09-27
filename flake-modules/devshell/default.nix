@@ -56,7 +56,7 @@ localFlake: { ... }: {
         }
         {
           name = "clippy";
-          command = "cargo clippy --all-targets";
+          command = "cargo clippy --all-targets --no-deps";
           help = "Run clippy on all targets";
           category = "[cargo actions]";
         }

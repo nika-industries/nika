@@ -10,6 +10,7 @@ use axum::{
   routing::{get, post},
   Json, Router,
 };
+use miette::IntoDiagnostic;
 use prime_domain::{
   models, CacheService, EntryService, StoreService, TokenService,
 };
@@ -77,7 +78,22 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> miette::Result<()> {
-  tracing_subscriber::fmt::init();
+  #[cfg(not(feature = "chrome-tracing"))]
+  tracing_subscriber::fmt()
+    .with_env_filter(
+      tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or(tracing_subscriber::EnvFilter::new("info")),
+    )
+    .init();
+  #[cfg(feature = "chrome-tracing")]
+  let _guard = {
+    use tracing_subscriber::prelude::*;
+
+    let (chrome_layer, guard) =
+      tracing_chrome::ChromeLayerBuilder::new().build();
+    tracing_subscriber::registry().with(chrome_layer).init();
+    guard
+  };
 
   println!(art::ascii_art!("../../media/ascii_logo.png"));
 
@@ -110,7 +126,9 @@ async fn main() -> miette::Result<()> {
   let listener = tokio::net::TcpListener::bind(bind_address).await.unwrap();
 
   tracing::info!("listening on `{bind_address}`");
-  axum::serve(listener, app).await.unwrap();
+  tokio::spawn(async move { axum::serve(listener, app).await });
+
+  tokio::signal::ctrl_c().await.into_diagnostic()?;
 
   Ok(())
 }

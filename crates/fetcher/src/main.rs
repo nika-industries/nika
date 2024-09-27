@@ -97,7 +97,9 @@ async fn fetch_path_from_client(
 
 #[tokio::main]
 async fn main() -> miette::Result<()> {
-  tracing_subscriber::fmt::init();
+  let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+    .unwrap_or(tracing_subscriber::EnvFilter::new("info"));
+  tracing_subscriber::fmt().with_env_filter(filter).init();
 
   println!(art::ascii_art!("../../media/ascii_logo.png"));
 

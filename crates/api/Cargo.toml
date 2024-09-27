@@ -21,9 +21,14 @@ thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }
 
 axum = { workspace = true, features = [ "macros" ] }
-tokio = { workspace = true, features = [ "rt", "rt-multi-thread" ] }
+tokio = { workspace = true, features = [ "full" ] }
 tokio-stream.workspace = true
 tokio-util = { workspace = true, features = [ "io" ] }
 
 tracing.workspace = true
 tracing-subscriber.workspace = true
+tracing-chrome = { version = "0.7", optional = true }
+
+[features]
+default = []
+chrome-tracing = [ "tracing-chrome" ]

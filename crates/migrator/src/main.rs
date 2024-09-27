@@ -5,7 +5,9 @@ use miette::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  tracing_subscriber::fmt::init();
+  let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+    .unwrap_or(tracing_subscriber::EnvFilter::new("info"));
+  tracing_subscriber::fmt().with_env_filter(filter).init();
 
   let db = db::TikvAdapter::new_from_env().await?;
   db.migrate().await?;

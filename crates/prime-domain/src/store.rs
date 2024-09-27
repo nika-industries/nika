@@ -1,5 +1,6 @@
 use models::{Store, StoreRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, StoreRepository};
+use tracing::instrument;
 
 /// The definition for the [`Store`] domain model service.
 #[async_trait::async_trait]
@@ -23,13 +24,17 @@ impl<R: StoreRepository + Clone> Clone for StoreServiceCanonical<R> {
 
 impl<R: StoreRepository> StoreServiceCanonical<R> {
   /// Create a new instance of the canonical [`Store`] service.
-  pub fn new(store_repo: R) -> Self { Self { store_repo } }
+  pub fn new(store_repo: R) -> Self {
+    tracing::info!("creating new `StoreServiceCanonical` instance");
+    Self { store_repo }
+  }
 }
 
 #[async_trait::async_trait]
 impl<R: StoreRepository> ModelRepositoryFetcher for StoreServiceCanonical<R> {
   type Model = Store;
 
+  #[instrument(skip(self))]
   async fn fetch(
     &self,
     id: StoreRecordId,
