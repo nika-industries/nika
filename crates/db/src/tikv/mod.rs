@@ -19,11 +19,13 @@ pub struct TikvAdapter(Arc<kv::tikv::TikvClient>);
 impl TikvAdapter {
   /// Creates a new TiKV adapter.
   pub async fn new(endpoints: Vec<&str>) -> Result<Self> {
+    tracing::info!("creating new `TikvAdapter` instance");
     Ok(Self(Arc::new(kv::tikv::TikvClient::new(endpoints).await?)))
   }
 
   /// Creates a new TiKV adapter from environment variables.
   pub async fn new_from_env() -> Result<Self> {
+    tracing::info!("creating new `TikvAdapter` instance");
     Ok(Self(Arc::new(kv::tikv::TikvClient::new_from_env().await?)))
   }
 }
@@ -47,6 +49,7 @@ fn index_base_key<M: models::Model>(index_name: &str) -> Key {
 }
 
 /// Rollback fn for "recoverable" - effectively, *consumable* - errors.
+#[instrument(skip(txn))]
 pub(crate) async fn rollback<T: KvTransaction>(mut txn: T) -> Result<()> {
   txn
     .rollback()
@@ -55,6 +58,7 @@ pub(crate) async fn rollback<T: KvTransaction>(mut txn: T) -> Result<()> {
 }
 
 /// Rollback fn for "unrecoverable" errors (unexpected error paths).
+#[instrument(skip(txn, error, context))]
 pub(crate) async fn rollback_with_error<T: KvTransaction>(
   txn: T,
   error: miette::Report,
@@ -69,8 +73,13 @@ pub(crate) async fn rollback_with_error<T: KvTransaction>(
   e
 }
 
+#[instrument(skip(txn))]
 pub(crate) async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
-  txn.commit().await.context("failed to commit transaction")
+  if let Err(e) = txn.commit().await.context("failed to commit transaction") {
+    tracing::error!("failed to commit transaction: {:?}", e);
+    Err(e)?;
+  }
+  Ok(())
 }
 
 #[async_trait::async_trait]
@@ -80,11 +89,7 @@ impl DatabaseAdapter for TikvAdapter {
     &self,
     model: M,
   ) -> Result<(), CreateModelError> {
-    tracing::info!(
-      "creating model with id `{}` on table {:?}",
-      model.id(),
-      M::TABLE_NAME
-    );
+    tracing::info!("creating model");
 
     // the model itself will be stored under [model_name]:[id] -> model
     // and each index will be stored under
@@ -166,11 +171,13 @@ impl DatabaseAdapter for TikvAdapter {
     Ok(())
   }
 
-  #[instrument(skip(self))]
+  #[instrument(skip(self), fields(table = M::TABLE_NAME))]
   async fn fetch_model_by_id<M: models::Model>(
     &self,
     id: models::RecordId<M>,
   ) -> Result<Option<M>, FetchModelError> {
+    tracing::info!("fetching model with id");
+
     let model_key = model_base_key::<M>(&id);
 
     let txn = self
@@ -195,12 +202,14 @@ impl DatabaseAdapter for TikvAdapter {
       .map_err(FetchModelError::Serde)
   }
 
-  #[instrument(skip(self))]
+  #[instrument(skip(self), fields(table = M::TABLE_NAME))]
   async fn fetch_model_by_index<M: models::Model>(
     &self,
     index_name: String,
     index_value: EitherSlug,
   ) -> Result<Option<M>, FetchModelByIndexError> {
+    tracing::info!("fetching model by index");
+
     if !M::UNIQUE_INDICES
       .iter()
       .any(|(name, _)| name == &index_name)
