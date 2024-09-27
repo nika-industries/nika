@@ -4,6 +4,7 @@ use repos::{
   CacheRepository, FetchModelByIndexError, FetchModelError,
   ModelRepositoryFetcher,
 };
+use tracing::instrument;
 
 /// The definition for the [`Cache`] domain model service.
 #[async_trait::async_trait]
@@ -32,13 +33,17 @@ impl<R: CacheRepository + Clone> Clone for CacheServiceCanonical<R> {
 
 impl<R: CacheRepository> CacheServiceCanonical<R> {
   /// Create a new instance of the canonical [`Cache`] service.
-  pub fn new(cache_repo: R) -> Self { Self { cache_repo } }
+  pub fn new(cache_repo: R) -> Self {
+    tracing::info!("creating new `CacheServiceCanonical` instance");
+    Self { cache_repo }
+  }
 }
 
 #[async_trait::async_trait]
 impl<R: CacheRepository> ModelRepositoryFetcher for CacheServiceCanonical<R> {
   type Model = Cache;
 
+  #[instrument(skip(self))]
   async fn fetch(
     &self,
     id: CacheRecordId,
@@ -49,6 +54,7 @@ impl<R: CacheRepository> ModelRepositoryFetcher for CacheServiceCanonical<R> {
 
 #[async_trait::async_trait]
 impl<R: CacheRepository> CacheService for CacheServiceCanonical<R> {
+  #[instrument(skip(self))]
   async fn find_by_name(
     &self,
     name: StrictSlug,

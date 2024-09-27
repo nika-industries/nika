@@ -1,5 +1,6 @@
 use models::{StrictSlug, Token, TokenRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
+use tracing::instrument;
 
 /// The error type for token verification.
 #[derive(Debug, thiserror::Error, miette::Diagnostic)]
@@ -44,13 +45,17 @@ impl<R: TokenRepository + Clone> Clone for TokenServiceCanonical<R> {
 
 impl<R: TokenRepository> TokenServiceCanonical<R> {
   /// Create a new instance of the canonical [`Token`] service.
-  pub fn new(token_repo: R) -> Self { Self { token_repo } }
+  pub fn new(token_repo: R) -> Self {
+    tracing::info!("creating new `TokenServiceCanonical` instance");
+    Self { token_repo }
+  }
 }
 
 #[async_trait::async_trait]
 impl<R: TokenRepository> ModelRepositoryFetcher for TokenServiceCanonical<R> {
   type Model = Token;
 
+  #[instrument(skip(self))]
   async fn fetch(
     &self,
     id: TokenRecordId,
@@ -61,6 +66,7 @@ impl<R: TokenRepository> ModelRepositoryFetcher for TokenServiceCanonical<R> {
 
 #[async_trait::async_trait]
 impl<R: TokenRepository> TokenService for TokenServiceCanonical<R> {
+  #[instrument(skip(self))]
   async fn verify_token_id_and_secret(
     &self,
     id: TokenRecordId,
