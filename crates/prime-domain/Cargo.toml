@@ -9,8 +9,9 @@ repos = { path = "../repos" }
 models = { path = "../models" }
 
 async-trait.workspace = true
-thiserror.workspace = true
 miette.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
 
 [lints]
 workspace = true

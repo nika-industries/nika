@@ -2053,6 +2053,7 @@ dependencies = [
  "models",
  "repos",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]
