@@ -50,8 +50,9 @@ impl rope::Task for NaiveUploadTask {
 
     let target_client = store.config.client().await.unwrap();
 
-    let temp_client = storage::temp::get_temp_storage_creds()
+    let temp_client = storage::temp::TempStorageCreds::new_from_env()
       .unwrap()
+      .as_creds()
       .client()
       .await
       .unwrap();

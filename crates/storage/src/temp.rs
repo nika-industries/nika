@@ -13,11 +13,34 @@ pub struct TempStorageCredsError {
   error: miette::Report,
 }
 
-/// Fetches temp storage credentials from the environment.
-pub fn get_temp_storage_creds(
-) -> Result<models::StorageCredentials, TempStorageCredsError> {
-  Ok(models::StorageCredentials::R2(
-    models::R2StorageCredentials::Default {
+/// Temporary storage credentials.
+#[derive(Clone, Debug)]
+pub struct TempStorageCreds {
+  access_key:        String,
+  secret_access_key: String,
+  endpoint:          String,
+  bucket:            String,
+}
+
+impl TempStorageCreds {
+  /// Creates a new set of temporary storage credentials.
+  pub fn new(
+    access_key: String,
+    secret_access_key: String,
+    endpoint: String,
+    bucket: String,
+  ) -> Self {
+    Self {
+      access_key,
+      secret_access_key,
+      endpoint,
+      bucket,
+    }
+  }
+
+  /// Creates a new set of temporary storage credentials from the environment.
+  pub fn new_from_env() -> Result<Self, TempStorageCredsError> {
+    Ok(Self {
       access_key:        std::env::var("R2_TEMP_ACCESS_KEY")
         .into_diagnostic()
         .map_err(|error| TempStorageCredsError { error })?,
@@ -30,8 +53,19 @@ pub fn get_temp_storage_creds(
       bucket:            std::env::var("R2_TEMP_BUCKET")
         .into_diagnostic()
         .map_err(|error| TempStorageCredsError { error })?,
-    },
-  ))
+    })
+  }
+
+  /// Converts the temporary storage credentials to a
+  /// [`models::StorageCredentials`].
+  pub fn as_creds(&self) -> models::StorageCredentials {
+    models::StorageCredentials::R2(models::R2StorageCredentials::Default {
+      access_key:        self.access_key.clone(),
+      secret_access_key: self.secret_access_key.clone(),
+      endpoint:          self.endpoint.clone(),
+      bucket:            self.bucket.clone(),
+    })
+  }
 }
 
 /// A temporary storage path.

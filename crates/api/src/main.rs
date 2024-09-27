@@ -50,7 +50,8 @@ async fn naive_upload(
   Path((cache_name, path)): Path<(String, String)>,
   payload: temp_storage_payload::TempStoragePayload,
 ) -> impl IntoResponse {
-  let payload_path = payload.upload().await.unwrap();
+  let payload_path =
+    payload.upload(&app_state.temp_storage_creds).await.unwrap();
   tasks::NaiveUploadTask {
     cache_name:        models::StrictSlug::new(cache_name),
     path:              path.into(),
@@ -67,10 +68,11 @@ async fn naive_upload(
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  cache_service: Arc<Box<dyn CacheService>>,
-  store_service: Arc<Box<dyn StoreService>>,
-  token_service: Arc<Box<dyn TokenService>>,
-  entry_service: Arc<Box<dyn EntryService>>,
+  cache_service:      Arc<Box<dyn CacheService>>,
+  store_service:      Arc<Box<dyn StoreService>>,
+  token_service:      Arc<Box<dyn TokenService>>,
+  entry_service:      Arc<Box<dyn EntryService>>,
+  temp_storage_creds: storage::temp::TempStorageCreds,
 }
 
 #[tokio::main]
@@ -88,12 +90,14 @@ async fn main() -> miette::Result<()> {
   let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
   let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
   let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
+  let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
 
   let state = AppState {
     cache_service: Arc::new(Box::new(cache_service)),
     store_service: Arc::new(Box::new(store_service)),
     token_service: Arc::new(Box::new(token_service)),
     entry_service: Arc::new(Box::new(entry_service)),
+    temp_storage_creds,
   };
 
   let app = Router::new()
