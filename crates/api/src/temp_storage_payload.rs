@@ -40,9 +40,9 @@ pub enum TempStoragePayloadError {
   /// Error writing to temp storage.
   #[error("Error writing to temp storage: {0}")]
   WriteError(storage::WriteError),
-  /// Error getting temp storage credentials
-  #[error("Error getting temp storage credentials: {0}")]
-  CredsError(storage::temp::TempStorageCredsError),
+  // /// Error getting temp storage credentials
+  // #[error("Error getting temp storage credentials: {0}")]
+  // CredsError(storage::temp::TempStorageCredsError),
   /// Error creating a storage client
   #[error("Error creating a storage client: {0}")]
   ClientError(miette::Report),
@@ -51,9 +51,10 @@ pub enum TempStoragePayloadError {
 impl TempStoragePayload {
   pub async fn upload(
     self,
+    temp_storage_creds: &storage::temp::TempStorageCreds,
   ) -> Result<TempStoragePath, TempStoragePayloadError> {
-    let client = storage::temp::get_temp_storage_creds()
-      .map_err(TempStoragePayloadError::CredsError)?
+    let client = temp_storage_creds
+      .as_creds()
       .client()
       .await
       .map_err(TempStoragePayloadError::ClientError)?;
