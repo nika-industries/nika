@@ -35,4 +35,4 @@ nutype = { version = "0.4" }
 
 # tracing
 tracing = { version = "0.1" }
-tracing-subscriber = { version = "0.3" }
+tracing-subscriber = { version = "0.3", features = [ "env-filter" ] }
