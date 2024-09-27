@@ -65,7 +65,7 @@ localFlake: { inputs, ... }: {
       # run clippy, denying warnings
       rust-cargo-clippy = craneLib.cargoClippy (common-args // {
         inherit cargoArtifacts;
-        cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+        cargoClippyExtraArgs = "--all-targets --no-deps -- --deny warnings";
       });
       # run rust-doc, denying warnings
       rust-cargo-docs = craneLib.cargoDoc (common-args // {
