@@ -84,7 +84,7 @@ impl rope::Task for PrepareFetchPayloadTask {
 
       if !authorized {
         Err(UnauthorizedStoreAccessError {
-          store_name: store.name.clone().into_inner(),
+          store_name: store.nickname.clone().into_inner().into_inner(),
           permission: models::CachePermissionType::Read,
         })?;
       }
