@@ -1,4 +1,4 @@
-use models::{StrictSlug, Token, TokenRecordId};
+use models::{Token, TokenRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
 use tracing::instrument;
 
@@ -26,7 +26,7 @@ pub trait TokenService:
   async fn verify_token_id_and_secret(
     &self,
     id: TokenRecordId,
-    secret: StrictSlug,
+    secret: models::TokenSecret,
   ) -> Result<Token, TokenVerifyError>;
 }
 
@@ -70,7 +70,7 @@ impl<R: TokenRepository> TokenService for TokenServiceCanonical<R> {
   async fn verify_token_id_and_secret(
     &self,
     id: TokenRecordId,
-    secret: StrictSlug,
+    secret: models::TokenSecret,
   ) -> Result<Token, TokenVerifyError> {
     let token = self
       .fetch(id)

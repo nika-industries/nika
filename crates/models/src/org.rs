@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use slugger::StrictSlug;
 
 use crate::{Model, RecordId};
 
@@ -15,7 +14,7 @@ pub struct Org {
   /// The org's ID.
   pub id:   OrgRecordId,
   /// The org's name.
-  pub name: StrictSlug,
+  pub name: dvf::EntityName,
 }
 
 impl Model for Org {
@@ -23,7 +22,7 @@ impl Model for Org {
   const UNIQUE_INDICES: &'static [(
     &'static str,
     crate::SlugFieldGetter<Self>,
-  )] = &[("name", |org| org.name.clone().into())];
+  )] = &[("name", |org| org.name.clone().into_inner().into())];
 
   fn id(&self) -> OrgRecordId { self.id }
 }

@@ -31,7 +31,8 @@ async fn prepare_fetch_payload(
       cache_name:   models::StrictSlug::new(cache_name),
       token_id:     token_id
         .and_then(|s| models::TokenRecordId::try_from(s).ok()),
-      token_secret: token_secret.map(models::StrictSlug::new),
+      token_secret: token_secret
+        .map(|s| models::TokenSecret::new(models::StrictSlug::new(s))),
       path:         models::LaxSlug::new(path),
     }
     .run((

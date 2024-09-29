@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use slugger::StrictSlug;
 
 use crate::{Model, OrgRecordId, RecordId, StorageCredentials};
 
@@ -13,15 +12,13 @@ pub type StoreRecordId = RecordId<Store>;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Store {
   /// The store's ID.
-  pub id:     StoreRecordId,
+  pub id:       StoreRecordId,
   /// The store's nickname.
-  pub name:   StrictSlug,
+  pub nickname: dvf::EntityNickname,
   /// The store's credentials.
-  pub config: StorageCredentials,
-  /// Whether the store is public.
-  pub public: bool,
+  pub config:   StorageCredentials,
   /// The [`Org`](crate::Org) the store belongs to.
-  pub org:    OrgRecordId,
+  pub org:      OrgRecordId,
 }
 
 impl Model for Store {
@@ -29,7 +26,7 @@ impl Model for Store {
   const UNIQUE_INDICES: &'static [(
     &'static str,
     crate::SlugFieldGetter<Self>,
-  )] = &[("name", |s| s.name.clone().into())];
+  )] = &[];
 
   fn id(&self) -> StoreRecordId { self.id }
 }
@@ -38,23 +35,20 @@ impl Model for Store {
 #[derive(Clone, Debug)]
 pub struct StoreCreateRequest {
   /// The store's nickname.
-  pub name:   StrictSlug,
+  pub nickname: dvf::EntityNickname,
   /// The store's credentials.
-  pub config: StorageCredentials,
-  /// Whether the store is public.
-  pub public: bool,
+  pub config:   StorageCredentials,
   /// The [`Org`](crate::Org) the store belongs to.
-  pub org:    OrgRecordId,
+  pub org:      OrgRecordId,
 }
 
 impl From<StoreCreateRequest> for Store {
   fn from(req: StoreCreateRequest) -> Self {
     Self {
-      id:     Default::default(),
-      name:   req.name,
-      config: req.config,
-      public: req.public,
-      org:    req.org,
+      id:       Default::default(),
+      nickname: req.nickname,
+      config:   req.config,
+      org:      req.org,
     }
   }
 }

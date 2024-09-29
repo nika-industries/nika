@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Model, Org, RecordId};
+use crate::{Model, OrgRecordId, RecordId};
 
 /// The [`User`] table name.
 pub const USER_TABLE_NAME: &str = "user";
@@ -12,11 +12,11 @@ pub type UserRecordId = RecordId<User>;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct User {
   /// The user's ID.
-  pub id:   RecordId<User>,
+  pub id:   UserRecordId,
   /// The user's name.
-  pub name: String,
+  pub name: dvf::HumanName,
   /// The user's org.
-  pub org:  RecordId<Org>,
+  pub org:  OrgRecordId,
 }
 
 impl Model for User {

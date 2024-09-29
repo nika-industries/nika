@@ -71,6 +71,13 @@ localFlake: { ... }: {
           name = "update-crate-graph";
           command = "cargo depgraph --workspace-only | dot -Tpng > $PRJ_ROOT/media/crate-graph.png";
           help = "Update the crate graph";
+          category = "[repo actions]";
+        }
+        {
+          name = "migrate";
+          command = "cargo run --bin migrator";
+          help = "Run the migrator";
+          category = "[stack actions]";
         }
       ]
         ++ import-commands-module ./bin-commands.nix

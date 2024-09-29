@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use slugger::StrictSlug;
 
 use crate::{Model, OrgRecordId, PermissionSet, RecordId, UserRecordId};
 
@@ -15,9 +14,9 @@ pub struct Token {
   /// The token's ID.
   pub id:       TokenRecordId,
   /// The token's nickname.
-  pub nickname: StrictSlug,
+  pub nickname: dvf::EntityNickname,
   /// The token's secret.
-  pub secret:   StrictSlug,
+  pub secret:   dvf::TokenSecret,
   /// The token's permissions.
   pub perms:    PermissionSet,
   /// The token's owner (a User).
@@ -31,7 +30,7 @@ impl Model for Token {
   const UNIQUE_INDICES: &'static [(
     &'static str,
     crate::SlugFieldGetter<Self>,
-  )] = &[("secret", |t| t.secret.clone().into())];
+  )] = &[("secret", |t| t.secret.clone().into_inner().into())];
 
   fn id(&self) -> TokenRecordId { self.id }
 }
@@ -47,9 +46,9 @@ impl Token {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TokenCreateRequest {
   /// The token's nickname.
-  pub nickname: StrictSlug,
+  pub nickname: dvf::EntityNickname,
   /// The token's secret.
-  pub secret:   StrictSlug,
+  pub secret:   dvf::TokenSecret,
   /// The token's permissions.
   pub perms:    PermissionSet,
   /// The token's owner (a User).

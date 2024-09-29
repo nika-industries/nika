@@ -1,0 +1,18 @@
+[package]
+name = "dvf"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+slugger = { path = "../slugger" }
+
+serde.workspace = true
+nutype = { workspace = true, features = [ "serde" ] }
+
+[package.metadata.cargo-machete]
+# `serde` only gets used in `nutype` macros
+ignored = [ "serde" ]
+
+[lints]
+workspace = true
