@@ -12,6 +12,7 @@ Welcome to the `nika` monorepo. Feel free to look around.
 - `cli` (bin) - command line interface (mostly useless right now).
 - `daemon` (bin) - task runner daemon.
 - `db` - model-based database adapter interface, and TiKV implementer.
+- `dvf` - usage-specific newtypes used in models.
 - `fetcher` - temporary binary for the fetch pathway.
 - `kv` - key-value store interface and types, and TiKV implementer.
 - `migrator` (bin) - database migration tool.
