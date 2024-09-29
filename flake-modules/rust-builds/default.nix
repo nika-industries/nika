@@ -70,6 +70,7 @@ localFlake: { inputs, ... }: {
       # run rust-doc, denying warnings
       rust-cargo-docs = craneLib.cargoDoc (common-args // {
         inherit cargoArtifacts;
+        cargoClippyExtraArgs = "--no-deps";
         RUSTDOCFLAGS = "-D warnings";
       });
       # run rust tests with nextest
