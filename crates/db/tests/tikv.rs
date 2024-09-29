@@ -7,10 +7,10 @@ async fn test_tikv() {
 
   let model = models::Org {
     id:   models::OrgRecordId::new(),
-    name: models::StrictSlug::new(format!(
+    name: models::EntityName::new(models::StrictSlug::new(format!(
       "org-{}",
       models::Ulid::new().to_string()
-    )),
+    ))),
   };
 
   db.create_model(model.clone()).await.unwrap();
@@ -29,7 +29,7 @@ async fn test_tikv() {
   let new_model = db
     .fetch_model_by_index::<models::Org>(
       "name".to_string(),
-      model.name.clone().into(),
+      model.name.clone().into_inner().into(),
     )
     .await
     .unwrap()
