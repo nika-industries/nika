@@ -36,7 +36,6 @@ impl<T: DatabaseAdapter> Migratable for T {
         PathBuf::from_str("/tmp/local-store").unwrap(),
       )),
       nickname: EntityNickname::new(StrictSlug::confident("local-file-store")),
-      public:   false,
       org:      org.id,
     };
 
