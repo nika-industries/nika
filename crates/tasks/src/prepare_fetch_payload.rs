@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use mollusk::*;
 use prime_domain::{
-  models::{self, LaxSlug, StrictSlug, TokenRecordId},
+  models::{self, LaxSlug, StrictSlug, TokenRecordId, TokenSecret},
   CacheService, EntryService, StoreService, TokenService,
 };
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ pub struct PrepareFetchPayloadTask {
   /// The token being used to fetch the path.
   pub token_id:     Option<TokenRecordId>,
   /// The secret of the token being used to fetch the path.
-  pub token_secret: Option<StrictSlug>,
+  pub token_secret: Option<TokenSecret>,
   /// The path to fetch from the cache.
   pub path:         LaxSlug,
 }

@@ -56,9 +56,9 @@ impl<T: DatabaseAdapter> Migratable for T {
       nickname: models::EntityNickname::new(models::StrictSlug::confident(
         "omnitoken",
       )),
-      secret:   models::StrictSlug::confident(
+      secret:   models::TokenSecret::new(models::StrictSlug::confident(
         "zvka5d29dgvpujdyqa6ftnkei02i-qm1n-fjzuqfbyrq7avxbzi6ma8flxsuwe4l",
-      ),
+      )),
       perms:    models::PermissionSet(
         vec![
           models::Permission::CachePermission {
