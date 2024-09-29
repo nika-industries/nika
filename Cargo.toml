@@ -31,7 +31,7 @@ serde_json = { version = "1" }
 nanorand = { version = "0.7", default-features = false }
 futures = { version = "0.3" }
 clap = { version = "4.5", features = [ "derive" ] }
-nutype = { version = "0.4" }
+nutype = { version = "0.5" }
 
 # tracing
 tracing = { version = "0.1" }
