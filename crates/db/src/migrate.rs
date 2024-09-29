@@ -18,13 +18,13 @@ impl<T: DatabaseAdapter> Migratable for T {
         "01J53FHN8TQXTQ2JEHNX56GCTN",
       )
       .unwrap(),
-      name: models::StrictSlug::confident("dev-org"),
+      name: models::EntityName::new(models::StrictSlug::confident("dev-org")),
     };
 
     let user = models::User {
       id:   models::UserRecordId::from_str("01J53N6ARQGFTBQ41T25TAJ949")
         .unwrap(),
-      name: "John Lewis".to_string(),
+      name: models::HumanName::try_new("John Lewis".to_string()).unwrap(),
       org:  org.id,
     };
 
