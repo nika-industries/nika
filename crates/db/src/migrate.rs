@@ -53,7 +53,9 @@ impl<T: DatabaseAdapter> Migratable for T {
     let omnitoken_token = models::Token {
       id:       models::TokenRecordId::from_str("01J53ZA38PS1P5KWCE4FMG58F0")
         .unwrap(),
-      nickname: models::StrictSlug::confident("omnitoken"),
+      nickname: models::EntityNickname::new(models::StrictSlug::confident(
+        "omnitoken",
+      )),
       secret:   models::StrictSlug::confident(
         "zvka5d29dgvpujdyqa6ftnkei02i-qm1n-fjzuqfbyrq7avxbzi6ma8flxsuwe4l",
       ),

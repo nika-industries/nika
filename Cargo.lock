@@ -800,6 +800,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
+name = "dvf"
+version = "0.1.0"
+dependencies = [
+ "nutype",
+ "serde",
+ "slugger",
+]
+
+[[package]]
 name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1741,6 +1750,7 @@ dependencies = [
 name = "models"
 version = "0.1.0"
 dependencies = [
+ "dvf",
  "serde",
  "slugger",
  "ulid",

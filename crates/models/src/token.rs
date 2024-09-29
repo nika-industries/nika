@@ -15,7 +15,7 @@ pub struct Token {
   /// The token's ID.
   pub id:       TokenRecordId,
   /// The token's nickname.
-  pub nickname: StrictSlug,
+  pub nickname: dvf::EntityNickname,
   /// The token's secret.
   pub secret:   StrictSlug,
   /// The token's permissions.
@@ -47,7 +47,7 @@ impl Token {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TokenCreateRequest {
   /// The token's nickname.
-  pub nickname: StrictSlug,
+  pub nickname: dvf::EntityNickname,
   /// The token's secret.
   pub secret:   StrictSlug,
   /// The token's permissions.
