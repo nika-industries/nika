@@ -2,7 +2,7 @@
 name = "dvf"
 version = "0.1.0"
 edition = "2021"
-publish = true
+publish = false
 
 [dependencies]
 slugger = { path = "../slugger" }
