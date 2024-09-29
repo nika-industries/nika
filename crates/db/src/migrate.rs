@@ -1,6 +1,12 @@
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
 
 use miette::Result;
+use models::{
+  CachePermissionType, CacheRecordId, EntityName, EntityNickname, HumanName,
+  LocalStorageCredentials, Org, Permission, PermissionSet, RecordId,
+  StorageCredentials, StoreRecordId, StrictSlug, TokenRecordId, TokenSecret,
+  UserRecordId,
+};
 
 use crate::DatabaseAdapter;
 
@@ -13,61 +19,50 @@ pub trait Migratable {
 impl<T: DatabaseAdapter> Migratable for T {
   /// Applies test data to the database.
   async fn migrate(&self) -> Result<()> {
-    let org = models::Org {
-      id:   models::RecordId::<models::Org>::from_str(
-        "01J53FHN8TQXTQ2JEHNX56GCTN",
-      )
-      .unwrap(),
-      name: models::EntityName::new(models::StrictSlug::confident("dev-org")),
+    let org = Org {
+      id:   RecordId::<Org>::from_str("01J53FHN8TQXTQ2JEHNX56GCTN").unwrap(),
+      name: EntityName::new(StrictSlug::confident("dev-org")),
     };
 
     let user = models::User {
-      id:   models::UserRecordId::from_str("01J53N6ARQGFTBQ41T25TAJ949")
-        .unwrap(),
-      name: models::HumanName::try_new("John Lewis".to_string()).unwrap(),
+      id:   UserRecordId::from_str("01J53N6ARQGFTBQ41T25TAJ949").unwrap(),
+      name: HumanName::try_new("John Lewis".to_string()).unwrap(),
       org:  org.id,
     };
 
     let local_file_store = models::Store {
-      id:     models::StoreRecordId::from_str("01J53YYCCJW4B4QBM1CG0CHAMP")
-        .unwrap(),
-      config: models::StorageCredentials::Local(
-        models::LocalStorageCredentials(
-          std::path::PathBuf::from_str("/tmp/local-store").unwrap(),
-        ),
-      ),
-      name:   models::StrictSlug::confident("local-file-store"),
+      id:     StoreRecordId::from_str("01J53YYCCJW4B4QBM1CG0CHAMP").unwrap(),
+      config: StorageCredentials::Local(LocalStorageCredentials(
+        PathBuf::from_str("/tmp/local-store").unwrap(),
+      )),
+      name:   StrictSlug::confident("local-file-store"),
       public: false,
       org:    org.id,
     };
 
     let albert_cache = models::Cache {
-      id:     models::CacheRecordId::from_str("01J799MSHXPPY5RJ8KGHVR9GWQ")
-        .unwrap(),
-      name:   models::StrictSlug::confident("albert"),
+      id:     CacheRecordId::from_str("01J799MSHXPPY5RJ8KGHVR9GWQ").unwrap(),
+      name:   EntityName::new(StrictSlug::confident("albert")),
       public: false,
       store:  local_file_store.id,
       org:    org.id,
     };
 
     let omnitoken_token = models::Token {
-      id:       models::TokenRecordId::from_str("01J53ZA38PS1P5KWCE4FMG58F0")
-        .unwrap(),
-      nickname: models::EntityNickname::new(models::StrictSlug::confident(
-        "omnitoken",
-      )),
-      secret:   models::TokenSecret::new(models::StrictSlug::confident(
+      id:       TokenRecordId::from_str("01J53ZA38PS1P5KWCE4FMG58F0").unwrap(),
+      nickname: EntityNickname::new(StrictSlug::confident("omnitoken")),
+      secret:   TokenSecret::new(StrictSlug::confident(
         "zvka5d29dgvpujdyqa6ftnkei02i-qm1n-fjzuqfbyrq7avxbzi6ma8flxsuwe4l",
       )),
-      perms:    models::PermissionSet(
+      perms:    PermissionSet(
         vec![
-          models::Permission::CachePermission {
+          Permission::CachePermission {
             store_id:   local_file_store.id,
-            permission: models::CachePermissionType::Read,
+            permission: CachePermissionType::Read,
           },
-          models::Permission::CachePermission {
+          Permission::CachePermission {
             store_id:   local_file_store.id,
-            permission: models::CachePermissionType::Write,
+            permission: CachePermissionType::Write,
           },
         ]
         .into_iter()

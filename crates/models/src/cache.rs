@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use slugger::StrictSlug;
 
 use crate::{Model, OrgRecordId, RecordId, StoreRecordId};
 
@@ -15,7 +14,7 @@ pub struct Cache {
   /// The cache's ID.
   pub id:     CacheRecordId,
   /// The cache's nickname.
-  pub name:   StrictSlug,
+  pub name:   dvf::EntityName,
   /// Whether the store is public.
   pub public: bool,
   /// The cache's backing store.
@@ -29,7 +28,7 @@ impl Model for Cache {
   const UNIQUE_INDICES: &'static [(
     &'static str,
     crate::SlugFieldGetter<Self>,
-  )] = &[("name", |s| s.name.clone().into())];
+  )] = &[("name", |s| s.name.clone().into_inner().into())];
 
   fn id(&self) -> CacheRecordId { self.id }
 }
@@ -38,7 +37,7 @@ impl Model for Cache {
 #[derive(Clone, Debug)]
 pub struct CacheCreateRequest {
   /// The cache's nickname.
-  pub name:   StrictSlug,
+  pub name:   dvf::EntityName,
   /// Whether the store is public.
   pub public: bool,
   /// The cache's backing store.
