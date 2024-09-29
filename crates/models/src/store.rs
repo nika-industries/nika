@@ -17,8 +17,6 @@ pub struct Store {
   pub nickname: dvf::EntityNickname,
   /// The store's credentials.
   pub config:   StorageCredentials,
-  /// Whether the store is public.
-  pub public:   bool,
   /// The [`Org`](crate::Org) the store belongs to.
   pub org:      OrgRecordId,
 }
@@ -40,8 +38,6 @@ pub struct StoreCreateRequest {
   pub nickname: dvf::EntityNickname,
   /// The store's credentials.
   pub config:   StorageCredentials,
-  /// Whether the store is public.
-  pub public:   bool,
   /// The [`Org`](crate::Org) the store belongs to.
   pub org:      OrgRecordId,
 }
@@ -52,7 +48,6 @@ impl From<StoreCreateRequest> for Store {
       id:       Default::default(),
       nickname: req.nickname,
       config:   req.config,
-      public:   req.public,
       org:      req.org,
     }
   }
