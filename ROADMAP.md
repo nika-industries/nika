@@ -19,23 +19,23 @@
 		3. [ ] The CLI can calculate Nix closures
 		4. [ ] The CLI can produce `.narinfo` files
 	5. [ ] Pushing archives
-		1. [ ] "Push archive" is job type and functions correctly
+		1. [X] "Push archive" is job type and functions correctly
 2. [ ] Multi-tenancy
 	1. [ ] Stores vs. Caches
-		1. [ ] Stores and caches are now separate things in the DB
-		2. [ ] The fetcher queries the DB to check if something is in a cache
-		3. [ ] The fetcher can fetch from multiple caches
-		4. [ ] Cache boundaries are enforced
+		1. [X] Stores and caches are now separate things in the DB
+		2. [X] The fetcher queries the DB to check if something is in a cache
+		3. [X] The fetcher can fetch from multiple caches
+		4. [X] Cache boundaries are enforced
 	2. [ ] Keys Init
 		1. [ ] Stopgap solution for a signing key exists
 		2. [ ] Keys exist in the DB with permissions, an expiry date, and a revocation flag
-		3. [ ] Caches can be marked as private
-		4. [ ] Keys are required for anything but fetching from public caches
-		5. [ ] Keys are checked for required permissions by fetcher and API layers before performing actions
+		3. [X] Caches can be marked as private
+		4. [X] Keys are required for anything but fetching from public caches
+		5. [X] Keys are checked for required permissions by fetcher and API layers before performing actions
 	3. [ ] Orgs and Users Init
-		1. [ ] Orgs and users exist in the database
+		1. [X] Orgs and users exist in the database
 		2. [ ] User credentials are kept and checked, and users can be logged in and given a "session token"
-		3. [ ] Keys are now tied to users
+		3. [X] Keys are now tied to users
 		4. [ ] CLI can log in as a user and get a session token
 3. [ ] Authorization
 	1. [ ] DB keeps track of all user permissions
