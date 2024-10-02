@@ -2,7 +2,8 @@
 
 Welcome to the `nika` monorepo. Feel free to look around.
 
-- See the [ROADMAP](./ROADMAP.md) for project direction and status.
+- See [PROJECTS](./PROJECTS.md) for project goals and objectives.
+- See the [ROADMAP](./ROADMAP.md) for (old) project direction and status.
 
 ## Crate Map
 ![Crate Graph](./media/crate-graph.png)
