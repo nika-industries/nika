@@ -1,6 +1,6 @@
 //! Temp storage.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use miette::IntoDiagnostic;
 use serde::{Deserialize, Serialize};
@@ -81,3 +81,13 @@ impl TempStorageCreds {
 /// A temporary storage path.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TempStoragePath(pub PathBuf);
+
+impl TempStoragePath {
+  /// Creates a new temporary storage path.
+  pub fn new(path: PathBuf) -> Self { Self(path) }
+
+  /// Creates a new random temporary storage path.
+  pub fn new_random() -> Self {
+    Self(PathBuf::from_str(&models::Ulid::new().to_string()).unwrap())
+  }
+}
