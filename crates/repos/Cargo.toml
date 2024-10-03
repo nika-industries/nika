@@ -8,6 +8,7 @@ publish = false
 models = { path = "../models" }
 db = { path = "../db" }
 slugger = { path = "../slugger" }
+storage = { path = "../storage" }
 
 async-trait.workspace = true
 miette.workspace = true

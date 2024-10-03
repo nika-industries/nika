@@ -2445,6 +2445,7 @@ dependencies = [
  "miette",
  "models",
  "slugger",
+ "storage",
  "tracing",
 ]
 
