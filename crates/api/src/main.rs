@@ -64,6 +64,7 @@ async fn naive_upload(
     app_state.cache_service.clone(),
     app_state.store_service.clone(),
     app_state.entry_service.clone(),
+    app_state.temp_storage_service.clone(),
   ))
   .await
   .unwrap();
