@@ -7,6 +7,9 @@ pub use storage::{
   WriteError as StorageWriteError,
 };
 
+#[cfg(feature = "mock-temp-storage")]
+pub use self::mock::TempStorageRepositoryMock;
+
 /// Descriptor trait for repositories that handle temp storage.
 #[async_trait::async_trait]
 pub trait TempStorageRepository: Send + Sync + 'static {
@@ -56,5 +59,49 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
     let path = TempStoragePath::new_random();
     self.client.write(path.as_ref(), data).await?;
     Ok(path)
+  }
+}
+
+#[cfg(feature = "mock-temp-storage")]
+mod mock {
+  use super::*;
+
+  /// A mock repository for temp storage.
+  #[derive(Clone)]
+  pub struct TempStorageRepositoryMock {
+    fs_root: std::path::PathBuf,
+  }
+
+  impl TempStorageRepositoryMock {
+    /// Create a new instance of the temp storage repository.
+    pub fn new(fs_root: std::path::PathBuf) -> Self { Self { fs_root } }
+  }
+
+  #[async_trait::async_trait]
+  impl TempStorageRepository for TempStorageRepositoryMock {
+    #[tracing::instrument(skip(self))]
+    async fn read(
+      &self,
+      path: TempStoragePath,
+    ) -> Result<DynAsyncReader, StorageReadError> {
+      let path = self.fs_root.join(path.as_ref());
+      let file = tokio::fs::File::open(path).await?;
+      Ok(Box::new(file))
+    }
+
+    #[tracing::instrument(skip(self, data))]
+    async fn store(
+      &self,
+      mut data: DynAsyncReader,
+    ) -> Result<TempStoragePath, StorageWriteError> {
+      // create fs_root if it doesn't exist
+      tokio::fs::create_dir_all(&self.fs_root).await?;
+
+      let path = TempStoragePath::new_random();
+      let real_path = self.fs_root.join(path.as_ref());
+      let mut file = tokio::fs::File::create(real_path).await?;
+      tokio::io::copy(&mut data, &mut file).await?;
+      Ok(path)
+    }
   }
 }

@@ -101,13 +101,18 @@ async fn main() -> miette::Result<()> {
   println!(art::ascii_art!("../../media/ascii_logo.png"));
 
   let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
-  let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
   let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
   let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
   let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
   let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
-  let temp_storage_repo =
-    repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?;
+  cfg_if::cfg_if! {
+    if #[cfg(feature = "mock-temp-storage")] {
+      let temp_storage_repo = repos::TempStorageRepositoryMock::new(std::path::PathBuf::from("/tmp/nika-temp-storage"));
+    } else {
+      let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
+      let temp_storage_repo = repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?;
+    }
+  };
   let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
   let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
   let token_service = prime_domain::TokenServiceCanonical::new(token_repo);

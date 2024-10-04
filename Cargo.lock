@@ -136,6 +136,7 @@ version = "0.1.0"
 dependencies = [
  "art",
  "axum 0.7.6",
+ "cfg-if",
  "db",
  "miette",
  "mollusk",
@@ -2446,6 +2447,7 @@ dependencies = [
  "miette",
  "models",
  "storage",
+ "tokio",
  "tracing",
 ]
 
