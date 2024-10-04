@@ -12,7 +12,8 @@ use axum::{
 };
 use miette::IntoDiagnostic;
 use prime_domain::{
-  models, CacheService, EntryService, StoreService, TokenService,
+  models, CacheService, EntryService, StoreService, TempStorageService,
+  TokenService,
 };
 use tasks::Task;
 
@@ -46,14 +47,14 @@ async fn prepare_fetch_payload(
   )
 }
 
+#[axum::debug_handler]
 #[tracing::instrument(skip(app_state, payload))]
 async fn naive_upload(
   State(app_state): State<AppState>,
   Path((cache_name, path)): Path<(String, String)>,
   payload: temp_storage_payload::TempStoragePayload,
 ) -> impl IntoResponse {
-  let payload_path =
-    payload.upload(&app_state.temp_storage_creds).await.unwrap();
+  let payload_path = payload.upload().await.unwrap();
   tasks::NaiveUploadTask {
     cache_name:        models::StrictSlug::new(cache_name),
     path:              path.into(),
@@ -70,11 +71,11 @@ async fn naive_upload(
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  cache_service:      Arc<Box<dyn CacheService>>,
-  store_service:      Arc<Box<dyn StoreService>>,
-  token_service:      Arc<Box<dyn TokenService>>,
-  entry_service:      Arc<Box<dyn EntryService>>,
-  temp_storage_creds: storage::temp::TempStorageCreds,
+  cache_service:        Arc<Box<dyn CacheService>>,
+  store_service:        Arc<Box<dyn StoreService>>,
+  token_service:        Arc<Box<dyn TokenService>>,
+  entry_service:        Arc<Box<dyn EntryService>>,
+  temp_storage_service: Arc<Box<dyn TempStorageService>>,
 }
 
 #[tokio::main]
@@ -99,22 +100,26 @@ async fn main() -> miette::Result<()> {
   println!(art::ascii_art!("../../media/ascii_logo.png"));
 
   let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
+  let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
   let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
   let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
   let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
   let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
+  let temp_storage_repo =
+    repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?;
   let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
   let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
   let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
   let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
-  let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
+  let temp_storage_service =
+    prime_domain::TempStorageServiceCanonical::new(temp_storage_repo);
 
   let state = AppState {
-    cache_service: Arc::new(Box::new(cache_service)),
-    store_service: Arc::new(Box::new(store_service)),
-    token_service: Arc::new(Box::new(token_service)),
-    entry_service: Arc::new(Box::new(entry_service)),
-    temp_storage_creds,
+    cache_service:        Arc::new(Box::new(cache_service)),
+    store_service:        Arc::new(Box::new(store_service)),
+    token_service:        Arc::new(Box::new(token_service)),
+    entry_service:        Arc::new(Box::new(entry_service)),
+    temp_storage_service: Arc::new(Box::new(temp_storage_service)),
   };
 
   let app = Router::new()

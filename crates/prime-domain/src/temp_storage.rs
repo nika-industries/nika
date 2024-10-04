@@ -1,6 +1,7 @@
 use repos::TempStorageRepository;
 use storage::temp::TempStoragePath;
 
+/// The definition for the temp storage service.
 #[async_trait::async_trait]
 pub trait TempStorageService: Send + Sync + 'static {
   /// Read data from the storage.
@@ -15,6 +16,7 @@ pub trait TempStorageService: Send + Sync + 'static {
   ) -> Result<TempStoragePath, storage::WriteError>;
 }
 
+/// Canonical service for the temp storage service.
 pub struct TempStorageServiceCanonical<S: TempStorageRepository> {
   storage_repo: S,
 }
@@ -30,7 +32,11 @@ impl<S: TempStorageRepository + Clone> Clone
 }
 
 impl<S: TempStorageRepository> TempStorageServiceCanonical<S> {
-  pub fn new(storage_repo: S) -> Self { Self { storage_repo } }
+  /// Create a new instance of the canonical temp storage service.
+  pub fn new(storage_repo: S) -> Self {
+    tracing::info!("creating new `TempStorageServiceCanonical` instance");
+    Self { storage_repo }
+  }
 }
 
 #[async_trait::async_trait]
