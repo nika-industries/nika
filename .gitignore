@@ -1,5 +1,23 @@
+# rust
 target/
+
+# environment
 .env
+
+# redis
 *.rdb
-tikv_data/
+
+# chrome traces
 trace-*.json
+
+# nixos testing
+.nixos-test-history
+
+# nix
+result
+
+# direnv
+.direnv/
+
+# mprocs
+mprocs.log
