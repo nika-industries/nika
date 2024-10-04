@@ -9,7 +9,7 @@ mod token;
 
 pub use db::{FetchModelByIndexError, FetchModelError};
 use miette::Result;
-use slugger::EitherSlug;
+use models::EitherSlug;
 
 pub use self::{cache::*, entry::*, store::*, temp_storage::*, token::*};
 

@@ -70,7 +70,7 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
   async fn fetch_model_by_index(
     &self,
     index_name: String,
-    index_value: slugger::EitherSlug,
+    index_value: models::EitherSlug,
   ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
     self
       .db_adapter

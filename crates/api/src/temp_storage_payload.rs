@@ -9,8 +9,7 @@ use axum::{
   extract::{FromRef, FromRequest, Request},
   response::Response,
 };
-use prime_domain::TempStorageService;
-use storage::temp::TempStoragePath;
+use prime_domain::{models::dvf::TempStoragePath, TempStorageService};
 use tokio_stream::StreamExt;
 
 use crate::AppState;

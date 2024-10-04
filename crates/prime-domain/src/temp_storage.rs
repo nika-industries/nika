@@ -1,5 +1,7 @@
 use models::dvf::TempStoragePath;
-use repos::TempStorageRepository;
+use repos::{
+  DynAsyncReader, StorageReadError, StorageWriteError, TempStorageRepository,
+};
 
 /// The definition for the temp storage service.
 #[async_trait::async_trait]
@@ -8,12 +10,12 @@ pub trait TempStorageService: Send + Sync + 'static {
   async fn read(
     &self,
     path: TempStoragePath,
-  ) -> Result<storage::DynAsyncReader, storage::ReadError>;
+  ) -> Result<DynAsyncReader, StorageReadError>;
   /// Store data in the storage.
   async fn store(
     &self,
-    data: storage::DynAsyncReader,
-  ) -> Result<TempStoragePath, storage::WriteError>;
+    data: DynAsyncReader,
+  ) -> Result<TempStoragePath, StorageWriteError>;
 }
 
 /// Canonical service for the temp storage service.
@@ -47,15 +49,15 @@ impl<S: TempStorageRepository> TempStorageService
   async fn read(
     &self,
     path: TempStoragePath,
-  ) -> Result<storage::DynAsyncReader, storage::ReadError> {
+  ) -> Result<DynAsyncReader, StorageReadError> {
     self.storage_repo.read(path).await
   }
 
   #[tracing::instrument(skip(self, data))]
   async fn store(
     &self,
-    data: storage::DynAsyncReader,
-  ) -> Result<TempStoragePath, storage::WriteError> {
+    data: DynAsyncReader,
+  ) -> Result<TempStoragePath, StorageWriteError> {
     self.storage_repo.store(data).await
   }
 }

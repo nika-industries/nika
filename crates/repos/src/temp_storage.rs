@@ -1,7 +1,11 @@
 use std::sync::Arc;
 
 use models::dvf::TempStoragePath;
-use storage::{temp::TempStorageCreds, StorageClientGenerator};
+use storage::temp::TempStorageCreds;
+pub use storage::{
+  DynAsyncReader, ReadError as StorageReadError, StorageClientGenerator,
+  WriteError as StorageWriteError,
+};
 
 /// Descriptor trait for repositories that handle temp storage.
 #[async_trait::async_trait]
@@ -10,12 +14,12 @@ pub trait TempStorageRepository: Send + Sync + 'static {
   async fn read(
     &self,
     path: TempStoragePath,
-  ) -> Result<storage::DynAsyncReader, storage::ReadError>;
+  ) -> Result<DynAsyncReader, StorageReadError>;
   /// Store data in the storage.
   async fn store(
     &self,
-    data: storage::DynAsyncReader,
-  ) -> Result<TempStoragePath, storage::WriteError>;
+    data: DynAsyncReader,
+  ) -> Result<TempStoragePath, StorageWriteError>;
 }
 
 /// The repository for temp storage.
@@ -40,15 +44,15 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
   async fn read(
     &self,
     path: TempStoragePath,
-  ) -> Result<storage::DynAsyncReader, storage::ReadError> {
+  ) -> Result<DynAsyncReader, StorageReadError> {
     self.client.read(path.as_ref()).await
   }
 
   #[tracing::instrument(skip(self, data))]
   async fn store(
     &self,
-    data: storage::DynAsyncReader,
-  ) -> Result<TempStoragePath, storage::WriteError> {
+    data: DynAsyncReader,
+  ) -> Result<TempStoragePath, StorageWriteError> {
     let path = TempStoragePath::new_random();
     self.client.write(path.as_ref(), data).await?;
     Ok(path)
