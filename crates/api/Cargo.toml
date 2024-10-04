@@ -17,6 +17,7 @@ tasks = { path = "../tasks" }
 prime-domain = { path = "../prime-domain" }
 
 # serde.workspace = true
+cfg-if.workspace = true
 thiserror.workspace = true
 miette = { workspace = true, features = [ "fancy" ] }
 
@@ -32,3 +33,5 @@ tracing-chrome = { version = "0.7", optional = true }
 [features]
 default = []
 chrome-tracing = [ "tracing-chrome" ]
+
+mock-temp-storage = ["repos/mock-temp-storage"]

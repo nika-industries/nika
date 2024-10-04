@@ -9,6 +9,7 @@ slugger = { path = "../slugger" }
 
 serde.workspace = true
 nutype = { workspace = true, features = [ "serde" ] }
+ulid.workspace = true
 
 [package.metadata.cargo-machete]
 # `serde` only gets used in `nutype` macros

@@ -1,9 +1,6 @@
 //! Temp storage.
 
-use std::path::PathBuf;
-
 use miette::IntoDiagnostic;
-use serde::{Deserialize, Serialize};
 
 /// Error type for [`TempStorageCreds::new_from_env()`].
 #[derive(thiserror::Error, Debug, miette::Diagnostic)]
@@ -77,7 +74,3 @@ impl TempStorageCreds {
     })
   }
 }
-
-/// A temporary storage path.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TempStoragePath(pub PathBuf);

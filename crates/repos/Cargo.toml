@@ -7,11 +7,18 @@ publish = false
 [dependencies]
 models = { path = "../models" }
 db = { path = "../db" }
-slugger = { path = "../slugger" }
+storage = { path = "../storage" }
 
 async-trait.workspace = true
 miette.workspace = true
 tracing.workspace = true
 
+tokio = { workspace = true, optional = true, features = ["full"] }
+
 [lints]
 workspace = true
+
+[features]
+default = []
+
+mock-temp-storage = ["dep:tokio"]

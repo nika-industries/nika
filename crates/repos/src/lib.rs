@@ -4,13 +4,14 @@ mod base;
 mod cache;
 mod entry;
 mod store;
+mod temp_storage;
 mod token;
 
 pub use db::{FetchModelByIndexError, FetchModelError};
 use miette::Result;
-use slugger::EitherSlug;
+use models::EitherSlug;
 
-pub use self::{cache::*, entry::*, store::*, token::*};
+pub use self::{cache::*, entry::*, store::*, temp_storage::*, token::*};
 
 /// Defines a repository interface for models.
 #[async_trait::async_trait]

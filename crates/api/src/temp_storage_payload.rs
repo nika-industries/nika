@@ -1,35 +1,41 @@
 use std::{
   io::{self},
-  path::PathBuf,
-  str::FromStr,
+  sync::Arc,
 };
 
 use axum::{
   async_trait,
   body::{Body, Bytes},
-  extract::{FromRequest, Request},
+  extract::{FromRef, FromRequest, Request},
   response::Response,
 };
-use prime_domain::models;
-use storage::{temp::TempStoragePath, StorageClientGenerator};
+use prime_domain::{models::dvf::TempStoragePath, TempStorageService};
 use tokio_stream::StreamExt;
 
+use crate::AppState;
+
 /// An extractor that reads the request body into temp storage.
-pub struct TempStoragePayload(Body);
+pub struct TempStoragePayload(Body, Arc<Box<dyn TempStorageService>>);
 
 #[async_trait]
 impl<S> FromRequest<S> for TempStoragePayload
 where
   Bytes: FromRequest<S>,
   S: Send + Sync,
+  AppState: FromRef<S>,
 {
   type Rejection = Response;
 
   async fn from_request(
     req: Request,
-    _state: &S,
+    state: &S,
   ) -> Result<Self, Self::Rejection> {
-    Ok(Self(req.into_body()))
+    let app_state = AppState::from_ref(state);
+
+    Ok(Self(
+      req.into_body(),
+      app_state.temp_storage_service.clone(),
+    ))
   }
 }
 
@@ -40,37 +46,25 @@ pub enum TempStoragePayloadError {
   /// Error writing to temp storage.
   #[error("Error writing to temp storage: {0}")]
   WriteError(storage::WriteError),
-  // /// Error getting temp storage credentials
-  // #[error("Error getting temp storage credentials: {0}")]
-  // CredsError(storage::temp::TempStorageCredsError),
-  /// Error creating a storage client
-  #[error("Error creating a storage client: {0}")]
-  ClientError(miette::Report),
 }
 
 impl TempStoragePayload {
   pub async fn upload(
     self,
-    temp_storage_creds: &storage::temp::TempStorageCreds,
   ) -> Result<TempStoragePath, TempStoragePayloadError> {
-    let client = temp_storage_creds
-      .as_creds()
-      .client()
-      .await
-      .map_err(TempStoragePayloadError::ClientError)?;
+    let TempStoragePayload(body, temp_storage_service) = self;
 
     let body_stream = Box::new(tokio_util::io::StreamReader::new(
-      self.0.into_data_stream().map(|result| {
+      body.into_data_stream().map(|result| {
         result.map_err(|err| io::Error::new(io::ErrorKind::Other, err))
       }),
     ));
 
-    let path = PathBuf::from_str(&models::Ulid::new().to_string()).unwrap();
-    client
-      .write(&path, body_stream)
+    let path = temp_storage_service
+      .store(body_stream)
       .await
       .map_err(TempStoragePayloadError::WriteError)?;
 
-    Ok(TempStoragePath(path))
+    Ok(path)
   }
 }

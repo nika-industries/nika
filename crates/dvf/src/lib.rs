@@ -1,5 +1,7 @@
 //! Data Validation Fundamentals.
 
+use std::{path::PathBuf, str::FromStr};
+
 pub use slugger;
 use slugger::StrictSlug;
 
@@ -67,3 +69,23 @@ pub struct HumanName(String);
   Display
 ))]
 pub struct TokenSecret(StrictSlug);
+
+/// A path in temp storage.
+#[nutype::nutype(derive(
+  Debug,
+  Clone,
+  Serialize,
+  Deserialize,
+  PartialEq,
+  Eq,
+  Hash,
+  AsRef,
+))]
+pub struct TempStoragePath(PathBuf);
+
+impl TempStoragePath {
+  /// Creates a new temporary storage path.
+  pub fn new_random() -> Self {
+    Self::new(PathBuf::from_str(&ulid::Ulid::new().to_string()).unwrap())
+  }
+}
