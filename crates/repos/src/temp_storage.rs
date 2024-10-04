@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
-use storage::{
-  temp::{TempStorageCreds, TempStoragePath},
-  StorageClientGenerator,
-};
+use models::dvf::TempStoragePath;
+use storage::{temp::TempStorageCreds, StorageClientGenerator};
 
 /// Descriptor trait for repositories that handle temp storage.
 #[async_trait::async_trait]
@@ -43,7 +41,7 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
     &self,
     path: TempStoragePath,
   ) -> Result<storage::DynAsyncReader, storage::ReadError> {
-    self.client.read(&path.0).await
+    self.client.read(path.as_ref()).await
   }
 
   #[tracing::instrument(skip(self, data))]
@@ -52,7 +50,7 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
     data: storage::DynAsyncReader,
   ) -> Result<TempStoragePath, storage::WriteError> {
     let path = TempStoragePath::new_random();
-    self.client.write(&path.0, data).await?;
+    self.client.write(path.as_ref(), data).await?;
     Ok(path)
   }
 }

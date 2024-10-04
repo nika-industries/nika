@@ -1,9 +1,6 @@
 //! Temp storage.
 
-use std::{path::PathBuf, str::FromStr};
-
 use miette::IntoDiagnostic;
-use serde::{Deserialize, Serialize};
 
 /// Error type for [`TempStorageCreds::new_from_env()`].
 #[derive(thiserror::Error, Debug, miette::Diagnostic)]
@@ -75,19 +72,5 @@ impl TempStorageCreds {
       endpoint:          self.endpoint.clone(),
       bucket:            self.bucket.clone(),
     })
-  }
-}
-
-/// A temporary storage path.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TempStoragePath(pub PathBuf);
-
-impl TempStoragePath {
-  /// Creates a new temporary storage path.
-  pub fn new(path: PathBuf) -> Self { Self(path) }
-
-  /// Creates a new random temporary storage path.
-  pub fn new_random() -> Self {
-    Self(PathBuf::from_str(&models::Ulid::new().to_string()).unwrap())
   }
 }

@@ -1,5 +1,5 @@
+use models::dvf::TempStoragePath;
 use repos::TempStorageRepository;
-use storage::temp::TempStoragePath;
 
 /// The definition for the temp storage service.
 #[async_trait::async_trait]
