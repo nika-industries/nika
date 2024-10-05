@@ -20,12 +20,12 @@ localFlake: { self, ... }: {
           services.tikv = {
             enable = true;
             addr = "0.0.0.0:20160";
-            advertiseAddr = "10.0.0.10:20160";
+            advertiseAddr = "tikv1:20160";
             statusAddr = "0.0.0.0:20180";
-            advertiseStatusAddr = "10.0.0.10:20180";
+            advertiseStatusAddr = "tikv1:20180";
             pdServers = [ "10.0.0.11:2379" ];
           };
-          networking.firewall.allowedTCPPorts = [ 20180 ];
+          networking.firewall.allowedTCPPorts = [ 20160 20180 ];
         };
 
         pd1 = { ... }: {
