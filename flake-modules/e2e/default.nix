@@ -35,13 +35,13 @@ localFlake: { self, ... }: {
             enable = true;
             clientUrls = [ "http://10.0.0.11:2379" ];
           };
-          networking.firewall.allowedTCPPorts = [ 2379 ];
+          networking.firewall.allowedTCPPorts = [ 2379 2380 ];
         };
 
         client = { pkgs, ... }: {
           imports = [ (assign-static 12) ];
 
-          environment.systemPackages = with pkgs; [ curl ];
+          environment.systemPackages = with pkgs; [ curl jq ];
         };
       };
 
@@ -51,10 +51,11 @@ localFlake: { self, ... }: {
         tikv1.wait_for_unit("network-online.target")
         tikv1.wait_for_unit("tikv.service")
 
-        # curl tikv1:20180/metrics from client
         client.wait_for_unit("network-online.target")
+        # make sure we can reach the tikv node by ip
         client.succeed("ping 10.0.0.10 -c 1")
-        client.succeed("curl http://10.0.0.10:20180/metrics")
+        # make sure pd reports the tikv node as up
+        client.wait_until_succeeds("curl http://10.0.0.11:2379/pd/api/v1/stores | jq -e '.[\"stores\"][0][\"store\"][\"state_name\"] == \"Up\"'")
       '';
     };
   in {
