@@ -94,6 +94,7 @@ in {
         ${optional-flag "config" "config"}
     '';
   in lib.mkIf cfg.enable {
+    networking.firewall.allowedTCPPorts = [ 2379 2380 ];
     systemd.services.pd = {
       description = "PD Server";
       wantedBy = [ "multi-user.target" ];
@@ -108,11 +109,6 @@ in {
       environment = {
         TZ = "UTC";
       };
-    };
-
-    environment.systemPackages = [ pkgs.tzdata ];
-    environment.variables = {
-      TZ = "UTC";
     };
   };
 }

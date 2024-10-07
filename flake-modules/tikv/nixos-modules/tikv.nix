@@ -94,6 +94,7 @@ in {
         ${optional-flag "log-file" "logFile"}
     '';
   in lib.mkIf cfg.enable {
+    networking.firewall.allowedTCPPorts = [ 20160 20180 ];
     systemd.services.tikv = {
       description = "TiKV Server";
       wantedBy = [ "multi-user.target" ];
