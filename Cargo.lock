@@ -137,6 +137,7 @@ dependencies = [
  "art",
  "axum 0.7.6",
  "cfg-if",
+ "clap",
  "db",
  "miette",
  "mollusk",
