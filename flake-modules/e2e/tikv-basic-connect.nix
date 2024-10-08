@@ -1,6 +1,6 @@
 { pkgs, self, common, ... }: {
-  tikv-cluster-connect = pkgs.testers.runNixOSTest {
-    name = "tikv-cluster-connect";
+  tikv-basic-connect = pkgs.testers.runNixOSTest {
+    name = "tikv-basic-connect";
 
     nodes = {
       tikv1 = { ... }: {

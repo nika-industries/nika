@@ -15,8 +15,8 @@ localFlake: { self, ... }: {
     callTestModule = source: pkgs.lib.attrsets.mapAttrs' test-renamer (call source);
 
     # modules here
-    tikv-cluster-connect = callTestModule ./tikv-cluster-connect.nix;
+    tikv-basic-connect = callTestModule ./tikv-basic-connect.nix;
   in {
-    checks = { } // tikv-cluster-connect;
+    checks = { } // tikv-basic-connect;
   };
 }
