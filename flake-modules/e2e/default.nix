@@ -4,7 +4,7 @@ localFlake: { self, ... }: {
     test-prefix = "nixvm-test-";
 
     # the common module
-    common = import ./common.nix { inherit pkgs; };
+    common = import ./common.nix { inherit self pkgs; };
     # the args we'll give to each module
     module-args = perSystemTop // { inherit self common; };
     # helper to call a module with the args

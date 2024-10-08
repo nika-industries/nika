@@ -1,29 +1,10 @@
-{ pkgs, self, common, ... }: {
+{ pkgs, common, ... }: {
   tikv-basic-connect = pkgs.testers.runNixOSTest {
     name = "tikv-basic-connect";
 
     nodes = {
-      tikv1 = { ... }: {
-        imports = [ (common.assign-static 10) self.nixosModules.tikv ];
-
-        services.tikv = {
-          enable = true;
-          addr = "0.0.0.0:20160";
-          advertiseAddr = "tikv1:20160";
-          statusAddr = "0.0.0.0:20180";
-          advertiseStatusAddr = "tikv1:20180";
-          pdServers = [ "10.0.0.11:2379" ];
-        };
-      };
-
-      pd1 = { ... }: {
-        imports = [ (common.assign-static 11) self.nixosModules.pd ];
-
-        services.pd = {
-          enable = true;
-          clientUrls = [ "http://10.0.0.11:2379" ];
-        };
-      };
+      tikv1 = common.basic-tikv-cluster.tikv;
+      pd1 = common.basic-tikv-cluster.pd;
 
       client = { pkgs, ... }: {
         imports = [ (common.assign-static 12) ];
