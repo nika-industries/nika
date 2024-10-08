@@ -95,7 +95,10 @@ mod mock {
 
   impl TempStorageRepositoryMock {
     /// Create a new instance of the temp storage repository.
-    pub fn new(fs_root: std::path::PathBuf) -> Self { Self { fs_root } }
+    pub fn new(fs_root: std::path::PathBuf) -> Self {
+      tracing::info!("creating new `TempStorageRepositoryMock` instance");
+      Self { fs_root }
+    }
   }
 
   #[async_trait::async_trait]
