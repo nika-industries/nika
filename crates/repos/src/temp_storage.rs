@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 
 use models::dvf::TempStoragePath;
 use storage::temp::TempStorageCreds;
@@ -23,6 +23,27 @@ pub trait TempStorageRepository: Send + Sync + 'static {
     &self,
     data: DynAsyncReader,
   ) -> Result<TempStoragePath, StorageWriteError>;
+}
+
+// impl for anything that derefs to TempStorageRepository (i.e. Box<dyn ...>)
+#[async_trait::async_trait]
+impl<T: Deref<Target = dyn TempStorageRepository> + Send + Sync + 'static>
+  TempStorageRepository for T
+{
+  #[tracing::instrument(skip(self))]
+  async fn read(
+    &self,
+    path: TempStoragePath,
+  ) -> Result<DynAsyncReader, StorageReadError> {
+    (**self).read(path).await
+  }
+  #[tracing::instrument(skip(self, data))]
+  async fn store(
+    &self,
+    data: DynAsyncReader,
+  ) -> Result<TempStoragePath, StorageWriteError> {
+    (**self).store(data).await
+  }
 }
 
 /// The repository for temp storage.
