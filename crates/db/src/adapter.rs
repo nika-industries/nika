@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
+use hex::Hexagonal;
 use kv::prelude::*;
 use miette::Result;
 
 /// An adapter for a model-based database.
 #[async_trait::async_trait]
-pub trait DatabaseAdapter: Send + Sync + 'static {
+pub trait DatabaseAdapter: Hexagonal {
   /// Creates a new model.
   async fn create_model<M: models::Model>(
     &self,

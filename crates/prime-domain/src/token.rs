@@ -1,3 +1,4 @@
+use hex::Hexagonal;
 use models::{Token, TokenRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
 use tracing::instrument;
@@ -20,7 +21,7 @@ pub enum TokenVerifyError {
 /// The definition for the [`Token`] domain model service.
 #[async_trait::async_trait]
 pub trait TokenService:
-  ModelRepositoryFetcher<Model = Token> + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Token> + Hexagonal
 {
   /// Verifies that the supplied token ID and secret are valid and exist.
   async fn verify_token_id_and_secret(

@@ -1,3 +1,4 @@
+use hex::Hexagonal;
 use models::{Store, StoreRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, StoreRepository};
 use tracing::instrument;
@@ -5,7 +6,7 @@ use tracing::instrument;
 /// The definition for the [`Store`] domain model service.
 #[async_trait::async_trait]
 pub trait StoreService:
-  ModelRepositoryFetcher<Model = Store> + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Store> + Hexagonal
 {
 }
 

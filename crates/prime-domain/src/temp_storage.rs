@@ -1,3 +1,4 @@
+use hex::Hexagonal;
 use models::dvf::TempStoragePath;
 use repos::{
   DynAsyncReader, StorageReadError, StorageWriteError, TempStorageRepository,
@@ -5,7 +6,7 @@ use repos::{
 
 /// The definition for the temp storage service.
 #[async_trait::async_trait]
-pub trait TempStorageService: Send + Sync + 'static {
+pub trait TempStorageService: Hexagonal {
   /// Read data from the storage.
   async fn read(
     &self,

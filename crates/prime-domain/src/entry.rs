@@ -1,3 +1,4 @@
+use hex::Hexagonal;
 use models::{CacheRecordId, Entry, EntryRecordId, LaxSlug};
 use repos::{
   CreateModelError, EntryCreateRequest, EntryRepository,
@@ -14,9 +15,7 @@ pub trait EntryService:
     Model = Entry,
     ModelCreateRequest = EntryCreateRequest,
     CreateError = CreateModelError,
-  > + Send
-  + Sync
-  + 'static
+  > + Hexagonal
 {
   /// Find an [`Entry`] by its cache ID and path.
   async fn find_by_entry_id_and_path(

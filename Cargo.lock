@@ -759,6 +759,7 @@ name = "db"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "hex",
  "kv",
  "miette",
  "models",
@@ -2083,6 +2084,7 @@ name = "prime-domain"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "hex",
  "miette",
  "models",
  "repos",
@@ -2456,6 +2458,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "db",
+ "hex",
  "miette",
  "models",
  "storage",

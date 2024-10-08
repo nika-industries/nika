@@ -8,6 +8,7 @@ mod temp_storage;
 mod token;
 
 pub use db::{FetchModelByIndexError, FetchModelError};
+use hex::Hexagonal;
 use miette::Result;
 use models::EitherSlug;
 
@@ -15,7 +16,7 @@ pub use self::{cache::*, entry::*, store::*, temp_storage::*, token::*};
 
 /// Defines a repository interface for models.
 #[async_trait::async_trait]
-pub trait ModelRepository: Send + Sync + 'static {
+pub trait ModelRepository: Hexagonal {
   /// The model type.
   type Model: models::Model;
   /// The request type for creating a model.
@@ -47,7 +48,7 @@ pub trait ModelRepository: Send + Sync + 'static {
 
 /// Defines a repository fetcher interface for models.
 #[async_trait::async_trait]
-pub trait ModelRepositoryFetcher: Send + Sync + 'static {
+pub trait ModelRepositoryFetcher: Hexagonal {
   /// The model type.
   type Model: models::Model;
 
@@ -60,7 +61,7 @@ pub trait ModelRepositoryFetcher: Send + Sync + 'static {
 
 /// Defines a repository interface for creating models.
 #[async_trait::async_trait]
-pub trait ModelRepositoryCreator: Send + Sync + 'static {
+pub trait ModelRepositoryCreator: Hexagonal {
   /// The model type.
   type Model: models::Model;
   /// The request type for creating a model.

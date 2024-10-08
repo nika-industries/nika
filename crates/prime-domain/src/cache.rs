@@ -1,3 +1,4 @@
+use hex::Hexagonal;
 use miette::Result;
 use models::{Cache, CacheRecordId, StrictSlug};
 use repos::{
@@ -9,7 +10,7 @@ use tracing::instrument;
 /// The definition for the [`Cache`] domain model service.
 #[async_trait::async_trait]
 pub trait CacheService:
-  ModelRepositoryFetcher<Model = Cache> + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Cache> + Hexagonal
 {
   /// Find a [`Cache`] by its name.
   async fn find_by_name(

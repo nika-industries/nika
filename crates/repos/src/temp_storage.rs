@@ -1,5 +1,6 @@
 use std::{ops::Deref, sync::Arc};
 
+use hex::Hexagonal;
 use models::dvf::TempStoragePath;
 use storage::temp::TempStorageCreds;
 pub use storage::{
@@ -12,7 +13,7 @@ pub use self::mock::TempStorageRepositoryMock;
 
 /// Descriptor trait for repositories that handle temp storage.
 #[async_trait::async_trait]
-pub trait TempStorageRepository: Send + Sync + 'static {
+pub trait TempStorageRepository: Hexagonal {
   /// Read data from the storage.
   async fn read(
     &self,
@@ -27,7 +28,7 @@ pub trait TempStorageRepository: Send + Sync + 'static {
 
 // impl for anything that derefs to TempStorageRepository (i.e. Box<dyn ...>)
 #[async_trait::async_trait]
-impl<T: Deref<Target = dyn TempStorageRepository> + Send + Sync + 'static>
+impl<T: Deref<Target = dyn TempStorageRepository> + Hexagonal>
   TempStorageRepository for T
 {
   #[tracing::instrument(skip(self))]
