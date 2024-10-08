@@ -10,12 +10,26 @@ use axum::{
   routing::{get, post},
   Json, Router,
 };
+use clap::Parser;
 use miette::IntoDiagnostic;
 use prime_domain::{
   models, CacheService, EntryService, StoreService, TempStorageService,
   TokenService,
 };
+use repos::TempStorageRepository;
 use tasks::Task;
+
+#[derive(Parser, Debug)]
+struct RuntimeConfig {
+  #[arg(short = 'a', long = "address", default_value = "0.0.0.0")]
+  bind_address:      String,
+  #[arg(short = 'p', long = "port", default_value = "3000")]
+  bind_port:         u16,
+  #[arg(long, action)]
+  mock_temp_storage: bool,
+  #[arg(long, action)]
+  chrome_tracing:    bool,
+}
 
 #[tracing::instrument(skip(app_state))]
 async fn prepare_fetch_payload(
@@ -81,38 +95,48 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> miette::Result<()> {
-  #[cfg(not(feature = "chrome-tracing"))]
-  tracing_subscriber::fmt()
-    .with_env_filter(
-      tracing_subscriber::EnvFilter::try_from_default_env()
-        .unwrap_or(tracing_subscriber::EnvFilter::new("info")),
-    )
-    .init();
-  #[cfg(feature = "chrome-tracing")]
-  let _guard = {
+  let config = RuntimeConfig::parse();
+
+  // start tracing using runtime config. keep the chrome tracing guard around.
+  let _guard: Option<_> = if config.chrome_tracing {
     use tracing_subscriber::prelude::*;
 
     let (chrome_layer, guard) =
       tracing_chrome::ChromeLayerBuilder::new().build();
     tracing_subscriber::registry().with(chrome_layer).init();
-    guard
+    Some(guard)
+  } else {
+    tracing_subscriber::fmt()
+      .with_env_filter(
+        tracing_subscriber::EnvFilter::try_from_default_env()
+          .unwrap_or(tracing_subscriber::EnvFilter::new("info")),
+      )
+      .init();
+    None
   };
 
   println!(art::ascii_art!("../../media/ascii_logo.png"));
+
+  tracing::info!("starting up");
+  tracing::info!("config: {:?}", config);
 
   let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
   let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
   let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
   let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
   let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
-  cfg_if::cfg_if! {
-    if #[cfg(feature = "mock-temp-storage")] {
-      let temp_storage_repo = repos::TempStorageRepositoryMock::new(std::path::PathBuf::from("/tmp/nika-temp-storage"));
+  let temp_storage_repo: Box<dyn TempStorageRepository> =
+    if config.mock_temp_storage {
+      Box::new(repos::TempStorageRepositoryMock::new(
+        std::path::PathBuf::from("/tmp/nika-temp-storage"),
+      ))
     } else {
       let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
-      let temp_storage_repo = repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?;
-    }
-  };
+      Box::new(
+        repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?,
+      )
+    };
+
   let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
   let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
   let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
@@ -134,8 +158,8 @@ async fn main() -> miette::Result<()> {
     .route("/fetch_payload", get(prepare_fetch_payload))
     .with_state(state);
 
-  let bind_address = "0.0.0.0:3000";
-  let listener = tokio::net::TcpListener::bind(bind_address).await.unwrap();
+  let bind_address = format!("{0}:{1}", config.bind_address, config.bind_port);
+  let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
 
   tracing::info!("listening on `{bind_address}`");
   tokio::spawn(async move { axum::serve(listener, app).await });
