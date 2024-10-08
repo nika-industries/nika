@@ -2,16 +2,105 @@
 
 use serde::{Deserialize, Serialize};
 
-/// The health of a component.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ComponentHealth {
-  /// The name of the component.
-  name:            String,
-  /// The status of the component, tested as a whole.
-  holistic_status: HealthStatus,
-  /// The status of the component's constituents.
-  components:      Vec<ComponentHealth>,
+/// Describes a component that can be health checked.
+#[async_trait::async_trait]
+pub trait HealthReporter: Send + Sync + 'static {
+  /// The name of this component.
+  const NAME: &'static str;
+
+  /// The type of health report this component can produce.
+  type HealthReport: Into<ComponentHealth>;
+
+  /// Perform a health check on this component.
+  async fn health_check(&self) -> Self::HealthReport;
 }
+
+/// Describes a component that can provide a health report.
+#[async_trait::async_trait]
+pub trait HealthAware: Send + Sync + 'static {
+  /// Perform a health check on this component.
+  async fn health_check(&self) -> ComponentHealthReport;
+}
+
+#[async_trait::async_trait]
+impl<T> HealthAware for T
+where
+  T: HealthReporter,
+{
+  async fn health_check(&self) -> ComponentHealthReport {
+    ComponentHealthReport {
+      name:   T::NAME.to_string(),
+      health: self.health_check().await.into(),
+    }
+  }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+/// A component health report.
+pub struct ComponentHealthReport {
+  name:   String,
+  health: ComponentHealth,
+}
+
+/// A description of the health of a component.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ComponentHealth {
+  /// The component's health is its components plus a composite status.
+  Composite(CompositeComponentHealth),
+  /// The component's health is the sum of its components.
+  Additive(AdditiveComponentHealth),
+  /// The component's health is fully tied to a single dependency.
+  Singular(HealthStatus),
+  /// The component is intrinsically up.
+  IntrensicallyUp,
+  /// The component is intrinsically down.
+  IntrensicallyDown,
+}
+
+impl From<CompositeComponentHealth> for ComponentHealth {
+  fn from(v: CompositeComponentHealth) -> Self { Self::Composite(v) }
+}
+
+impl From<AdditiveComponentHealth> for ComponentHealth {
+  fn from(v: AdditiveComponentHealth) -> Self { Self::Additive(v) }
+}
+
+impl From<HealthStatus> for ComponentHealth {
+  fn from(v: HealthStatus) -> Self { Self::Singular(v) }
+}
+
+impl From<IntrensicallyUp> for ComponentHealth {
+  fn from(_: IntrensicallyUp) -> Self { Self::IntrensicallyUp }
+}
+
+impl From<IntrensicallyDown> for ComponentHealth {
+  fn from(_: IntrensicallyDown) -> Self { Self::IntrensicallyDown }
+}
+
+/// The health of a component, described as a composition of itself and its
+/// components.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompositeComponentHealth {
+  /// The status of the component, tested as a whole.
+  composite_statuses: Vec<ComponentHealthReport>,
+  /// The status of the component's constituents
+  additive:           AdditiveComponentHealth,
+}
+
+/// The health of a component, described as the addition of its components.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdditiveComponentHealth {
+  /// The status of the component's constituents.
+  components: Vec<ComponentHealthReport>,
+}
+
+/// The health of a component which cannot statefully fail.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IntrensicallyUp;
+
+/// The health of a component which is always down.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IntrensicallyDown;
 
 /// The health status of a component.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,10 +111,6 @@ pub enum HealthStatus {
   Degraded(Vec<DegredationMessage>),
   /// The component is down.
   Down(Vec<FailureMessage>),
-  /// The component cannot statefully fail (i.e. FS access)
-  IntrinsicallyUp,
-  /// The component's health is fully dependent upon its constituents.
-  Additive,
 }
 
 /// A message describing why a component is degraded.
