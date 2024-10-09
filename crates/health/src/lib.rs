@@ -135,6 +135,13 @@ pub struct SingularComponentHealth {
   status: HealthStatus,
 }
 
+impl SingularComponentHealth {
+  /// Create a new `SingularComponentHealth`.
+  pub fn new(status: HealthStatus) -> SingularComponentHealth {
+    SingularComponentHealth { status }
+  }
+}
+
 /// The health of a component which cannot statefully fail.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IntrensicallyUp;
