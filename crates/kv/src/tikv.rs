@@ -1,5 +1,6 @@
 //! TiKV key-value store implementation.
 
+use hex::health;
 use miette::{Context, IntoDiagnostic};
 
 use crate::{
