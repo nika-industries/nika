@@ -111,6 +111,23 @@ pub struct AdditiveComponentHealth {
   components: Vec<ComponentHealthReport>,
 }
 
+impl AdditiveComponentHealth {
+  /// Create a new `AdditiveComponentHealth`.
+  pub fn start(
+    component: impl Into<ComponentHealthReport>,
+  ) -> AdditiveComponentHealth {
+    AdditiveComponentHealth {
+      components: vec![component.into()],
+    }
+  }
+  /// Add a component to the health report.
+  #[allow(clippy::should_implement_trait)]
+  pub fn add(mut self, component: impl Into<ComponentHealthReport>) -> Self {
+    self.components.push(component.into());
+    self
+  }
+}
+
 /// The health of a component which is fully tied to a single dependency.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SingularComponentHealth {
