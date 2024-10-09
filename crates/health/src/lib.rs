@@ -2,6 +2,7 @@
 
 use std::ops::Deref;
 
+pub use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 /// Describes a component that can be health checked.

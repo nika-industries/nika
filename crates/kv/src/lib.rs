@@ -70,7 +70,7 @@ pub trait KvTransaction {
 }
 
 /// Defines methods and types for performing transactions on a key-value store.
-pub trait KvTransactional {
+pub trait KvTransactional: health::HealthReporter {
   /// The type of optimistic transactions.
   type OptimisticTransaction: KvPrimitive + KvTransaction;
   /// The type of pessimistic transactions.
