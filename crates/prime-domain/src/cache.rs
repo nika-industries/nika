@@ -1,4 +1,4 @@
-use hex::Hexagonal;
+use hex::{health, Hexagonal};
 use miette::Result;
 use models::{Cache, CacheRecordId, StrictSlug};
 use repos::{
@@ -37,6 +37,18 @@ impl<R: CacheRepository> CacheServiceCanonical<R> {
   pub fn new(cache_repo: R) -> Self {
     tracing::info!("creating new `CacheServiceCanonical` instance");
     Self { cache_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: CacheRepository> health::HealthReporter for CacheServiceCanonical<R> {
+  const NAME: &'static str = stringify!(CacheServiceCanonical<R>);
+  type HealthReport = health::AdditiveComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    health::AdditiveComponentHealth::start(
+      self.cache_repo.health_report().await,
+    )
   }
 }
 

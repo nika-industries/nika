@@ -1,4 +1,4 @@
-use hex::Hexagonal;
+use hex::{health, Hexagonal};
 use models::{CacheRecordId, Entry, EntryRecordId, LaxSlug};
 use repos::{
   CreateModelError, EntryCreateRequest, EntryRepository,
@@ -43,6 +43,18 @@ impl<R: EntryRepository> EntryServiceCanonical<R> {
   pub fn new(entry_repo: R) -> Self {
     tracing::info!("creating new `EntryServiceCanonical` instance");
     Self { entry_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: EntryRepository> health::HealthReporter for EntryServiceCanonical<R> {
+  const NAME: &'static str = stringify!(EntryServiceCanonical<R>);
+  type HealthReport = health::AdditiveComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    health::AdditiveComponentHealth::start(
+      self.entry_repo.health_report().await,
+    )
   }
 }
 

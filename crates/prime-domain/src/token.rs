@@ -1,4 +1,4 @@
-use hex::Hexagonal;
+use hex::{health, Hexagonal};
 use models::{Token, TokenRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
 use tracing::instrument;
@@ -49,6 +49,18 @@ impl<R: TokenRepository> TokenServiceCanonical<R> {
   pub fn new(token_repo: R) -> Self {
     tracing::info!("creating new `TokenServiceCanonical` instance");
     Self { token_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: TokenRepository> health::HealthReporter for TokenServiceCanonical<R> {
+  const NAME: &'static str = stringify!(TokenServiceCanonical<R>);
+  type HealthReport = health::AdditiveComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    health::AdditiveComponentHealth::start(
+      self.token_repo.health_report().await,
+    )
   }
 }
 

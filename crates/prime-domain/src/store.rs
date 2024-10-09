@@ -1,4 +1,4 @@
-use hex::Hexagonal;
+use hex::{health, Hexagonal};
 use models::{Store, StoreRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, StoreRepository};
 use tracing::instrument;
@@ -28,6 +28,18 @@ impl<R: StoreRepository> StoreServiceCanonical<R> {
   pub fn new(store_repo: R) -> Self {
     tracing::info!("creating new `StoreServiceCanonical` instance");
     Self { store_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: StoreRepository> health::HealthReporter for StoreServiceCanonical<R> {
+  const NAME: &'static str = stringify!(StoreServiceCanonical<R>);
+  type HealthReport = health::AdditiveComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    health::AdditiveComponentHealth::start(
+      self.store_repo.health_report().await,
+    )
   }
 }
 

@@ -1,4 +1,4 @@
-use hex::Hexagonal;
+use hex::{health, Hexagonal};
 use models::dvf::TempStoragePath;
 use repos::{
   DynAsyncReader, StorageReadError, StorageWriteError, TempStorageRepository,
@@ -39,6 +39,20 @@ impl<S: TempStorageRepository> TempStorageServiceCanonical<S> {
   pub fn new(storage_repo: S) -> Self {
     tracing::info!("creating new `TempStorageServiceCanonical` instance");
     Self { storage_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<S: TempStorageRepository> health::HealthReporter
+  for TempStorageServiceCanonical<S>
+{
+  const NAME: &'static str = stringify!(TempStorageServiceCanonical<S>);
+  type HealthReport = health::AdditiveComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    health::AdditiveComponentHealth::start(
+      self.storage_repo.health_report().await,
+    )
   }
 }
 
