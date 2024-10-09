@@ -2962,6 +2962,7 @@ dependencies = [
  "async-trait",
  "bytes-stream",
  "futures",
+ "hex",
  "miette",
  "models",
  "object_store",

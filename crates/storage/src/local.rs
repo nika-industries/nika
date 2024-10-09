@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use hex::health;
 use miette::{Context, IntoDiagnostic};
 use models::LocalStorageCredentials;
 use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
@@ -20,6 +21,14 @@ impl LocalStorageClient {
         .to_path_buf(),
     ))
   }
+}
+
+#[async_trait::async_trait]
+impl health::HealthReporter for LocalStorageClient {
+  const NAME: &'static str = stringify!(LocalStorageClient);
+  type HealthReport = health::IntrensicallyUp;
+
+  async fn health_check(&self) -> Self::HealthReport { health::IntrensicallyUp }
 }
 
 #[async_trait::async_trait]

@@ -6,6 +6,7 @@ pub mod temp;
 
 use std::path::{Path, PathBuf};
 
+use hex::Hexagonal;
 use tokio::io::AsyncRead;
 
 use self::{local::LocalStorageClient, s3_compat::S3CompatStorageClient};
@@ -67,7 +68,7 @@ pub enum WriteError {
 
 /// The main storage trait. Allows reading to or writing from a stream of bytes.
 #[async_trait::async_trait]
-pub trait StorageClient {
+pub trait StorageClient: Hexagonal {
   /// Reads a file. Returns a [`DynAsyncReader`].
   async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError>;
   /// Writes a file. Consumes a [`DynAsyncReader`].
