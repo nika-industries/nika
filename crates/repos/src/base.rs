@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 pub use db::CreateModelError;
 pub(crate) use db::{DatabaseAdapter, FetchModelByIndexError, FetchModelError};
+use hex::health;
 use miette::Result;
 use tracing::instrument;
 
@@ -39,6 +40,20 @@ impl<M: models::Model, DB: DatabaseAdapter> BaseRepository<M, DB> {
       db_adapter,
       _phantom: PhantomData,
     }
+  }
+}
+
+#[async_trait::async_trait]
+impl<M: models::Model, DB: DatabaseAdapter> health::HealthReporter
+  for BaseRepository<M, DB>
+{
+  const NAME: &'static str = stringify!(BaseRepository<M, DB>);
+  type HealthReport = health::AdditiveComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    health::AdditiveComponentHealth::start(
+      self.db_adapter.health_report().await,
+    )
   }
 }
 
