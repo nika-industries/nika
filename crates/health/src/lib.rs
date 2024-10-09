@@ -1,5 +1,7 @@
 //! Health checks and reporting.
 
+use std::ops::Deref;
+
 use serde::{Deserialize, Serialize};
 
 /// Describes a component that can be health checked.
@@ -15,11 +17,25 @@ pub trait HealthReporter: Send + Sync + 'static {
   async fn health_check(&self) -> Self::HealthReport;
 }
 
+#[async_trait::async_trait]
+impl<T, I> HealthReporter for T
+where
+  T: Deref<Target = I> + Send + Sync + 'static,
+  I: HealthReporter,
+{
+  const NAME: &'static str = I::NAME;
+  type HealthReport = I::HealthReport;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    self.deref().health_check().await
+  }
+}
+
 /// Describes a component that can provide a health report.
 #[async_trait::async_trait]
 pub trait HealthAware: Send + Sync + 'static {
   /// Perform a health check on this component.
-  async fn health_check(&self) -> ComponentHealthReport;
+  async fn health_report(&self) -> ComponentHealthReport;
 }
 
 #[async_trait::async_trait]
@@ -27,7 +43,7 @@ impl<T> HealthAware for T
 where
   T: HealthReporter,
 {
-  async fn health_check(&self) -> ComponentHealthReport {
+  async fn health_report(&self) -> ComponentHealthReport {
     ComponentHealthReport {
       name:   T::NAME.to_string(),
       health: self.health_check().await.into(),
@@ -50,7 +66,7 @@ pub enum ComponentHealth {
   /// The component's health is the sum of its components.
   Additive(AdditiveComponentHealth),
   /// The component's health is fully tied to a single dependency.
-  Singular(HealthStatus),
+  Singular(SingularComponentHealth),
   /// The component is intrinsically up.
   IntrensicallyUp,
   /// The component is intrinsically down.
@@ -65,8 +81,8 @@ impl From<AdditiveComponentHealth> for ComponentHealth {
   fn from(v: AdditiveComponentHealth) -> Self { Self::Additive(v) }
 }
 
-impl From<HealthStatus> for ComponentHealth {
-  fn from(v: HealthStatus) -> Self { Self::Singular(v) }
+impl From<SingularComponentHealth> for ComponentHealth {
+  fn from(v: SingularComponentHealth) -> Self { Self::Singular(v) }
 }
 
 impl From<IntrensicallyUp> for ComponentHealth {
@@ -92,6 +108,13 @@ pub struct CompositeComponentHealth {
 pub struct AdditiveComponentHealth {
   /// The status of the component's constituents.
   components: Vec<ComponentHealthReport>,
+}
+
+/// The health of a component which is fully tied to a single dependency.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SingularComponentHealth {
+  /// The status of the component.
+  status: HealthStatus,
 }
 
 /// The health of a component which cannot statefully fail.
