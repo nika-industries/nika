@@ -1,6 +1,6 @@
 use std::{ops::Deref, sync::Arc};
 
-use hex::Hexagonal;
+use hex::{health, Hexagonal};
 use models::dvf::TempStoragePath;
 use storage::temp::TempStorageCreds;
 pub use storage::{
@@ -64,6 +64,16 @@ impl TempStorageRepositoryCanonical {
 }
 
 #[async_trait::async_trait]
+impl health::HealthReporter for TempStorageRepositoryCanonical {
+  const NAME: &'static str = stringify!(TempStorageRepositoryCanonical);
+  type HealthReport = health::AdditiveComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport {
+    health::AdditiveComponentHealth::start(self.client.health_report().await)
+  }
+}
+
+#[async_trait::async_trait]
 impl TempStorageRepository for TempStorageRepositoryCanonical {
   #[tracing::instrument(skip(self))]
   async fn read(
@@ -99,6 +109,16 @@ mod mock {
     pub fn new(fs_root: std::path::PathBuf) -> Self {
       tracing::info!("creating new `TempStorageRepositoryMock` instance");
       Self { fs_root }
+    }
+  }
+
+  #[async_trait::async_trait]
+  impl health::HealthReporter for TempStorageRepositoryMock {
+    const NAME: &'static str = stringify!(TempStorageRepositoryMock);
+    type HealthReport = health::IntrensicallyUp;
+
+    async fn health_check(&self) -> Self::HealthReport {
+      health::IntrensicallyUp
     }
   }
 
