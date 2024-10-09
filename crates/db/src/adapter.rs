@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::ops::Deref;
 
 use hex::Hexagonal;
 use kv::prelude::*;
@@ -30,19 +30,23 @@ pub trait DatabaseAdapter: Hexagonal {
 
 // impl for Arc
 #[async_trait::async_trait]
-impl<T: DatabaseAdapter> DatabaseAdapter for Arc<T> {
+impl<
+    T: Deref<Target = I> + hex::health::HealthReporter + Send + Sync + 'static,
+    I: DatabaseAdapter,
+  > DatabaseAdapter for T
+{
   async fn create_model<M: models::Model>(
     &self,
     model: M,
   ) -> Result<(), CreateModelError> {
-    self.as_ref().create_model(model).await
+    (**self).create_model(model).await
   }
 
   async fn fetch_model_by_id<M: models::Model>(
     &self,
     id: models::RecordId<M>,
   ) -> Result<Option<M>, FetchModelError> {
-    self.as_ref().fetch_model_by_id(id).await
+    (**self).fetch_model_by_id(id).await
   }
 
   async fn fetch_model_by_index<M: models::Model>(
@@ -50,10 +54,7 @@ impl<T: DatabaseAdapter> DatabaseAdapter for Arc<T> {
     index_name: String,
     index_value: EitherSlug,
   ) -> Result<Option<M>, FetchModelByIndexError> {
-    self
-      .as_ref()
-      .fetch_model_by_index(index_name, index_value)
-      .await
+    (**self).fetch_model_by_index(index_name, index_value).await
   }
 }
 

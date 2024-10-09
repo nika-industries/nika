@@ -2,6 +2,7 @@ mod consumptive;
 
 use std::sync::{Arc, LazyLock};
 
+use hex::health;
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
@@ -266,4 +267,12 @@ impl DatabaseAdapter for TikvAdapter {
 
     Ok(Some(model))
   }
+}
+
+#[async_trait::async_trait]
+impl health::HealthReporter for TikvAdapter {
+  const NAME: &'static str = stringify!(TikvAdapter);
+  type HealthReport = health::SingularComponentHealth;
+
+  async fn health_check(&self) -> Self::HealthReport { todo!() }
 }
