@@ -55,7 +55,7 @@ impl<DB: DatabaseAdapter> TokenRepositoryCanonical<DB> {
 impl<DB: DatabaseAdapter> health::HealthReporter
   for TokenRepositoryCanonical<DB>
 {
-  const NAME: &'static str = stringify!(TokenRepositoryCanonical<DB>);
+  fn name(&self) -> &'static str { stringify!(TokenRepositoryCanonical<DB>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

@@ -49,7 +49,7 @@ impl S3CompatStorageClient {
 
 #[async_trait::async_trait]
 impl health::HealthReporter for S3CompatStorageClient {
-  const NAME: &'static str = stringify!(S3CompatStorageClient);
+  fn name(&self) -> &'static str { stringify!(S3CompatStorageClient) }
   type HealthReport = health::SingularComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

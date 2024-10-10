@@ -33,7 +33,7 @@ impl<R: StoreRepository> StoreServiceCanonical<R> {
 
 #[async_trait::async_trait]
 impl<R: StoreRepository> health::HealthReporter for StoreServiceCanonical<R> {
-  const NAME: &'static str = stringify!(StoreServiceCanonical<R>);
+  fn name(&self) -> &'static str { stringify!(StoreServiceCanonical<R>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

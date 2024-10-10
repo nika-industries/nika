@@ -25,7 +25,7 @@ impl LocalStorageClient {
 
 #[async_trait::async_trait]
 impl health::HealthReporter for LocalStorageClient {
-  const NAME: &'static str = stringify!(LocalStorageClient);
+  fn name(&self) -> &'static str { stringify!(LocalStorageClient) }
   type HealthReport = health::IntrensicallyUp;
 
   async fn health_check(&self) -> Self::HealthReport { health::IntrensicallyUp }

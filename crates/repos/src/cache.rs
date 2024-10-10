@@ -67,7 +67,7 @@ impl<DB: DatabaseAdapter> CacheRepositoryCanonical<DB> {
 impl<DB: DatabaseAdapter> health::HealthReporter
   for CacheRepositoryCanonical<DB>
 {
-  const NAME: &'static str = stringify!(CacheRepositoryCanonical<DB>);
+  fn name(&self) -> &'static str { stringify!(CacheRepositoryCanonical<DB>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

@@ -68,7 +68,7 @@ impl<DB: DatabaseAdapter> EntryRepositoryCanonical<DB> {
 impl<DB: DatabaseAdapter> health::HealthReporter
   for EntryRepositoryCanonical<DB>
 {
-  const NAME: &'static str = stringify!(EntryRepositoryCanonical<DB>);
+  fn name(&self) -> &'static str { stringify!(EntryRepositoryCanonical<DB>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

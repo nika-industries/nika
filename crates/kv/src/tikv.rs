@@ -38,7 +38,7 @@ impl TikvClient {
 
 #[health::async_trait]
 impl health::HealthReporter for TikvClient {
-  const NAME: &'static str = stringify!(TikvClient);
+  fn name(&self) -> &'static str { stringify!(TikvClient) }
   type HealthReport = health::IntrensicallyUp;
 
   async fn health_check(&self) -> Self::HealthReport { health::IntrensicallyUp }

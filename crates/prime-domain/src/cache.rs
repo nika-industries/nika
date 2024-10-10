@@ -42,7 +42,7 @@ impl<R: CacheRepository> CacheServiceCanonical<R> {
 
 #[async_trait::async_trait]
 impl<R: CacheRepository> health::HealthReporter for CacheServiceCanonical<R> {
-  const NAME: &'static str = stringify!(CacheServiceCanonical<R>);
+  fn name(&self) -> &'static str { stringify!(CacheServiceCanonical<R>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

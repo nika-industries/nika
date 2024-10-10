@@ -47,7 +47,7 @@ impl<M: models::Model, DB: DatabaseAdapter> BaseRepository<M, DB> {
 impl<M: models::Model, DB: DatabaseAdapter> health::HealthReporter
   for BaseRepository<M, DB>
 {
-  const NAME: &'static str = stringify!(BaseRepository<M, DB>);
+  fn name(&self) -> &'static str { stringify!(BaseRepository<M, DB>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

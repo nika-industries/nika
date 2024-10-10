@@ -46,7 +46,7 @@ impl<S: TempStorageRepository> TempStorageServiceCanonical<S> {
 impl<S: TempStorageRepository> health::HealthReporter
   for TempStorageServiceCanonical<S>
 {
-  const NAME: &'static str = stringify!(TempStorageServiceCanonical<S>);
+  fn name(&self) -> &'static str { stringify!(TempStorageServiceCanonical<S>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

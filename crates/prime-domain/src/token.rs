@@ -54,7 +54,7 @@ impl<R: TokenRepository> TokenServiceCanonical<R> {
 
 #[async_trait::async_trait]
 impl<R: TokenRepository> health::HealthReporter for TokenServiceCanonical<R> {
-  const NAME: &'static str = stringify!(TokenServiceCanonical<R>);
+  fn name(&self) -> &'static str { stringify!(TokenServiceCanonical<R>) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {

@@ -1,6 +1,9 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
-use hex::{health, Hexagonal};
+use hex::{
+  health::{self, HealthReporter},
+  Hexagonal,
+};
 use models::dvf::TempStoragePath;
 use storage::temp::TempStorageCreds;
 pub use storage::{
@@ -26,27 +29,6 @@ pub trait TempStorageRepository: Hexagonal {
   ) -> Result<TempStoragePath, StorageWriteError>;
 }
 
-// impl for anything that derefs to TempStorageRepository (i.e. Box<dyn ...>)
-#[async_trait::async_trait]
-impl<T: Deref<Target = dyn TempStorageRepository> + Hexagonal>
-  TempStorageRepository for T
-{
-  #[tracing::instrument(skip(self))]
-  async fn read(
-    &self,
-    path: TempStoragePath,
-  ) -> Result<DynAsyncReader, StorageReadError> {
-    (**self).read(path).await
-  }
-  #[tracing::instrument(skip(self, data))]
-  async fn store(
-    &self,
-    data: DynAsyncReader,
-  ) -> Result<TempStoragePath, StorageWriteError> {
-    (**self).store(data).await
-  }
-}
-
 /// The repository for temp storage.
 #[derive(Clone)]
 pub struct TempStorageRepositoryCanonical {
@@ -65,7 +47,7 @@ impl TempStorageRepositoryCanonical {
 
 #[async_trait::async_trait]
 impl health::HealthReporter for TempStorageRepositoryCanonical {
-  const NAME: &'static str = stringify!(TempStorageRepositoryCanonical);
+  fn name(&self) -> &'static str { stringify!(TempStorageRepositoryCanonical) }
   type HealthReport = health::AdditiveComponentHealth;
 
   async fn health_check(&self) -> Self::HealthReport {
@@ -114,7 +96,7 @@ mod mock {
 
   #[async_trait::async_trait]
   impl health::HealthReporter for TempStorageRepositoryMock {
-    const NAME: &'static str = stringify!(TempStorageRepositoryMock);
+    fn name(&self) -> &'static str { stringify!(TempStorageRepositoryMock) }
     type HealthReport = health::IntrensicallyUp;
 
     async fn health_check(&self) -> Self::HealthReport {
