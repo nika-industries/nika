@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use hex::{
-  health::{self, HealthReporter},
+  health::{self},
   Hexagonal,
 };
 use models::dvf::TempStoragePath;
@@ -29,6 +29,27 @@ pub trait TempStorageRepository: Hexagonal {
   ) -> Result<TempStoragePath, StorageWriteError>;
 }
 
+// impl for smart pointer to dyn TempStorageRepository
+#[async_trait::async_trait]
+impl<I> TempStorageRepository for Box<I>
+where
+  I: TempStorageRepository + ?Sized,
+  Box<I>: Hexagonal,
+{
+  async fn read(
+    &self,
+    path: TempStoragePath,
+  ) -> Result<DynAsyncReader, StorageReadError> {
+    (**self).read(path).await
+  }
+  async fn store(
+    &self,
+    data: DynAsyncReader,
+  ) -> Result<TempStoragePath, StorageWriteError> {
+    (**self).store(data).await
+  }
+}
+
 /// The repository for temp storage.
 #[derive(Clone)]
 pub struct TempStorageRepositoryCanonical {
@@ -48,10 +69,9 @@ impl TempStorageRepositoryCanonical {
 #[async_trait::async_trait]
 impl health::HealthReporter for TempStorageRepositoryCanonical {
   fn name(&self) -> &'static str { stringify!(TempStorageRepositoryCanonical) }
-  type HealthReport = health::AdditiveComponentHealth;
-
-  async fn health_check(&self) -> Self::HealthReport {
+  async fn health_check(&self) -> health::ComponentHealth {
     health::AdditiveComponentHealth::start(self.client.health_report().await)
+      .into()
   }
 }
 
@@ -97,10 +117,9 @@ mod mock {
   #[async_trait::async_trait]
   impl health::HealthReporter for TempStorageRepositoryMock {
     fn name(&self) -> &'static str { stringify!(TempStorageRepositoryMock) }
-    type HealthReport = health::IntrensicallyUp;
 
-    async fn health_check(&self) -> Self::HealthReport {
-      health::IntrensicallyUp
+    async fn health_check(&self) -> health::ComponentHealth {
+      health::IntrensicallyUp.into()
     }
   }
 

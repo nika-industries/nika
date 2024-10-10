@@ -56,10 +56,9 @@ impl<DB: DatabaseAdapter> health::HealthReporter
   for StoreRepositoryCanonical<DB>
 {
   fn name(&self) -> &'static str { stringify!(StoreRepositoryCanonical<DB>) }
-  type HealthReport = health::AdditiveComponentHealth;
-
-  async fn health_check(&self) -> Self::HealthReport {
+  async fn health_check(&self) -> health::ComponentHealth {
     health::AdditiveComponentHealth::start(self.base_repo.health_report().await)
+      .into()
   }
 }
 

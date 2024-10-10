@@ -55,12 +55,11 @@ impl<R: TokenRepository> TokenServiceCanonical<R> {
 #[async_trait::async_trait]
 impl<R: TokenRepository> health::HealthReporter for TokenServiceCanonical<R> {
   fn name(&self) -> &'static str { stringify!(TokenServiceCanonical<R>) }
-  type HealthReport = health::AdditiveComponentHealth;
-
-  async fn health_check(&self) -> Self::HealthReport {
+  async fn health_check(&self) -> health::ComponentHealth {
     health::AdditiveComponentHealth::start(
       self.token_repo.health_report().await,
     )
+    .into()
   }
 }
 

@@ -271,10 +271,8 @@ impl DatabaseAdapter for TikvAdapter {
 
 #[async_trait::async_trait]
 impl health::HealthReporter for TikvAdapter {
-  const NAME: &'static str = stringify!(TikvAdapter);
-  type HealthReport = health::AdditiveComponentHealth;
-
-  async fn health_check(&self) -> Self::HealthReport {
-    health::AdditiveComponentHealth::start(self.0.health_report().await)
+  fn name(&self) -> &'static str { stringify!(TikvAdapter) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(self.0.health_report().await).into()
   }
 }

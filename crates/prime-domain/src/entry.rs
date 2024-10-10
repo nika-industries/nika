@@ -49,12 +49,11 @@ impl<R: EntryRepository> EntryServiceCanonical<R> {
 #[async_trait::async_trait]
 impl<R: EntryRepository> health::HealthReporter for EntryServiceCanonical<R> {
   fn name(&self) -> &'static str { stringify!(EntryServiceCanonical<R>) }
-  type HealthReport = health::AdditiveComponentHealth;
-
-  async fn health_check(&self) -> Self::HealthReport {
+  async fn health_check(&self) -> health::ComponentHealth {
     health::AdditiveComponentHealth::start(
       self.entry_repo.health_report().await,
     )
+    .into()
   }
 }
 

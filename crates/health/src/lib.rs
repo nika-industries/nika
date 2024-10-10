@@ -1,6 +1,6 @@
 //! Health checks and reporting.
 
-use std::ops::Deref;
+use std::sync::Arc;
 
 pub use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -9,45 +9,39 @@ use serde::{Deserialize, Serialize};
 #[async_trait::async_trait]
 pub trait HealthReporter: Send + Sync + 'static {
   /// The name of this component.
-  const NAME: &'static str;
-
-  /// The type of health report this component can produce.
-  type HealthReport: Into<ComponentHealth>;
-
+  fn name(&self) -> &'static str;
   /// Perform a health check on this component.
-  async fn health_check(&self) -> Self::HealthReport;
+  async fn health_check(&self) -> ComponentHealth;
 }
 
 #[async_trait::async_trait]
-impl<T, I> HealthReporter for T
-where
-  T: Deref<Target = I> + Send + Sync + 'static,
-  I: HealthReporter,
-{
-  const NAME: &'static str = I::NAME;
-  type HealthReport = I::HealthReport;
-
-  async fn health_check(&self) -> Self::HealthReport {
-    self.deref().health_check().await
+impl<T: HealthReporter + ?Sized> HealthReporter for Box<T> {
+  fn name(&self) -> &'static str { T::name(self) }
+  async fn health_check(&self) -> ComponentHealth {
+    T::health_check(self).await
+  }
+}
+#[async_trait::async_trait]
+impl<T: HealthReporter + ?Sized> HealthReporter for Arc<T> {
+  fn name(&self) -> &'static str { T::name(self) }
+  async fn health_check(&self) -> ComponentHealth {
+    T::health_check(self).await
   }
 }
 
 /// Describes a component that can provide a health report.
 #[async_trait::async_trait]
-pub trait HealthAware: Send + Sync + 'static {
+pub trait HealthAware: HealthReporter + Send + Sync + 'static {
   /// Perform a health check on this component.
   async fn health_report(&self) -> ComponentHealthReport;
 }
 
 #[async_trait::async_trait]
-impl<T> HealthAware for T
-where
-  T: HealthReporter,
-{
+impl<T: HealthReporter + ?Sized> HealthAware for T {
   async fn health_report(&self) -> ComponentHealthReport {
     ComponentHealthReport {
-      name:   T::NAME.to_string(),
-      health: self.health_check().await.into(),
+      name:   self.name().to_string(),
+      health: self.health_check().await,
     }
   }
 }

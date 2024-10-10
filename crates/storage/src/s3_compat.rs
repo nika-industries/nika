@@ -50,9 +50,7 @@ impl S3CompatStorageClient {
 #[async_trait::async_trait]
 impl health::HealthReporter for S3CompatStorageClient {
   fn name(&self) -> &'static str { stringify!(S3CompatStorageClient) }
-  type HealthReport = health::SingularComponentHealth;
-
-  async fn health_check(&self) -> Self::HealthReport {
+  async fn health_check(&self) -> health::ComponentHealth {
     let result = self
       .store
       .head(&object_store::path::Path::parse("a").unwrap())
@@ -66,6 +64,7 @@ impl health::HealthReporter for S3CompatStorageClient {
         )]),
       },
     })
+    .into()
   }
 }
 

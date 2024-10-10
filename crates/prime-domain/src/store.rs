@@ -34,12 +34,11 @@ impl<R: StoreRepository> StoreServiceCanonical<R> {
 #[async_trait::async_trait]
 impl<R: StoreRepository> health::HealthReporter for StoreServiceCanonical<R> {
   fn name(&self) -> &'static str { stringify!(StoreServiceCanonical<R>) }
-  type HealthReport = health::AdditiveComponentHealth;
-
-  async fn health_check(&self) -> Self::HealthReport {
+  async fn health_check(&self) -> health::ComponentHealth {
     health::AdditiveComponentHealth::start(
       self.store_repo.health_report().await,
     )
+    .into()
   }
 }
 
