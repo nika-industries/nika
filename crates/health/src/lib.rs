@@ -105,6 +105,14 @@ pub struct AdditiveComponentHealth {
   components: Vec<ComponentHealthReport>,
 }
 
+impl FromIterator<ComponentHealthReport> for AdditiveComponentHealth {
+  fn from_iter<I: IntoIterator<Item = ComponentHealthReport>>(iter: I) -> Self {
+    AdditiveComponentHealth {
+      components: iter.into_iter().collect(),
+    }
+  }
+}
+
 impl AdditiveComponentHealth {
   /// Create a new `AdditiveComponentHealth`.
   pub fn start(

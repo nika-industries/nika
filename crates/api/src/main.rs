@@ -11,6 +11,7 @@ use axum::{
   Json, Router,
 };
 use clap::Parser;
+use hex::health::{self, HealthAware};
 use miette::IntoDiagnostic;
 use prime_domain::{
   models, CacheService, EntryService, StoreService, TempStorageService,
@@ -93,6 +94,21 @@ struct AppState {
   temp_storage_service: Arc<Box<dyn TempStorageService>>,
 }
 
+#[hex::health::async_trait]
+impl health::HealthReporter for AppState {
+  fn name(&self) -> &'static str { stringify!(AppState) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::from_iter(vec![
+      self.cache_service.health_report().await,
+      self.store_service.health_report().await,
+      self.token_service.health_report().await,
+      self.entry_service.health_report().await,
+      self.temp_storage_service.health_report().await,
+    ])
+    .into()
+  }
+}
+
 #[tokio::main]
 async fn main() -> miette::Result<()> {
   let config = RuntimeConfig::parse();
@@ -119,6 +135,8 @@ async fn main() -> miette::Result<()> {
 
   tracing::info!("starting up");
   tracing::info!("config: {:?}", config);
+
+  tracing::info!("initializing services");
 
   let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
   let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
@@ -151,6 +169,13 @@ async fn main() -> miette::Result<()> {
     entry_service:        Arc::new(Box::new(entry_service)),
     temp_storage_service: Arc::new(Box::new(temp_storage_service)),
   };
+
+  tracing::info!("finished initializing services");
+  tracing::info!(
+    "service health: {}",
+    serde_json::to_string(&state.health_report().await).unwrap()
+  );
+  tracing::info!("starting server");
 
   let app = Router::new()
     .route("/naive-upload/:name/*path", post(naive_upload))

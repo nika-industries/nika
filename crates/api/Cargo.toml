@@ -9,6 +9,7 @@ workspace = true
 
 [dependencies]
 art = { path = "../art" }
+hex = { path = "../hex" }
 repos = { path = "../repos", features = [ "mock-temp-storage" ] }
 db = { path = "../db" }
 mollusk = { path = "../mollusk" }
@@ -17,6 +18,7 @@ tasks = { path = "../tasks" }
 prime-domain = { path = "../prime-domain" }
 
 # serde.workspace = true
+serde_json.workspace = true
 cfg-if.workspace = true
 clap.workspace = true
 thiserror.workspace = true
