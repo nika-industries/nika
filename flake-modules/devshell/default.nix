@@ -41,6 +41,9 @@ localFlake: { ... }: {
 
       commands = let
         import-commands-module = path: (import path) (ps // { inherit bin-hl; });
+        graphviz-font-config = pkgs.makeFontsConf {
+          fontDirectories = [ pkgs.dejavu_fonts ];
+        };
       in [
         {
           name = "test";
@@ -69,7 +72,7 @@ localFlake: { ... }: {
 
         {
           name = "update-crate-graph";
-          command = "cargo depgraph --workspace-only | dot -Tpng > $PRJ_ROOT/media/crate-graph.png";
+          command = "cp $(nix build .#crate-graph-image --print-out-paths)/crate-graph.png $PRJ_ROOT/media/crate-graph.png";
           help = "Update the crate graph";
           category = "[repo actions]";
         }

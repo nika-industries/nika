@@ -52,6 +52,25 @@ localFlake: { inputs, ... }: {
       cargoExtraArgs = "-p ${crate-name}";
     };
     build-crate = name: craneLib.buildPackage (individual-crate-args name);
+
+    crate-graph-image = craneLib.mkCargoDerivation {
+      inherit src cargoArtifacts;
+      pname = "crate-graph-image";
+      version = "0.1";
+      buildPhaseCargoCommand = ''
+        export XDG_CACHE_HOME="$(mktemp -d)"
+        cargo depgraph --workspace-only | dot -Tpng > crate-graph.png
+      '';
+      installPhaseCommand = ''
+        mkdir $out
+        cp crate-graph.png $out
+      '';
+      FONTCONFIG_FILE = pkgs.makeFontsConf {
+        fontDirectories = [ pkgs.dejavu_fonts ];
+      };
+      doInstallCargoArtifacts = false;
+      nativeBuildInputs = with pkgs; [ graphviz cargo-depgraph ];
+    };
   in {
     packages = {
       fetcher = build-crate "fetcher";
@@ -60,6 +79,7 @@ localFlake: { inputs, ... }: {
       migrator = build-crate "migrator";
       toolchain = toolchain pkgs;
       dev-toolchain = dev-toolchain pkgs;
+      inherit crate-graph-image;
     };
     checks = {
       # run clippy, denying warnings

@@ -33,6 +33,8 @@
       (importApply ./flake-modules/rust-builds { })
       # defines e2e tests as nix checks
       (importApply ./flake-modules/e2e { })
+      # extraneous and miscellaneous tests
+      (importApply ./flake-modules/repo-tests { })
       # defines devshell
       (importApply ./flake-modules/devshell { })
     ];

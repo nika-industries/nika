@@ -22,8 +22,6 @@ commands, which you can explore with the `menu` command.
 ### Contributing
 
 - Before submitting a PR, run the `check` command (an alias of `nix flake check -L`). This will test many things, and will also be run in CI.
-- If you modify the graph of the first-party crates, please update the crate graph
-with `update-crate-graph`.
 
 ## Crate Map
 ![Crate Graph](./media/crate-graph.png)
