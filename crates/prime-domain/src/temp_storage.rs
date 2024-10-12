@@ -1,5 +1,5 @@
 use hex::{health, Hexagonal};
-use models::dvf::TempStoragePath;
+use models::TempStoragePath;
 use repos::{
   DynAsyncReader, StorageReadError, StorageWriteError, TempStorageRepository,
 };

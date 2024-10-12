@@ -4,7 +4,7 @@ use hex::{
   health::{self},
   Hexagonal,
 };
-use models::dvf::TempStoragePath;
+use models::TempStoragePath;
 use storage::temp::TempStorageCreds;
 pub use storage::{
   DynAsyncReader, ReadError as StorageReadError, StorageClientGenerator,

@@ -15,7 +15,7 @@ pub struct NaiveUploadTask {
   /// The target path.
   pub path:              PathBuf,
   /// The temporary storage path where the payload is currently stored.
-  pub temp_storage_path: models::dvf::TempStoragePath,
+  pub temp_storage_path: models::TempStoragePath,
 }
 
 #[async_trait::async_trait]
