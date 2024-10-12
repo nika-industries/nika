@@ -21,6 +21,7 @@ use prime_domain::{
 };
 use repos::TempStorageRepository;
 use tasks::Task;
+use tracing_subscriber::prelude::*;
 
 use self::{cmd::RuntimeConfig, temp_storage_payload::TempStoragePayload};
 
@@ -142,26 +143,28 @@ impl health::HealthReporter for AppState {
 async fn main() -> Result<()> {
   let config = RuntimeConfig::parse();
 
+  let filter_layer = tracing_subscriber::EnvFilter::try_from_default_env()
+    .unwrap_or(tracing_subscriber::EnvFilter::new("info"));
+  let fmt_layer = tracing_subscriber::fmt::layer()
+    .with_target(false)
+    .with_writer(std::io::stderr);
+  let registry = tracing_subscriber::registry()
+    .with(filter_layer)
+    .with(fmt_layer);
+
   let use_chrome_tracing = match &config.command {
     Commands::Start { chrome_tracing, .. } => *chrome_tracing,
     Commands::Health => false,
   };
   let _guard = match use_chrome_tracing {
     true => {
-      use tracing_subscriber::prelude::*;
-
       let (chrome_layer, guard) =
         tracing_chrome::ChromeLayerBuilder::new().build();
-      tracing_subscriber::registry().with(chrome_layer).init();
+      registry.with(chrome_layer).init();
       Some(guard)
     }
     false => {
-      tracing_subscriber::fmt()
-        .with_env_filter(
-          tracing_subscriber::EnvFilter::try_from_default_env()
-            .unwrap_or(tracing_subscriber::EnvFilter::new("info")),
-        )
-        .init();
+      registry.init();
       None
     }
   };
