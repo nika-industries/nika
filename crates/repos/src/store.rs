@@ -1,5 +1,6 @@
 //! Provides a repository for the [`Store`] domain model.
 
+use hex::health::{self, HealthAware};
 pub use models::{Store, StoreCreateRequest};
 use tracing::instrument;
 
@@ -47,6 +48,17 @@ impl<DB: DatabaseAdapter> StoreRepositoryCanonical<DB> {
     Self {
       base_repo: BaseRepository::new(db_adapter),
     }
+  }
+}
+
+#[async_trait::async_trait]
+impl<DB: DatabaseAdapter> health::HealthReporter
+  for StoreRepositoryCanonical<DB>
+{
+  fn name(&self) -> &'static str { stringify!(StoreRepositoryCanonical<DB>) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(self.base_repo.health_report().await)
+      .into()
   }
 }
 

@@ -1,5 +1,6 @@
 //! Provides a repository for the [`Cache`] domain model.
 
+use hex::health::{self, HealthAware};
 use models::StrictSlug;
 pub use models::{Cache, CacheCreateRequest};
 use tracing::instrument;
@@ -59,6 +60,17 @@ impl<DB: DatabaseAdapter> CacheRepositoryCanonical<DB> {
     Self {
       base_repo: BaseRepository::new(db_adapter),
     }
+  }
+}
+
+#[async_trait::async_trait]
+impl<DB: DatabaseAdapter> health::HealthReporter
+  for CacheRepositoryCanonical<DB>
+{
+  fn name(&self) -> &'static str { stringify!(CacheRepositoryCanonical<DB>) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(self.base_repo.health_report().await)
+      .into()
   }
 }
 

@@ -35,6 +35,8 @@ with `update-crate-graph`.
 - `db` - model-based database adapter interface, and TiKV implementer.
 - `dvf` - usage-specific newtypes used in models.
 - `fetcher` - temporary binary for the fetch pathway.
+- `health` - health check framework
+- `hex` - foundational hexagonal architecture traits.
 - `kv` - key-value store interface and types, and TiKV implementer.
 - `migrator` (bin) - database migration tool.
 - `models` - primary db model types.

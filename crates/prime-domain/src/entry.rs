@@ -1,3 +1,4 @@
+use hex::{health, Hexagonal};
 use models::{CacheRecordId, Entry, EntryRecordId, LaxSlug};
 use repos::{
   CreateModelError, EntryCreateRequest, EntryRepository,
@@ -14,9 +15,7 @@ pub trait EntryService:
     Model = Entry,
     ModelCreateRequest = EntryCreateRequest,
     CreateError = CreateModelError,
-  > + Send
-  + Sync
-  + 'static
+  > + Hexagonal
 {
   /// Find an [`Entry`] by its cache ID and path.
   async fn find_by_entry_id_and_path(
@@ -44,6 +43,17 @@ impl<R: EntryRepository> EntryServiceCanonical<R> {
   pub fn new(entry_repo: R) -> Self {
     tracing::info!("creating new `EntryServiceCanonical` instance");
     Self { entry_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: EntryRepository> health::HealthReporter for EntryServiceCanonical<R> {
+  fn name(&self) -> &'static str { stringify!(EntryServiceCanonical<R>) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(
+      self.entry_repo.health_report().await,
+    )
+    .into()
   }
 }
 

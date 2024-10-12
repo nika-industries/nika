@@ -1,6 +1,10 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
-use models::dvf::TempStoragePath;
+use hex::{
+  health::{self},
+  Hexagonal,
+};
+use models::TempStoragePath;
 use storage::temp::TempStorageCreds;
 pub use storage::{
   DynAsyncReader, ReadError as StorageReadError, StorageClientGenerator,
@@ -12,7 +16,7 @@ pub use self::mock::TempStorageRepositoryMock;
 
 /// Descriptor trait for repositories that handle temp storage.
 #[async_trait::async_trait]
-pub trait TempStorageRepository: Send + Sync + 'static {
+pub trait TempStorageRepository: Hexagonal {
   /// Read data from the storage.
   async fn read(
     &self,
@@ -25,19 +29,19 @@ pub trait TempStorageRepository: Send + Sync + 'static {
   ) -> Result<TempStoragePath, StorageWriteError>;
 }
 
-// impl for anything that derefs to TempStorageRepository (i.e. Box<dyn ...>)
+// impl for smart pointer to dyn TempStorageRepository
 #[async_trait::async_trait]
-impl<T: Deref<Target = dyn TempStorageRepository> + Send + Sync + 'static>
-  TempStorageRepository for T
+impl<I> TempStorageRepository for Box<I>
+where
+  I: TempStorageRepository + ?Sized,
+  Box<I>: Hexagonal,
 {
-  #[tracing::instrument(skip(self))]
   async fn read(
     &self,
     path: TempStoragePath,
   ) -> Result<DynAsyncReader, StorageReadError> {
     (**self).read(path).await
   }
-  #[tracing::instrument(skip(self, data))]
   async fn store(
     &self,
     data: DynAsyncReader,
@@ -59,6 +63,15 @@ impl TempStorageRepositoryCanonical {
     Ok(Self {
       client: Arc::new(creds.as_creds().client().await?),
     })
+  }
+}
+
+#[async_trait::async_trait]
+impl health::HealthReporter for TempStorageRepositoryCanonical {
+  fn name(&self) -> &'static str { stringify!(TempStorageRepositoryCanonical) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(self.client.health_report().await)
+      .into()
   }
 }
 
@@ -98,6 +111,15 @@ mod mock {
     pub fn new(fs_root: std::path::PathBuf) -> Self {
       tracing::info!("creating new `TempStorageRepositoryMock` instance");
       Self { fs_root }
+    }
+  }
+
+  #[async_trait::async_trait]
+  impl health::HealthReporter for TempStorageRepositoryMock {
+    fn name(&self) -> &'static str { stringify!(TempStorageRepositoryMock) }
+
+    async fn health_check(&self) -> health::ComponentHealth {
+      health::IntrensicallyUp.into()
     }
   }
 

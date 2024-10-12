@@ -1,3 +1,4 @@
+use hex::{health, Hexagonal};
 use miette::Result;
 use models::{Cache, CacheRecordId, StrictSlug};
 use repos::{
@@ -9,7 +10,7 @@ use tracing::instrument;
 /// The definition for the [`Cache`] domain model service.
 #[async_trait::async_trait]
 pub trait CacheService:
-  ModelRepositoryFetcher<Model = Cache> + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Cache> + Hexagonal
 {
   /// Find a [`Cache`] by its name.
   async fn find_by_name(
@@ -36,6 +37,17 @@ impl<R: CacheRepository> CacheServiceCanonical<R> {
   pub fn new(cache_repo: R) -> Self {
     tracing::info!("creating new `CacheServiceCanonical` instance");
     Self { cache_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: CacheRepository> health::HealthReporter for CacheServiceCanonical<R> {
+  fn name(&self) -> &'static str { stringify!(CacheServiceCanonical<R>) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(
+      self.cache_repo.health_report().await,
+    )
+    .into()
   }
 }
 

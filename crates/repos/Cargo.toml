@@ -5,6 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
+hex = { path = "../hex" }
 models = { path = "../models" }
 db = { path = "../db" }
 storage = { path = "../storage" }

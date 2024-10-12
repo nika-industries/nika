@@ -1,11 +1,12 @@
-use models::dvf::TempStoragePath;
+use hex::{health, Hexagonal};
+use models::TempStoragePath;
 use repos::{
   DynAsyncReader, StorageReadError, StorageWriteError, TempStorageRepository,
 };
 
 /// The definition for the temp storage service.
 #[async_trait::async_trait]
-pub trait TempStorageService: Send + Sync + 'static {
+pub trait TempStorageService: Hexagonal {
   /// Read data from the storage.
   async fn read(
     &self,
@@ -38,6 +39,19 @@ impl<S: TempStorageRepository> TempStorageServiceCanonical<S> {
   pub fn new(storage_repo: S) -> Self {
     tracing::info!("creating new `TempStorageServiceCanonical` instance");
     Self { storage_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<S: TempStorageRepository> health::HealthReporter
+  for TempStorageServiceCanonical<S>
+{
+  fn name(&self) -> &'static str { stringify!(TempStorageServiceCanonical<S>) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(
+      self.storage_repo.health_report().await,
+    )
+    .into()
   }
 }
 

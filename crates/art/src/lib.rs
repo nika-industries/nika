@@ -47,7 +47,7 @@ pub fn ascii_art(input: TokenStream) -> TokenStream {
 
   // Generate the ASCII art string as a static literal
   let output = quote! {
-      #ascii_art
+      eprintln!("\n{}", #ascii_art);
   };
 
   TokenStream::from(output)

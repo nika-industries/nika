@@ -2,6 +2,7 @@ use std::{path::Path, sync::Arc};
 
 use bytes_stream::BytesStream;
 use futures::{StreamExt, TryFutureExt, TryStreamExt};
+use hex::health;
 use miette::{Context, IntoDiagnostic, Report};
 use models::R2StorageCredentials;
 use object_store::{
@@ -43,6 +44,27 @@ impl S3CompatStorageClient {
         Ok(S3CompatStorageClient { store: r2 })
       }
     }
+  }
+}
+
+#[async_trait::async_trait]
+impl health::HealthReporter for S3CompatStorageClient {
+  fn name(&self) -> &'static str { stringify!(S3CompatStorageClient) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    let result = self
+      .store
+      .head(&object_store::path::Path::parse("a").unwrap())
+      .await;
+    health::SingularComponentHealth::new(match result {
+      Ok(_) => health::HealthStatus::Ok,
+      Err(e) => match e {
+        ObjectStoreError::NotFound { .. } => health::HealthStatus::Ok,
+        _ => health::HealthStatus::Down(vec![health::FailureMessage::new(
+          &format!("failed to perform heartbeat request: {e:?}"),
+        )]),
+      },
+    })
+    .into()
   }
 }
 

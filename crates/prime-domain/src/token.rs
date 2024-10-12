@@ -1,3 +1,4 @@
+use hex::{health, Hexagonal};
 use models::{Token, TokenRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
 use tracing::instrument;
@@ -20,7 +21,7 @@ pub enum TokenVerifyError {
 /// The definition for the [`Token`] domain model service.
 #[async_trait::async_trait]
 pub trait TokenService:
-  ModelRepositoryFetcher<Model = Token> + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Token> + Hexagonal
 {
   /// Verifies that the supplied token ID and secret are valid and exist.
   async fn verify_token_id_and_secret(
@@ -48,6 +49,17 @@ impl<R: TokenRepository> TokenServiceCanonical<R> {
   pub fn new(token_repo: R) -> Self {
     tracing::info!("creating new `TokenServiceCanonical` instance");
     Self { token_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: TokenRepository> health::HealthReporter for TokenServiceCanonical<R> {
+  fn name(&self) -> &'static str { stringify!(TokenServiceCanonical<R>) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(
+      self.token_repo.health_report().await,
+    )
+    .into()
   }
 }
 

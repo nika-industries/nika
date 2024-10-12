@@ -1,3 +1,4 @@
+use hex::{health, Hexagonal};
 use models::{Store, StoreRecordId};
 use repos::{FetchModelError, ModelRepositoryFetcher, StoreRepository};
 use tracing::instrument;
@@ -5,7 +6,7 @@ use tracing::instrument;
 /// The definition for the [`Store`] domain model service.
 #[async_trait::async_trait]
 pub trait StoreService:
-  ModelRepositoryFetcher<Model = Store> + Send + Sync + 'static
+  ModelRepositoryFetcher<Model = Store> + Hexagonal
 {
 }
 
@@ -27,6 +28,17 @@ impl<R: StoreRepository> StoreServiceCanonical<R> {
   pub fn new(store_repo: R) -> Self {
     tracing::info!("creating new `StoreServiceCanonical` instance");
     Self { store_repo }
+  }
+}
+
+#[async_trait::async_trait]
+impl<R: StoreRepository> health::HealthReporter for StoreServiceCanonical<R> {
+  fn name(&self) -> &'static str { stringify!(StoreServiceCanonical<R>) }
+  async fn health_check(&self) -> health::ComponentHealth {
+    health::AdditiveComponentHealth::start(
+      self.store_repo.health_report().await,
+    )
+    .into()
   }
 }
 
