@@ -101,7 +101,7 @@ async fn main() -> miette::Result<()> {
     .unwrap_or(tracing_subscriber::EnvFilter::new("info"));
   tracing_subscriber::fmt().with_env_filter(filter).init();
 
-  println!(art::ascii_art!("../../media/ascii_logo.png"));
+  art::ascii_art!("../../media/ascii_logo.png");
 
   let app = Router::new().route("/:name/*path", get(fetch_handler));
 

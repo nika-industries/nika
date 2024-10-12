@@ -169,7 +169,7 @@ async fn main() -> Result<()> {
     }
   };
 
-  println!(art::ascii_art!("../../media/ascii_logo.png"));
+  art::ascii_art!("../../media/ascii_logo.png");
 
   tracing::info!("starting up");
   tracing::info!("config: {:?}", config);
