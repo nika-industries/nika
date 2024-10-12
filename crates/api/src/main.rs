@@ -12,8 +12,9 @@ use axum::{
   Json, Router,
 };
 use clap::Parser;
+use cmd::Commands;
 use hex::health::{self, HealthAware};
-use miette::IntoDiagnostic;
+use miette::{IntoDiagnostic, Result};
 use prime_domain::{
   models, CacheService, EntryService, StoreService, TempStorageService,
   TokenService,
@@ -85,6 +86,43 @@ struct AppState {
   temp_storage_service: Arc<Box<dyn TempStorageService>>,
 }
 
+impl AppState {
+  async fn build(config: &RuntimeConfig) -> Result<Self> {
+    let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
+    let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
+    let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
+    let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
+    let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
+    let temp_storage_repo: Box<dyn TempStorageRepository> = if config
+      .mock_temp_storage
+    {
+      Box::new(repos::TempStorageRepositoryMock::new(
+        std::path::PathBuf::from("/tmp/nika-temp-storage"),
+      ))
+    } else {
+      let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
+      Box::new(
+        repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?,
+      )
+    };
+
+    let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
+    let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
+    let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
+    let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
+    let temp_storage_service =
+      prime_domain::TempStorageServiceCanonical::new(temp_storage_repo);
+
+    Ok(AppState {
+      cache_service:        Arc::new(Box::new(cache_service)),
+      store_service:        Arc::new(Box::new(store_service)),
+      token_service:        Arc::new(Box::new(token_service)),
+      entry_service:        Arc::new(Box::new(entry_service)),
+      temp_storage_service: Arc::new(Box::new(temp_storage_service)),
+    })
+  }
+}
+
 #[hex::health::async_trait]
 impl health::HealthReporter for AppState {
   fn name(&self) -> &'static str { stringify!(AppState) }
@@ -101,25 +139,31 @@ impl health::HealthReporter for AppState {
 }
 
 #[tokio::main]
-async fn main() -> miette::Result<()> {
+async fn main() -> Result<()> {
   let config = RuntimeConfig::parse();
 
-  // start tracing using runtime config. keep the chrome tracing guard around.
-  let _guard: Option<_> = if config.chrome_tracing {
-    use tracing_subscriber::prelude::*;
+  let use_chrome_tracing = match &config.command {
+    Commands::Start { chrome_tracing, .. } => *chrome_tracing,
+    Commands::Health => false,
+  };
+  let _guard = match use_chrome_tracing {
+    true => {
+      use tracing_subscriber::prelude::*;
 
-    let (chrome_layer, guard) =
-      tracing_chrome::ChromeLayerBuilder::new().build();
-    tracing_subscriber::registry().with(chrome_layer).init();
-    Some(guard)
-  } else {
-    tracing_subscriber::fmt()
-      .with_env_filter(
-        tracing_subscriber::EnvFilter::try_from_default_env()
-          .unwrap_or(tracing_subscriber::EnvFilter::new("info")),
-      )
-      .init();
-    None
+      let (chrome_layer, guard) =
+        tracing_chrome::ChromeLayerBuilder::new().build();
+      tracing_subscriber::registry().with(chrome_layer).init();
+      Some(guard)
+    }
+    false => {
+      tracing_subscriber::fmt()
+        .with_env_filter(
+          tracing_subscriber::EnvFilter::try_from_default_env()
+            .unwrap_or(tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+      None
+    }
   };
 
   println!(art::ascii_art!("../../media/ascii_logo.png"));
@@ -129,52 +173,35 @@ async fn main() -> miette::Result<()> {
 
   tracing::info!("initializing services");
 
-  let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
-  let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
-  let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
-  let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
-  let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
-  let temp_storage_repo: Box<dyn TempStorageRepository> =
-    if config.mock_temp_storage {
-      Box::new(repos::TempStorageRepositoryMock::new(
-        std::path::PathBuf::from("/tmp/nika-temp-storage"),
-      ))
-    } else {
-      let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
-      Box::new(
-        repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?,
-      )
-    };
-
-  let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
-  let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
-  let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
-  let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
-  let temp_storage_service =
-    prime_domain::TempStorageServiceCanonical::new(temp_storage_repo);
-
-  let state = AppState {
-    cache_service:        Arc::new(Box::new(cache_service)),
-    store_service:        Arc::new(Box::new(store_service)),
-    token_service:        Arc::new(Box::new(token_service)),
-    entry_service:        Arc::new(Box::new(entry_service)),
-    temp_storage_service: Arc::new(Box::new(temp_storage_service)),
-  };
+  let state = AppState::build(&config).await?;
 
   tracing::info!("finished initializing services");
   tracing::info!(
     "service health: {}",
     serde_json::to_string(&state.health_report().await).unwrap()
   );
+
+  let (bind_address, bind_port) = match &config.command {
+    Commands::Health => {
+      let health_report = state.health_report().await;
+      println!("{}", serde_json::to_string(&health_report).unwrap());
+      return Ok(());
+    }
+    Commands::Start {
+      bind_address,
+      bind_port,
+      ..
+    } => (bind_address.clone(), *bind_port),
+  };
+
   tracing::info!("starting server");
 
   let app = Router::new()
     .route("/naive-upload/:name/*path", post(naive_upload))
-    // .route("/creds/:name", get(get_store_creds_handler))
     .route("/fetch_payload", get(prepare_fetch_payload))
     .with_state(state);
 
-  let bind_address = format!("{0}:{1}", config.bind_address, config.bind_port);
+  let bind_address = format!("{bind_address}:{bind_port}");
   let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
 
   tracing::info!("listening on `{bind_address}`");
