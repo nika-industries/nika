@@ -1,5 +1,6 @@
 //! API server that handles platform actions for the frontend and CLI.
 
+mod cmd;
 mod temp_storage_payload;
 
 use std::sync::Arc;
@@ -20,17 +21,7 @@ use prime_domain::{
 use repos::TempStorageRepository;
 use tasks::Task;
 
-#[derive(Parser, Debug)]
-struct RuntimeConfig {
-  #[arg(short = 'a', long = "address", default_value = "0.0.0.0")]
-  bind_address:      String,
-  #[arg(short = 'p', long = "port", default_value = "3000")]
-  bind_port:         u16,
-  #[arg(long, action)]
-  mock_temp_storage: bool,
-  #[arg(long, action)]
-  chrome_tracing:    bool,
-}
+use self::cmd::RuntimeConfig;
 
 #[tracing::instrument(skip(app_state))]
 async fn prepare_fetch_payload(
