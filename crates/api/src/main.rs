@@ -22,7 +22,7 @@ use prime_domain::{
 use repos::TempStorageRepository;
 use tasks::Task;
 
-use self::cmd::RuntimeConfig;
+use self::{cmd::RuntimeConfig, temp_storage_payload::TempStoragePayload};
 
 #[tracing::instrument(skip(app_state))]
 async fn prepare_fetch_payload(
@@ -59,7 +59,7 @@ async fn prepare_fetch_payload(
 async fn naive_upload(
   State(app_state): State<AppState>,
   Path((cache_name, path)): Path<(String, String)>,
-  payload: temp_storage_payload::TempStoragePayload,
+  payload: TempStoragePayload,
 ) -> impl IntoResponse {
   let payload_path = payload.upload().await.unwrap();
   tasks::NaiveUploadTask {
