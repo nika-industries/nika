@@ -19,7 +19,7 @@ localFlake: { inputs, ... }: {
     });
     dev-toolchain = p: p.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
       extensions = [ "rust-src" "rust-analyzer" ];
-      # targets = [ "wasm32-unknown-unknown" ];
+      targets = [ "wasm32-unknown-unknown" ];
     });
 
     # configure crane to use the CI toolchain
