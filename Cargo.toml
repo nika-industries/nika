@@ -34,6 +34,18 @@ futures = { version = "0.3" }
 clap = { version = "4.5", features = [ "derive" ] }
 nutype = { version = "0.5" }
 
+# leptos-specific
+leptos = { version = "0.7.0-gamma3", features = ["nightly", "experimental-islands"] }
+leptos_axum = { version = "0.7.0-gamma3", features = [] }
+leptos_meta = { version = "0.7.0-gamma3", features = [] }
+leptos_router = { version = "0.7.0-gamma3", features = ["nightly"] }
+console_error_panic_hook = "0.1"
+console_log = "1"
+tower = { version = "0.5", features = ["full"] }
+tower-http = { version = "0.6", features = ["full"] }
+wasm-bindgen = "=0.2.93"
+
+
 # tracing
 tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = [ "env-filter" ] }

@@ -1,0 +1,22 @@
+[package]
+name = "cart-server"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+cart-app = { path = "../cart-app", default-features = false, features = ["ssr"] }
+
+leptos = { workspace = true, features = [ "ssr", "tracing" ]}
+leptos_axum.workspace = true
+leptos_router.workspace = true
+
+axum = { workspace = true, features = [ "macros", "tracing" ] }
+tokio = { workspace = true, features = [ "full" ] }
+tower = { workspace = true, features = [ "full" ] }
+tower-http = { workspace = true, features = [ "full" ] }
+
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

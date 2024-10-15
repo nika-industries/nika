@@ -1,0 +1,22 @@
+[package]
+name = "cart-app"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+leptos.workspace = true
+leptos_meta.workspace = true
+leptos_router.workspace = true
+leptos_axum = { workspace = true, optional = true }
+
+[features]
+default = []
+hydrate = ["leptos/hydrate"]
+ssr = [
+  "leptos/ssr", "leptos/tracing", "leptos_meta/ssr", "leptos_router/ssr",
+  "dep:leptos_axum",
+]
+
+[lints]
+workspace = true
