@@ -27,7 +27,7 @@ tokio-util = { version = "0.7" }
 tokio-stream = { version = "0.1" }
 
 # atomic-ish features
-ulid = { git = "https://github.com/TimLuq/ulid-rs", branch = "fix-57-feature-combos-compiles", default-features = false, features = [ "serde", "std" ] }
+ulid = { version = "1.1", features = [ "serde" ] }
 serde_json = { version = "1" }
 nanorand = { version = "0.7", default-features = false }
 futures = { version = "0.3" }
