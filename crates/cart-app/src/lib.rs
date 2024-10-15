@@ -1,7 +1,9 @@
 //! The leptos app crate for the Cartographer app.
 
 use leptos::prelude::*;
-use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
+use leptos_meta::{
+  provide_meta_context, Link, MetaTags, Style, Stylesheet, Title,
+};
 use leptos_router::{
   components::{Route, Router, Routes},
   StaticSegment,
@@ -36,6 +38,8 @@ pub fn App() -> impl IntoView {
     // injects a stylesheet into the document <head>
     // id=leptos means cargo-leptos will hot-reload this stylesheet
     <Stylesheet id="leptos" href="/pkg/cart.css"/>
+    <Style>{include_str!("../style/fonts.css")}</Style>
+    <Link rel="preload" href="/fonts/inter.ttf" as_="font" type_="font/ttf" crossorigin="anonymous" />
 
     // sets the document title
     <Title text="Welcome to Leptos"/>
@@ -59,7 +63,16 @@ fn HomePage() -> impl IntoView {
   let on_click = move |_| *count.write() += 1;
 
   view! {
-      <h1>"Welcome to Leptos!"</h1>
-      <button on:click=on_click>"Click Me: " {count}</button>
+    <div class="h-screen flex justify-items-start items-start gap-4">
+      <div class="flex-none self-stretch w-60 bg-backgroundSecondary">
+
+      </div>
+      <div class="container py-8">
+        <div class="flex flex-col gap-4 items-start">
+          <p class="text-2xl font-semibold tracking-tight">"Welcome to Leptos!"</p>
+          <button class="btn" on:click=on_click>"Click Me: " {count}</button>
+        </div>
+      </div>
+    </div>
   }
 }
