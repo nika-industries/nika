@@ -1,0 +1,22 @@
+[package]
+name = "cart-frontend"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cart-app = { path = "../cart-app", default-features = false, features = ["hydrate"] }
+
+leptos = { workspace = true, features = [ "hydrate" ] }
+
+console_error_panic_hook = "0.1.7"
+console_log = "1"
+log = "0.4"
+
+wasm-bindgen.workspace = true
+
+[lints]
+workspace = true
