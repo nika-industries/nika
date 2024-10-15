@@ -1,12 +1,12 @@
-pub fn add(left: u64, right: u64) -> u64 { left + right }
+//! The leptos frontend crate for the Cartographer app.
 
-#[cfg(test)]
-mod tests {
-  use super::*;
+/// The leptos hydrate function.
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn hydrate() {
+  use cart_app::*;
+  // initializes logging using the `log` crate
+  _ = console_log::init_with_level(log::Level::Debug);
+  console_error_panic_hook::set_once();
 
-  #[test]
-  fn it_works() {
-    let result = add(2, 2);
-    assert_eq!(result, 4);
-  }
+  leptos::mount::hydrate_body(App);
 }
