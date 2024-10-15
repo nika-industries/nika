@@ -35,6 +35,13 @@ localFlake: { ... }: {
 
         # service runtimes
         redis
+
+        # leptos development
+        cargo-leptos # builds and runs leptos projects
+        binaryen # for wasm-opt
+        dart-sass # for compiling scss
+        tailwindcss # for tailwindcss
+        yarn # for populating local style node_modules
       ];
 
       motd = "\n  Welcome to the {2}nika{reset} dev shell. Run {1}menu{reset} for commands.\n";

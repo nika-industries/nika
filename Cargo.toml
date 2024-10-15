@@ -45,7 +45,45 @@ tower = { version = "0.5", features = ["full"] }
 tower-http = { version = "0.6", features = ["full"] }
 wasm-bindgen = "=0.2.93"
 
-
 # tracing
 tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = [ "env-filter" ] }
+
+# only for client-side leptos builds
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+
+[[workspace.metadata.leptos]]
+name = "cart"
+hash-files = false
+
+bin-package = "cart-server"
+lib-package = "cart-frontend"
+
+site-root = "target/cart"
+site-pkg-dir = "pkg"
+
+style-file = "crates/cart-app/style/main.scss"
+assets-dir = "crates/cart-app/public"
+
+site-addr = "127.0.0.1:3000"
+reload-port = 3001
+
+browserquery = "defaults"
+
+tailwind-input-file = "crates/cart-app/style/main.scss"
+tailwind-config-file = "crates/cart-app/style/tailwind/tailwind.config.js"
+
+# set by cargo-leptos
+watch = false
+env = "DEV"
+
+bin-features = []
+bin-default-features = false
+lib-features = []
+lib-default-features = false
+lib-profile-release = "wasm-release"
+
