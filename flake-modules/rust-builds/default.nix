@@ -54,7 +54,8 @@ localFlake: { inputs, ... }: {
     build-crate = name: craneLib.buildPackage (individual-crate-args name);
 
     crate-graph-image = craneLib.mkCargoDerivation {
-      inherit src cargoArtifacts;
+      inherit src;
+      cargoArtifacts = null;
       pname = "crate-graph-image";
       version = "0.1";
       buildPhaseCargoCommand = ''
