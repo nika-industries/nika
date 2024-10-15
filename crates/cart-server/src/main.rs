@@ -5,6 +5,9 @@ use cart_app::*;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 
+#[derive(Clone)]
+struct AppState {}
+
 #[tokio::main]
 async fn main() {
   let conf = get_configuration(None).unwrap();
@@ -13,11 +16,23 @@ async fn main() {
   // Generate the list of routes in your Leptos App
   let routes = generate_route_list(App);
 
+  let app_state = AppState {};
+
   let app = Router::new()
-    .leptos_routes(&leptos_options, routes, {
-      let leptos_options = leptos_options.clone();
-      move || shell(leptos_options.clone())
-    })
+    .leptos_routes_with_context(
+      &leptos_options,
+      routes,
+      {
+        let app_state = app_state.clone();
+        move || {
+          provide_context(app_state.clone());
+        }
+      },
+      {
+        let leptos_options = leptos_options.clone();
+        move || shell(leptos_options.clone())
+      },
+    )
     .fallback(leptos_axum::file_and_error_handler(shell))
     .layer(tower_http::compression::CompressionLayer::new())
     .with_state(leptos_options);
