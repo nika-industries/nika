@@ -107,6 +107,22 @@ impl fmt::Display for Key {
   }
 }
 
+impl TryFrom<Vec<u8>> for Key {
+  type Error = std::str::Utf8Error;
+
+  fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
+    let string = std::str::from_utf8(&bytes)?;
+    let mut segments = string.split(':').map(|s| s.to_string());
+    let first_segment = segments.next().unwrap();
+    let first_segment = Starc::new_owned(StrictSlug::new(first_segment));
+    let mut key = Key::new(first_segment);
+    for segment in segments {
+      key.push(Starc::new_owned(StrictSlug::new(segment)));
+    }
+    Ok(key)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use std::sync::LazyLock;

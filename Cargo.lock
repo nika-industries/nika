@@ -1974,6 +1974,7 @@ dependencies = [
  "thiserror",
  "tikv-client",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

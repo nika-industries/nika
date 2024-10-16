@@ -5,7 +5,7 @@ pub mod key;
 pub mod tikv;
 pub mod value;
 
-use std::future::Future;
+use std::{future::Future, ops::Bound};
 
 use self::{key::Key, value::Value};
 
@@ -59,6 +59,13 @@ pub trait KvPrimitive {
     key: &Key,
     value: Value,
   ) -> impl Future<Output = KvResult<()>> + Send;
+  /// Scan the keyspace.
+  fn scan(
+    &mut self,
+    start: Bound<Key>,
+    end: Bound<Key>,
+    limit: u32,
+  ) -> impl Future<Output = KvResult<Vec<(Key, Value)>>> + Send;
 }
 
 /// Defines methods on transactions.

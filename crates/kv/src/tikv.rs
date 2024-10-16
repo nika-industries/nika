@@ -1,5 +1,7 @@
 //! TiKV key-value store implementation.
 
+use std::ops::Bound;
+
 use hex::health;
 use miette::{Context, IntoDiagnostic};
 
@@ -77,6 +79,43 @@ impl KvPrimitive for TikvTransaction {
   async fn insert(&mut self, key: &Key, value: Value) -> KvResult<()> {
     self.0.insert(key.clone(), value).await?;
     Ok(())
+  }
+
+  async fn scan(
+    &mut self,
+    start: Bound<Key>,
+    end: Bound<Key>,
+    limit: u32,
+  ) -> KvResult<Vec<(Key, Value)>> {
+    let start_bound: Bound<tikv_client::Key> = match start {
+      Bound::Included(k) => Bound::Included(k.into()),
+      Bound::Excluded(k) => Bound::Excluded(k.into()),
+      Bound::Unbounded => Bound::Unbounded,
+    };
+    let end_bound: Bound<tikv_client::Key> = match end {
+      Bound::Included(k) => Bound::Included(k.into()),
+      Bound::Excluded(k) => Bound::Excluded(k.into()),
+      Bound::Unbounded => Bound::Unbounded,
+    };
+    let range = tikv_client::BoundRange {
+      from: start_bound,
+      to:   end_bound,
+    };
+
+    Ok(
+      self
+        .0
+        .scan(range, limit)
+        .await?
+        .filter_map(|kp| match Key::try_from(Vec::<u8>::from(kp.0)) {
+          Ok(key) => Some((key, Value::from(kp.1))),
+          Err(e) => {
+            tracing::error!("failed to parse key from kv store: {}", e);
+            None
+          }
+        })
+        .collect(),
+    )
   }
 }
 
