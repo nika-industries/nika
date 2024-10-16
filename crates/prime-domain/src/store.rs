@@ -74,7 +74,7 @@ impl<R: StoreRepository> ModelRepositoryFetcher for StoreServiceCanonical<R> {
       .await
   }
   #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<StoreRecordId>> {
+  async fn enumerate_models(&self) -> Result<Vec<Store>> {
     self.store_repo.enumerate_models().await
   }
 }

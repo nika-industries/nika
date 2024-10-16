@@ -47,7 +47,7 @@ pub trait ModelRepository: Hexagonal {
   ) -> Result<Option<Self::Model>, FetchModelByIndexError>;
 
   /// Produces a list of all model IDs.
-  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>>;
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>>;
 }
 
 #[async_trait::async_trait]
@@ -79,7 +79,7 @@ where
   ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
     I::fetch_model_by_index(self, index_name, index_value).await
   }
-  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>> {
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
     I::enumerate_models(self).await
   }
 }
@@ -104,7 +104,7 @@ pub trait ModelRepositoryFetcher: Hexagonal {
     index_value: EitherSlug,
   ) -> Result<Option<Self::Model>, FetchModelByIndexError>;
   /// Produces a list of all model IDs.
-  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>>;
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>>;
 }
 
 // impl for smart pointer to dyn ModelRepositoryFetcher
@@ -130,7 +130,7 @@ where
   ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
     I::fetch_model_by_index(self, index_name, index_value).await
   }
-  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>> {
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
     I::enumerate_models(self).await
   }
 }

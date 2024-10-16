@@ -86,7 +86,7 @@ impl<R: EntryRepository> ModelRepositoryFetcher for EntryServiceCanonical<R> {
       .await
   }
   #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<EntryRecordId>> {
+  async fn enumerate_models(&self) -> Result<Vec<Entry>> {
     self.entry_repo.enumerate_models().await
   }
 }

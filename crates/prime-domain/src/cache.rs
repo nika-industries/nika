@@ -79,7 +79,7 @@ impl<R: CacheRepository> ModelRepositoryFetcher for CacheServiceCanonical<R> {
       .await
   }
   #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<CacheRecordId>> {
+  async fn enumerate_models(&self) -> Result<Vec<Cache>> {
     self.cache_repo.enumerate_models().await
   }
 }

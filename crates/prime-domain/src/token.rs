@@ -95,7 +95,7 @@ impl<R: TokenRepository> ModelRepositoryFetcher for TokenServiceCanonical<R> {
       .await
   }
   #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<TokenRecordId>> {
+  async fn enumerate_models(&self) -> Result<Vec<Token>> {
     self.token_repo.enumerate_models().await
   }
 }

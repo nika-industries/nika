@@ -110,7 +110,7 @@ impl<DB: DatabaseAdapter> ModelRepository for CacheRepositoryCanonical<DB> {
   }
 
   #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>> {
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
     self.base_repo.enumerate_models().await
   }
 }
