@@ -61,7 +61,13 @@ impl<T> RecordId<T> {
   /// Creates a new [`RecordId`].
   pub fn new() -> Self { Self(Ulid::new(), PhantomData) }
   /// Creates a new [`RecordId`] from a [`Ulid`].
-  pub fn from_ulid(ulid: Ulid) -> Self { Self(ulid, PhantomData) }
+  pub const fn from_ulid(ulid: Ulid) -> Self { Self(ulid, PhantomData) }
+  /// Returns the minimum possible [`RecordId`].
+  #[allow(non_snake_case)]
+  pub const fn MIN() -> Self { Self(Ulid::nil(), PhantomData) }
+  /// Returns the maximum possible [`RecordId`].
+  #[allow(non_snake_case)]
+  pub const fn MAX() -> Self { Self(Ulid(u128::MAX), PhantomData) }
 }
 
 impl<T> FromStr for RecordId<T> {
