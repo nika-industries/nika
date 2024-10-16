@@ -7,6 +7,7 @@ mod store;
 mod temp_storage;
 mod token;
 
+pub use hex;
 pub use models;
 pub use repos;
 

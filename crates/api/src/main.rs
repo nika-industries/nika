@@ -13,11 +13,12 @@ use axum::{
 };
 use clap::Parser;
 use cmd::Commands;
-use hex::health::{self, HealthAware};
 use miette::{IntoDiagnostic, Result};
 use prime_domain::{
-  models, repos::TempStorageRepository, CacheService, EntryService,
-  StoreService, TempStorageService, TokenService,
+  hex::health::{self, HealthAware},
+  models,
+  repos::TempStorageRepository,
+  CacheService, EntryService, StoreService, TempStorageService, TokenService,
 };
 use tasks::Task;
 use tracing_subscriber::prelude::*;
@@ -131,7 +132,7 @@ impl AppState {
   }
 }
 
-#[hex::health::async_trait]
+#[prime_domain::hex::health::async_trait]
 impl health::HealthReporter for AppState {
   fn name(&self) -> &'static str { stringify!(AppState) }
   async fn health_check(&self) -> health::ComponentHealth {

@@ -165,7 +165,6 @@ dependencies = [
  "axum 0.7.6",
  "cfg-if",
  "clap",
- "hex",
  "miette",
  "mollusk",
  "prime-domain",
@@ -2435,8 +2434,11 @@ dependencies = [
 name = "mollusk"
 version = "0.1.0"
 dependencies = [
- "axum 0.7.6",
+ "axum-core 0.4.4",
+ "bytes",
+ "http 1.1.0",
  "miette",
+ "mime",
  "models",
  "serde",
  "serde_json",
