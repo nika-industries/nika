@@ -1,22 +1,23 @@
 //! The leptos server crate for the Cartographer app.
 
-use axum::Router;
+use axum::{extract::FromRef, Router};
 use cart_app::*;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 
-#[derive(Clone)]
-struct AppState {}
+#[derive(Clone, FromRef)]
+struct AppState {
+  test: i32,
+}
 
 #[tokio::main]
 async fn main() {
   let conf = get_configuration(None).unwrap();
   let addr = conf.leptos_options.site_addr;
   let leptos_options = conf.leptos_options;
-  // Generate the list of routes in your Leptos App
   let routes = generate_route_list(App);
 
-  let app_state = AppState {};
+  let app_state = AppState { test: 42 };
 
   let app = Router::new()
     .leptos_routes_with_context(
@@ -25,7 +26,7 @@ async fn main() {
       {
         let app_state = app_state.clone();
         move || {
-          provide_context(app_state.clone());
+          provide_context(app_state.test);
         }
       },
       {
@@ -37,8 +38,6 @@ async fn main() {
     .layer(tower_http::compression::CompressionLayer::new())
     .with_state(leptos_options);
 
-  // run our app with hyper
-  // `axum::Server` is a re-export of `hyper::Server`
   log!("listening on http://{}", &addr);
   let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
   axum::serve(listener, app.into_make_service())
