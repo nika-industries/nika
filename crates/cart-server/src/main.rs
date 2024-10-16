@@ -15,6 +15,10 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> miette::Result<()> {
+  let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+    .unwrap_or(tracing_subscriber::EnvFilter::new("info"));
+  tracing_subscriber::fmt().with_env_filter(filter).init();
+
   let conf = get_configuration(None).unwrap();
   let addr = conf.leptos_options.site_addr;
   let leptos_options = conf.leptos_options;
