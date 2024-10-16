@@ -1,8 +1,13 @@
+use std::sync::Arc;
+
 use hex::{health, Hexagonal};
 use models::TempStoragePath;
 use repos::{
   DynAsyncReader, StorageReadError, StorageWriteError, TempStorageRepository,
 };
+
+/// A dynamic [`TempStorageService`] trait object.
+pub type DynTempStorageService = Arc<Box<dyn TempStorageService>>;
 
 /// The definition for the temp storage service.
 #[async_trait::async_trait]

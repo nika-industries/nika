@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 cart-app = { path = "../cart-app", default-features = false, features = ["ssr"] }
+prime-domain = { path = "../prime-domain" }
 
 leptos = { workspace = true, features = [ "ssr", "tracing" ]}
 leptos_axum.workspace = true
@@ -16,6 +17,7 @@ tokio = { workspace = true, features = [ "full" ] }
 tower = { workspace = true, features = [ "full" ] }
 tower-http = { workspace = true, features = [ "full" ] }
 
+miette = { workspace = true, features = [ "fancy" ] }
 tracing-subscriber.workspace = true
 
 [lints]

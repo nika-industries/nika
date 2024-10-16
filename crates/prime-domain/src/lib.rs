@@ -12,9 +12,11 @@ pub use models;
 pub use repos;
 
 pub use self::{
-  cache::{CacheService, CacheServiceCanonical},
-  entry::{EntryService, EntryServiceCanonical},
-  store::{StoreService, StoreServiceCanonical},
-  temp_storage::{TempStorageService, TempStorageServiceCanonical},
-  token::{TokenService, TokenServiceCanonical},
+  cache::{CacheService, CacheServiceCanonical, DynCacheService},
+  entry::{DynEntryService, EntryService, EntryServiceCanonical},
+  store::{DynStoreService, StoreService, StoreServiceCanonical},
+  temp_storage::{
+    DynTempStorageService, TempStorageService, TempStorageServiceCanonical,
+  },
+  token::{DynTokenService, TokenService, TokenServiceCanonical},
 };

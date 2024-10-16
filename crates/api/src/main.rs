@@ -18,7 +18,8 @@ use prime_domain::{
   hex::health::{self, HealthAware},
   models,
   repos::TempStorageRepository,
-  CacheService, EntryService, StoreService, TempStorageService, TokenService,
+  DynCacheService, DynEntryService, DynStoreService, DynTempStorageService,
+  DynTokenService,
 };
 use tasks::Task;
 use tracing_subscriber::prelude::*;
@@ -80,11 +81,11 @@ async fn naive_upload(
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  cache_service:        Arc<Box<dyn CacheService>>,
-  store_service:        Arc<Box<dyn StoreService>>,
-  token_service:        Arc<Box<dyn TokenService>>,
-  entry_service:        Arc<Box<dyn EntryService>>,
-  temp_storage_service: Arc<Box<dyn TempStorageService>>,
+  cache_service:        DynCacheService,
+  store_service:        DynStoreService,
+  token_service:        DynTokenService,
+  entry_service:        DynEntryService,
+  temp_storage_service: DynTempStorageService,
 }
 
 impl AppState {

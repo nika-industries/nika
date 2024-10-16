@@ -267,6 +267,42 @@ impl DatabaseAdapter for TikvAdapter {
 
     Ok(Some(model))
   }
+
+  async fn enumerate_models<M: models::Model>(
+    &self,
+  ) -> Result<Vec<models::RecordId<M>>> {
+    // let prefix = Key::new_lazy(&MODEL_NS_SEGMENT)
+    //   .with(StrictSlug::new(M::TABLE_NAME.to_string()));
+    // let txn = self
+    //   .0
+    //   .begin_optimistic_transaction()
+    //   .await
+    //   .context("failed to begin optimistic transaction")
+    //   .map_err(FetchModelError::RetryableTransaction)?;
+    // let (txn, keys) = txn
+    //   .csm_keys_with_prefix(&prefix)
+    //   .await
+    //   .map_err(FetchModelError::Db)?;
+    // commit(txn)
+    //   .await
+    //   .map_err(FetchModelError::RetryableTransaction)?;
+    // let ids = keys
+    //   .into_iter()
+    //   .map(|key| {
+    //     let id_str = key
+    //       .segments()
+    //       .last()
+    //       .expect("key has no segments")
+    //       .to_string();
+    //     models::RecordId::<M>::from_str(&id_str)
+    //       .into_diagnostic()
+    //       .context("failed to parse id")
+    //       .map_err(FetchModelError::Serde)
+    //   })
+    //   .collect::<Result<Vec<models::RecordId<M>>>>();
+    // ids
+    todo!()
+  }
 }
 
 #[async_trait::async_trait]

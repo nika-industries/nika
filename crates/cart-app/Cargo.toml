@@ -10,12 +10,14 @@ leptos_meta.workspace = true
 leptos_router.workspace = true
 leptos_axum = { workspace = true, optional = true }
 
+prime-domain = { path = "../prime-domain", optional = true }
+
 [features]
 default = []
 hydrate = ["leptos/hydrate"]
 ssr = [
   "leptos/ssr", "leptos/tracing", "leptos_meta/ssr", "leptos_router/ssr",
-  "dep:leptos_axum",
+  "dep:leptos_axum", "dep:prime-domain"
 ]
 
 [lints]

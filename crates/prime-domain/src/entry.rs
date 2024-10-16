@@ -1,11 +1,17 @@
+use std::sync::Arc;
+
 use hex::{health, Hexagonal};
-use models::{CacheRecordId, Entry, EntryRecordId, LaxSlug};
+use miette::Result;
+use models::{CacheRecordId, EitherSlug, Entry, EntryRecordId, LaxSlug};
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
   CreateModelError, EntryCreateRequest, EntryRepository,
   ModelRepositoryCreator, ModelRepositoryFetcher,
 };
 use tracing::instrument;
+
+/// A dynamic [`EntryService`] trait object.
+pub type DynEntryService = Arc<Box<dyn EntryService>>;
 
 /// The definition for the [`Entry`] domain model service.
 #[async_trait::async_trait]
@@ -67,6 +73,21 @@ impl<R: EntryRepository> ModelRepositoryFetcher for EntryServiceCanonical<R> {
     id: EntryRecordId,
   ) -> Result<Option<Entry>, FetchModelError> {
     self.entry_repo.fetch_model_by_id(id).await
+  }
+  #[instrument(skip(self))]
+  async fn fetch_model_by_index(
+    &self,
+    index_name: String,
+    index_value: EitherSlug,
+  ) -> Result<Option<Entry>, FetchModelByIndexError> {
+    self
+      .entry_repo
+      .fetch_model_by_index(index_name, index_value)
+      .await
+  }
+  #[instrument(skip(self))]
+  async fn enumerate_models(&self) -> Result<Vec<EntryRecordId>> {
+    self.entry_repo.enumerate_models().await
   }
 }
 

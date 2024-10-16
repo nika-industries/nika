@@ -632,6 +632,7 @@ dependencies = [
  "leptos_axum",
  "leptos_meta",
  "leptos_router",
+ "prime-domain",
 ]
 
 [[package]]
@@ -655,6 +656,8 @@ dependencies = [
  "leptos",
  "leptos_axum",
  "leptos_router",
+ "miette",
+ "prime-domain",
  "tokio",
  "tower 0.5.1",
  "tower-http 0.6.1",

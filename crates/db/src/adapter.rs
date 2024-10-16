@@ -3,6 +3,7 @@ use std::ops::Deref;
 use hex::Hexagonal;
 use kv::prelude::*;
 use miette::Result;
+use models::RecordId;
 
 /// An adapter for a model-based database.
 #[async_trait::async_trait]
@@ -26,6 +27,10 @@ pub trait DatabaseAdapter: Hexagonal {
     index_name: String,
     index_value: EitherSlug,
   ) -> Result<Option<M>, FetchModelByIndexError>;
+  /// Produces a list of all model IDs.
+  async fn enumerate_models<M: models::Model>(
+    &self,
+  ) -> Result<Vec<RecordId<M>>>;
 }
 
 // impl for Arc
@@ -55,6 +60,12 @@ impl<
     index_value: EitherSlug,
   ) -> Result<Option<M>, FetchModelByIndexError> {
     (**self).fetch_model_by_index(index_name, index_value).await
+  }
+
+  async fn enumerate_models<M: models::Model>(
+    &self,
+  ) -> Result<Vec<RecordId<M>>> {
+    (**self).enumerate_models().await
   }
 }
 

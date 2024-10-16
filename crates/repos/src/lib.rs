@@ -7,13 +7,11 @@ mod store;
 mod temp_storage;
 mod token;
 
-use std::sync::Arc;
-
 pub use db;
 use db::{FetchModelByIndexError, FetchModelError};
 use hex::Hexagonal;
 use miette::Result;
-use models::EitherSlug;
+use models::{EitherSlug, RecordId};
 
 pub use self::{cache::*, entry::*, store::*, temp_storage::*, token::*};
 
@@ -47,65 +45,42 @@ pub trait ModelRepository: Hexagonal {
     index_name: String,
     index_value: EitherSlug,
   ) -> Result<Option<Self::Model>, FetchModelByIndexError>;
+
+  /// Produces a list of all model IDs.
+  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>>;
 }
 
 #[async_trait::async_trait]
-impl<T> ModelRepository for Box<T>
+impl<T, I> ModelRepository for T
 where
-  T: ModelRepository + ?Sized,
+  T: std::ops::Deref<Target = I> + Hexagonal + Sized,
+  I: ModelRepository + ?Sized,
 {
-  type Model = T::Model;
-  type ModelCreateRequest = T::ModelCreateRequest;
-  type CreateError = T::CreateError;
+  type Model = I::Model;
+  type ModelCreateRequest = I::ModelCreateRequest;
+  type CreateError = I::CreateError;
 
   async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
   ) -> Result<(), Self::CreateError> {
-    T::create_model(self, input).await
+    I::create_model(self, input).await
   }
   async fn fetch_model_by_id(
     &self,
     id: models::RecordId<Self::Model>,
   ) -> Result<Option<Self::Model>, FetchModelError> {
-    T::fetch_model_by_id(self, id).await
+    I::fetch_model_by_id(self, id).await
   }
   async fn fetch_model_by_index(
     &self,
     index_name: String,
     index_value: EitherSlug,
   ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
-    T::fetch_model_by_index(self, index_name, index_value).await
+    I::fetch_model_by_index(self, index_name, index_value).await
   }
-}
-
-#[async_trait::async_trait]
-impl<T> ModelRepository for Arc<T>
-where
-  T: ModelRepository + ?Sized,
-{
-  type Model = T::Model;
-  type ModelCreateRequest = T::ModelCreateRequest;
-  type CreateError = T::CreateError;
-
-  async fn create_model(
-    &self,
-    input: Self::ModelCreateRequest,
-  ) -> Result<(), Self::CreateError> {
-    T::create_model(self, input).await
-  }
-  async fn fetch_model_by_id(
-    &self,
-    id: models::RecordId<Self::Model>,
-  ) -> Result<Option<Self::Model>, FetchModelError> {
-    T::fetch_model_by_id(self, id).await
-  }
-  async fn fetch_model_by_index(
-    &self,
-    index_name: String,
-    index_value: EitherSlug,
-  ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
-    T::fetch_model_by_index(self, index_name, index_value).await
+  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>> {
+    I::enumerate_models(self).await
   }
 }
 
@@ -120,6 +95,16 @@ pub trait ModelRepositoryFetcher: Hexagonal {
     &self,
     id: models::RecordId<Self::Model>,
   ) -> Result<Option<Self::Model>, FetchModelError>;
+  /// Fetches a model by an index.
+  ///
+  /// Must be a valid index, defined in the model's `INDICES` constant.
+  async fn fetch_model_by_index(
+    &self,
+    index_name: String,
+    index_value: EitherSlug,
+  ) -> Result<Option<Self::Model>, FetchModelByIndexError>;
+  /// Produces a list of all model IDs.
+  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>>;
 }
 
 // impl for smart pointer to dyn ModelRepositoryFetcher
@@ -137,6 +122,16 @@ where
     id: models::RecordId<Self::Model>,
   ) -> Result<Option<Self::Model>, FetchModelError> {
     I::fetch(self, id).await
+  }
+  async fn fetch_model_by_index(
+    &self,
+    index_name: String,
+    index_value: EitherSlug,
+  ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
+    I::fetch_model_by_index(self, index_name, index_value).await
+  }
+  async fn enumerate_models(&self) -> Result<Vec<RecordId<Self::Model>>> {
+    I::enumerate_models(self).await
   }
 }
 
