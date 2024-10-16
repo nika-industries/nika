@@ -16,10 +16,9 @@ use cmd::Commands;
 use hex::health::{self, HealthAware};
 use miette::{IntoDiagnostic, Result};
 use prime_domain::{
-  models, CacheService, EntryService, StoreService, TempStorageService,
-  TokenService,
+  models, repos::TempStorageRepository, CacheService, EntryService,
+  StoreService, TempStorageService, TokenService,
 };
-use repos::TempStorageRepository;
 use tasks::Task;
 use tracing_subscriber::prelude::*;
 
@@ -89,21 +88,29 @@ struct AppState {
 
 impl AppState {
   async fn build(config: &RuntimeConfig) -> Result<Self> {
-    let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
-    let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
-    let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
-    let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
-    let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
+    let tikv_adapter =
+      Arc::new(prime_domain::repos::db::TikvAdapter::new_from_env().await?);
+    let cache_repo =
+      prime_domain::repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
+    let store_repo =
+      prime_domain::repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
+    let token_repo =
+      prime_domain::repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
+    let entry_repo =
+      prime_domain::repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
     let temp_storage_repo: Box<dyn TempStorageRepository> = if config
       .mock_temp_storage
     {
-      Box::new(repos::TempStorageRepositoryMock::new(
+      Box::new(prime_domain::repos::TempStorageRepositoryMock::new(
         std::path::PathBuf::from("/tmp/nika-temp-storage"),
       ))
     } else {
       let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
       Box::new(
-        repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?,
+        prime_domain::repos::TempStorageRepositoryCanonical::new(
+          temp_storage_creds,
+        )
+        .await?,
       )
     };
 

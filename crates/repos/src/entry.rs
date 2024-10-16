@@ -1,5 +1,6 @@
 //! Provides a repository for the [`Entry`] domain model.
 
+use db::{FetchModelByIndexError, FetchModelError};
 use hex::health::{self, HealthAware};
 use models::{CacheRecordId, LaxSlug};
 pub use models::{Entry, EntryCreateRequest};

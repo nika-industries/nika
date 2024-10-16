@@ -1,9 +1,9 @@
 use hex::{health, Hexagonal};
 use models::{CacheRecordId, Entry, EntryRecordId, LaxSlug};
 use repos::{
+  db::{FetchModelByIndexError, FetchModelError},
   CreateModelError, EntryCreateRequest, EntryRepository,
-  FetchModelByIndexError, FetchModelError, ModelRepositoryCreator,
-  ModelRepositoryFetcher,
+  ModelRepositoryCreator, ModelRepositoryFetcher,
 };
 use tracing::instrument;
 

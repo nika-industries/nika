@@ -2,8 +2,8 @@ use hex::{health, Hexagonal};
 use miette::Result;
 use models::{Cache, CacheRecordId, StrictSlug};
 use repos::{
-  CacheRepository, FetchModelByIndexError, FetchModelError,
-  ModelRepositoryFetcher,
+  db::{FetchModelByIndexError, FetchModelError},
+  CacheRepository, ModelRepositoryFetcher,
 };
 use tracing::instrument;
 

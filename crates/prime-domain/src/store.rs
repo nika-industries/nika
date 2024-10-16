@@ -1,6 +1,6 @@
 use hex::{health, Hexagonal};
 use models::{Store, StoreRecordId};
-use repos::{FetchModelError, ModelRepositoryFetcher, StoreRepository};
+use repos::{db::FetchModelError, ModelRepositoryFetcher, StoreRepository};
 use tracing::instrument;
 
 /// The definition for the [`Store`] domain model service.

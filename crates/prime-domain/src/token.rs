@@ -1,6 +1,6 @@
 use hex::{health, Hexagonal};
 use models::{Token, TokenRecordId};
-use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
+use repos::{db::FetchModelError, ModelRepositoryFetcher, TokenRepository};
 use tracing::instrument;
 
 /// The error type for token verification.

@@ -8,6 +8,7 @@ mod temp_storage;
 mod token;
 
 pub use models;
+pub use repos;
 
 pub use self::{
   cache::{CacheService, CacheServiceCanonical},

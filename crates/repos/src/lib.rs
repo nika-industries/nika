@@ -9,7 +9,8 @@ mod token;
 
 use std::sync::Arc;
 
-pub use db::{FetchModelByIndexError, FetchModelError};
+pub use db;
+use db::{FetchModelByIndexError, FetchModelError};
 use hex::Hexagonal;
 use miette::Result;
 use models::EitherSlug;
