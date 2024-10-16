@@ -2,13 +2,13 @@
 
 mod page_title;
 
-use leptos::prelude::*;
+use leptos::{either::Either, prelude::*};
 use leptos_meta::{
   provide_meta_context, Link, MetaTags, Style, Stylesheet, Title,
 };
 use leptos_router::{
   components::{Route, Router, Routes},
-  path,
+  path, SsrMode,
 };
 
 use self::page_title::PageTitle;
@@ -52,7 +52,7 @@ pub fn App() -> impl IntoView {
           <main>
             <Routes fallback=|| "Page not found.".into_view()>
               <Route path=path!("") view=HomePage/>
-              // <Route path=path!("/model/cache") view=CacheModelPage/>
+              <Route path=path!("/model/cache") view=CacheModelPage ssr=SsrMode::OutOfOrder/>
               <Route path=path!("/model/cache/*id") view=CacheModelPage/>
             </Routes>
           </main>
@@ -72,12 +72,49 @@ fn HomePage() -> impl IntoView {
   }
 }
 
+#[server]
+async fn enumerate_cache_ids(
+) -> Result<Vec<models::CacheRecordId>, ServerFnError> {
+  let cache_service: Option<_> = use_context();
+  let cache_service: prime_domain::DynCacheService = cache_service
+    .ok_or(ServerFnError::new("Cache service is not available."))?;
+
+  let ids = cache_service.enumerate_models().await.map_err(|e| {
+    ServerFnError::new(format!("Failed to enumerate cache models: {}", e))
+  })?;
+  Ok(ids)
+}
+
 #[component]
 fn CacheModelPage() -> impl IntoView {
+  let cache_ids_resource = Resource::new(|| (), |_| enumerate_cache_ids());
+
+  let fallback = move || "Loading...".into_view();
+
+  let cache_ids_reader = move || {
+    Suspend::new(async move {
+      match cache_ids_resource.await {
+        Ok(ids) => Either::Left(view! {
+          <span>"Available models: "{ ids.len() }</span>
+        }),
+        Err(e) => Either::Right(view! {
+          <span>"Error: "{format!("{e}")}</span>
+        }),
+      }
+    })
+  };
+
   view! {
     <div class="flex flex-col gap-4">
       <PageTitle title="Cache Model".to_string() level=1 />
-      <p class="text-lg text-content2">"This page will display the cache model."</p>
+      <div class="text-lg text-content2">
+        <p>"This page will display the cache model."</p>
+        <p>
+          <Suspense fallback=fallback>
+            { cache_ids_reader }
+          </Suspense>
+        </p>
+      </div>
     </div>
   }
 }

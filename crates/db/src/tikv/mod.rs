@@ -301,7 +301,7 @@ impl DatabaseAdapter for TikvAdapter {
     //   })
     //   .collect::<Result<Vec<models::RecordId<M>>>>();
     // ids
-    todo!()
+    Ok(vec![])
   }
 }
 

@@ -632,6 +632,7 @@ dependencies = [
  "leptos_axum",
  "leptos_meta",
  "leptos_router",
+ "models",
  "prime-domain",
 ]
 
