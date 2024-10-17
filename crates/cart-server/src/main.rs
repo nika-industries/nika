@@ -6,11 +6,12 @@ use axum::{extract::FromRef, Router};
 use cart_app::*;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
-use prime_domain::DynCacheService;
+use prime_domain::{DynCacheService, DynEntryService};
 
 #[derive(Clone, FromRef)]
 struct AppState {
   cache_service: DynCacheService,
+  entry_service: DynEntryService,
 }
 
 #[tokio::main]
@@ -28,10 +29,14 @@ async fn main() -> miette::Result<()> {
     Arc::new(prime_domain::repos::db::TikvAdapter::new_from_env().await?);
   let cache_repo =
     prime_domain::repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
+  let entry_repo =
+    prime_domain::repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
   let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
+  let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
 
   let app_state = AppState {
     cache_service: Arc::new(Box::new(cache_service)),
+    entry_service: Arc::new(Box::new(entry_service)),
   };
 
   let app = Router::new()
@@ -42,6 +47,7 @@ async fn main() -> miette::Result<()> {
         let app_state = app_state.clone();
         move || {
           provide_context(app_state.cache_service.clone());
+          provide_context(app_state.entry_service.clone());
         }
       },
       {

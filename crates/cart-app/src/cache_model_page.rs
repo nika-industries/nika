@@ -1,6 +1,6 @@
 use leptos::{either::Either, prelude::*};
 
-use crate::page_title::PageTitle;
+use crate::utils::{ItemList, KeyValue, PageTitle};
 
 #[server]
 async fn fetch_caches() -> Result<Vec<models::Cache>, ServerFnError> {
@@ -15,37 +15,33 @@ async fn fetch_caches() -> Result<Vec<models::Cache>, ServerFnError> {
 }
 
 #[component]
-fn CacheList(caches: impl IntoIterator<Item = models::Cache>) -> impl IntoView {
-  view! {
-    <ul class="flex flex-col gap-2">
-      { caches.into_iter().map(|cache| view! {
-        <li>
-          <Cache cache=cache/>
-        </li>
-      }).collect_view() }
-    </ul>
-  }
-}
-
-#[component]
 fn Cache(#[prop(into)] cache: MaybeSignal<models::Cache>) -> impl IntoView {
   let cache = Signal::derive(move || cache.get());
-  let cache_name = move || cache.with(|c| c.name.to_string());
+
   let cache_id = move || cache.with(|c| c.id.to_string());
   let cache_page_url = move || format!("/model/cache/{}", cache_id());
+
+  let cache_name = move || cache.with(|c| c.name.to_string());
   let cache_visibility = move || cache.with(|c| c.visibility.to_string());
   let cache_store = move || cache.with(|c| c.store.to_string());
   let cache_store_url = move || format!("/model/store/{}", cache_store());
 
   view! {
     <div class="w-full max-w-3xl p-4 flex flex-col gap-2 bg-gray-2 border border-gray-6 rounded-lg shadow">
-      <a href={cache_page_url} class="font-semibold tracking-tight text-2xl link link-underline">
-        { cache_name }
-      </a>
-      <div class="flex flex-row gap-x-2 flex-wrap">
-        <span><span class="text-content2">"ID: "</span>{ cache_id }</span>
-        <span><span class="text-content2">"Visibility: "</span>{ cache_visibility }</span>
-        <span><span class="text-content2">"Store: "</span><a href={cache_store_url} class="link link-underline">{ cache_store }</a></span>
+      <div class="flex flex-row gap-4 items-center">
+        <span class="dot dot-success" />
+        <a href={cache_page_url} class="font-semibold tracking-tight text-2xl link link-underline">
+          { cache_name }
+        </a>
+      </div>
+      <div class="flex flex-row gap-x-2 flex-wrap items-center">
+        <KeyValue key="ID:"> { cache_id } </KeyValue>
+        <KeyValue key="Visibility:"> { cache_visibility } </KeyValue>
+        <KeyValue key="Store:">
+          <a href={cache_store_url} class="text-sm link link-underline">
+            { cache_store }
+          </a>
+        </KeyValue>
       </div>
     </div>
   }
@@ -60,9 +56,12 @@ pub fn CacheModelListPage() -> impl IntoView {
   let caches_reader = move || {
     Suspend::new(async move {
       match caches_resource.await {
-        Ok(caches) => Either::Left(view! {
-          <CacheList caches=caches/>
-        }),
+        Ok(caches) => {
+          let caches = caches.into_iter().map(|c| view! { <Cache cache=c /> });
+          Either::Left(view! {
+            <ItemList items=caches />
+          })
+        }
         Err(e) => Either::Right(view! {
           <span>"Error: "{format!("{e}")}</span>
         }),

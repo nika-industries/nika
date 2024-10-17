@@ -9,6 +9,7 @@ pub fn SideBar() -> impl IntoView {
         <p class="text-content2">"Models"</p>
         <ul class="flex flex-col gap-1 pl-2">
           <li><a href="/model/cache" class="link link-underline">"Cache"</a></li>
+          <li><a href="/model/entry" class="link link-underline">"Entry"</a></li>
         </ul>
       </div>
     </div>

@@ -1,6 +1,6 @@
 use leptos::prelude::*;
 
-use crate::page_title::PageTitle;
+use crate::utils::PageTitle;
 
 #[component]
 pub fn HomePage() -> impl IntoView {

@@ -1,10 +1,10 @@
 //! The leptos app crate for the Cartographer app.
 
 mod cache_model_page;
-mod code_block;
+mod entry_model_page;
 mod home_page;
-mod page_title;
 mod side_bar;
+mod utils;
 
 use leptos::prelude::*;
 use leptos_meta::{
@@ -16,7 +16,8 @@ use leptos_router::{
 };
 
 use self::{
-  cache_model_page::CacheModelListPage, home_page::HomePage, side_bar::SideBar,
+  cache_model_page::CacheModelListPage, entry_model_page::EntryModelListPage,
+  home_page::HomePage, side_bar::SideBar,
 };
 
 /// Builds the HTML shell for the application.
@@ -58,8 +59,10 @@ pub fn App() -> impl IntoView {
           <main>
             <Routes fallback=|| "Page not found.".into_view()>
               <Route path=path!("") view=HomePage/>
-              <Route path=path!("/model/cache") view=CacheModelListPage ssr=SsrMode::OutOfOrder/>
+              <Route path=path!("/model/cache") view=CacheModelListPage/>
               <Route path=path!("/model/cache/:id") view=CacheModelListPage/>
+              <Route path=path!("/model/entry") view=EntryModelListPage/>
+              <Route path=path!("/model/entry/:id") view=EntryModelListPage/>
             </Routes>
           </main>
         </div>
