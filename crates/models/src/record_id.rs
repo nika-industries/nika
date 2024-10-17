@@ -14,7 +14,11 @@ pub struct RecordId<T>(Ulid, #[serde(skip)] PhantomData<T>);
 
 impl<T> fmt::Debug for RecordId<T> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_tuple("RecordId").field(&self.0).finish()
+    let generic_full = std::any::type_name::<T>().to_string();
+    let generic = generic_full.split("::").last().unwrap();
+    f.debug_tuple(&format!("{generic}RecordId"))
+      .field(&self.0.to_string())
+      .finish()
   }
 }
 
