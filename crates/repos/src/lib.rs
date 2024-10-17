@@ -11,7 +11,7 @@ pub use db;
 use db::{FetchModelByIndexError, FetchModelError};
 use hex::Hexagonal;
 use miette::Result;
-use models::{EitherSlug, RecordId};
+use models::EitherSlug;
 
 pub use self::{cache::*, entry::*, store::*, temp_storage::*, token::*};
 
