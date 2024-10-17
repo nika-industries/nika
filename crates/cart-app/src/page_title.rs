@@ -2,9 +2,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn PageTitle(
-  #[prop(into)] title: MaybeSignal<
-    impl AsRef<str> + Clone + Send + Sync + 'static,
-  >,
+  children: Children,
   #[prop(default = 1)] level: i32,
 ) -> impl IntoView {
   let size_class = match level {
@@ -16,9 +14,7 @@ pub fn PageTitle(
   };
   let class = format!("font-semibold tracking-tight {size_class}");
 
-  let title_reader = move || title.with(|t| t.as_ref().to_string());
-
   view! {
-    <p class=class>{ title_reader }</p>
+    <p class=class>{ children() }</p>
   }
 }
