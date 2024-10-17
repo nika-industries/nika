@@ -33,12 +33,7 @@ fn Cache(#[prop(into)] cache: MaybeSignal<models::Cache>) -> impl IntoView {
   let cache_name = move || cache.with(|c| c.name.to_string());
   let cache_id = move || cache.with(|c| c.id.to_string());
   let cache_page_url = move || format!("/model/cache/{}", cache_id());
-  let cache_visibility = move || {
-    cache.with(|c| match c.public {
-      true => "Public",
-      false => "Private",
-    })
-  };
+  let cache_visibility = move || cache.with(|c| c.visibility.to_string());
   let cache_store = move || cache.with(|c| c.store.to_string());
   let cache_store_url = move || format!("/model/store/{}", cache_store());
 

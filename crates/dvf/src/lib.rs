@@ -2,6 +2,7 @@
 
 use std::{path::PathBuf, str::FromStr};
 
+use serde::{Deserialize, Serialize};
 pub use slugger;
 use slugger::StrictSlug;
 
@@ -87,5 +88,28 @@ impl TempStoragePath {
   /// Creates a new temporary storage path.
   pub fn new_random() -> Self {
     Self::new(PathBuf::from_str(&ulid::Ulid::new().to_string()).unwrap())
+  }
+}
+
+/// An entity's visibility.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum Visibility {
+  /// The entity is public.
+  Public,
+  /// The entity is private.
+  Private,
+}
+
+impl Visibility {
+  /// Returns `true` if the entity is public.
+  pub fn is_public(&self) -> bool { matches!(self, Visibility::Public) }
+}
+
+impl std::fmt::Display for Visibility {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Visibility::Public => write!(f, "Public"),
+      Visibility::Private => write!(f, "Private"),
+    }
   }
 }
