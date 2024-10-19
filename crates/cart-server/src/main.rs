@@ -6,12 +6,16 @@ use axum::{extract::FromRef, Router};
 use cart_app::*;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
-use prime_domain::{DynCacheService, DynEntryService};
+use prime_domain::{
+  DynCacheService, DynEntryService, DynStoreService, DynTokenService,
+};
 
 #[derive(Clone, FromRef)]
 struct AppState {
   cache_service: DynCacheService,
   entry_service: DynEntryService,
+  store_service: DynStoreService,
+  token_service: DynTokenService,
 }
 
 #[tokio::main]
@@ -31,12 +35,20 @@ async fn main() -> miette::Result<()> {
     prime_domain::repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
   let entry_repo =
     prime_domain::repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
+  let store_repo =
+    prime_domain::repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
+  let token_repo =
+    prime_domain::repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
   let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
   let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
+  let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
+  let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
 
   let app_state = AppState {
     cache_service: Arc::new(Box::new(cache_service)),
     entry_service: Arc::new(Box::new(entry_service)),
+    store_service: Arc::new(Box::new(store_service)),
+    token_service: Arc::new(Box::new(token_service)),
   };
 
   let app = Router::new()
@@ -48,6 +60,8 @@ async fn main() -> miette::Result<()> {
         move || {
           provide_context(app_state.cache_service.clone());
           provide_context(app_state.entry_service.clone());
+          provide_context(app_state.store_service.clone());
+          provide_context(app_state.token_service.clone());
         }
       },
       {

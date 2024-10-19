@@ -57,6 +57,7 @@ opt-level = 'z'
 lto = true
 codegen-units = 1
 
+# configure `cart` leptos project
 [[workspace.metadata.leptos]]
 name = "cart"
 hash-files = false
@@ -70,8 +71,8 @@ site-pkg-dir = "pkg"
 style-file = "crates/cart-app/style/main.scss"
 assets-dir = "crates/cart-app/public"
 
-site-addr = "127.0.0.1:3000"
-reload-port = 3001
+site-addr = "127.0.0.1:2000"
+reload-port = 2001
 
 browserquery = "defaults"
 

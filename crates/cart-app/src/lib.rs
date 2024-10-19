@@ -2,8 +2,11 @@
 
 mod cache_model_page;
 mod entry_model_page;
+mod fetchers;
 mod home_page;
 mod side_bar;
+mod store_model_page;
+mod token_model_page;
 mod utils;
 
 use leptos::prelude::*;
@@ -12,12 +15,16 @@ use leptos_meta::{
 };
 use leptos_router::{
   components::{Route, Router, Routes},
-  path, SsrMode,
+  path,
 };
 
 use self::{
-  cache_model_page::CacheModelListPage, entry_model_page::EntryModelListPage,
-  home_page::HomePage, side_bar::SideBar,
+  cache_model_page::{CacheModelListPage, CacheModelSinglePage},
+  entry_model_page::{EntryModelListPage, EntryModelSinglePage},
+  home_page::HomePage,
+  side_bar::SideBar,
+  store_model_page::{StoreModelListPage, StoreModelSinglePage},
+  token_model_page::{TokenModelListPage, TokenModelSinglePage},
 };
 
 /// Builds the HTML shell for the application.
@@ -60,9 +67,13 @@ pub fn App() -> impl IntoView {
             <Routes fallback=|| "Page not found.".into_view()>
               <Route path=path!("") view=HomePage/>
               <Route path=path!("/model/cache") view=CacheModelListPage/>
-              <Route path=path!("/model/cache/:id") view=CacheModelListPage/>
+              <Route path=path!("/model/cache/:id") view=CacheModelSinglePage/>
               <Route path=path!("/model/entry") view=EntryModelListPage/>
-              <Route path=path!("/model/entry/:id") view=EntryModelListPage/>
+              <Route path=path!("/model/entry/:id") view=EntryModelSinglePage/>
+              <Route path=path!("/model/store") view=StoreModelListPage/>
+              <Route path=path!("/model/store/:id") view=StoreModelSinglePage/>
+              <Route path=path!("/model/token") view=TokenModelListPage/>
+              <Route path=path!("/model/token/:id") view=TokenModelSinglePage/>
             </Routes>
           </main>
         </div>

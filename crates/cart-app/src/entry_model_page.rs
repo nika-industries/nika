@@ -1,56 +1,48 @@
+use std::str::FromStr;
+
 use leptos::{either::Either, prelude::*};
 
-use crate::utils::{ItemList, KeyValue, PageTitle};
-
-#[server]
-async fn fetch_entries() -> Result<Vec<models::Entry>, ServerFnError> {
-  let entry_service: Option<_> = use_context();
-  let entry_service: prime_domain::DynEntryService = entry_service
-    .ok_or(ServerFnError::new("Entry service is not available."))?;
-
-  let ids = entry_service.enumerate_models().await.map_err(|e| {
-    ServerFnError::new(format!("Failed to enumerate entry models: {}", e))
-  })?;
-  Ok(ids)
-}
+use crate::{fetchers::*, utils::*};
 
 #[component]
 fn Entry(#[prop(into)] entry: MaybeSignal<models::Entry>) -> impl IntoView {
   let entry = Signal::derive(move || entry.get());
 
   let entry_id = move || entry.with(|e| e.id.to_string());
-  let entry_page_url = move || format!("/model/entry/{}", entry_id());
+  let entry_page_url =
+    Signal::derive(move || format!("/model/entry/{}", entry_id()));
 
   let entry_path = move || entry.with(|e| e.path.to_string());
   let entry_size = move || entry.with(|e| e.size.to_string());
   let entry_cache = move || entry.with(|e| e.cache.to_string());
-  let entry_cache_url = move || format!("/model/cache/{}", entry_cache());
+  let entry_cache_url =
+    Signal::derive(move || format!("/model/cache/{}", entry_cache()));
 
   view! {
-    <div class="w-full max-w-3xl p-4 flex flex-col gap-2 bg-gray-2 border border-gray-6 rounded-lg shadow">
-      <div class="flex flex-row gap-4 items-center">
-        <span class="dot dot-success" />
-        <a href={entry_page_url} class="font-semibold tracking-tight text-2xl link link-underline">
+    <Card>
+      <TitleRow>
+        <SuccessDot />
+        <TitleLink href=entry_page_url>
           { entry_path }
-        </a>
-      </div>
-      <div class="flex flex-row gap-x-2 flex-wrap items-center">
+        </TitleLink>
+      </TitleRow>
+      <PropList>
         <KeyValue key="ID:"> { entry_id } </KeyValue>
         <KeyValue key="Path:"> { entry_path } </KeyValue>
         <KeyValue key="Size:"> { entry_size } </KeyValue>
         <KeyValue key="Cache:">
-          <a href={entry_cache_url} class="text-sm link link-underline">
+          <Link href=entry_cache_url>
             { entry_cache }
-          </a>
+          </Link>
         </KeyValue>
-      </div>
-    </div>
+      </PropList>
+    </Card>
   }
 }
 
 #[component]
 pub fn EntryModelListPage() -> impl IntoView {
-  let entries_resource = Resource::new(|| (), |_| fetch_entries());
+  let entries_resource = Resource::new(|| (), |_| fetch_all_entries());
 
   let fallback = move || "Loading...".into_view();
 
@@ -80,4 +72,51 @@ pub fn EntryModelListPage() -> impl IntoView {
       </Suspense>
     </div>
   }
+}
+
+#[component]
+pub fn EntryModelSinglePage() -> impl IntoView {
+  let params = leptos_router::hooks::use_params_map();
+  let id_param = params().get("id").unwrap_or_default();
+
+  let entry_id = match models::EntryRecordId::from_str(&id_param) {
+    Ok(id) => id,
+    Err(e) => {
+      return Either::Left(view! {
+        <div class="flex flex-col gap-4">
+          <PageTitle level=1>"Entry: Invalid ID"</PageTitle>
+          <p class="text-lg text-content2">"Invalid entry ID: " { e.to_string() }</p>
+        </div>
+      })
+    }
+  };
+
+  let entry_resource = Resource::new(move || entry_id, fetch_entry);
+
+  let fallback = move || "Loading...".into_view();
+
+  let entry_reader = move || {
+    Suspend::new(async move {
+      match entry_resource.await {
+        Ok(entry) => Either::Left(view! {
+          <Entry entry=entry />
+        }),
+        Err(e) => Either::Right(view! {
+          <p class="text-lg text-content2">"Error: "{format!("{e}")}</p>
+        }),
+      }
+    })
+  };
+
+  Either::Right(view! {
+    <div class="flex flex-col gap-4">
+      <PageTitle level=1>
+        "Entry: "
+        <CodeHighlight>{ entry_id.to_string() }</CodeHighlight>
+      </PageTitle>
+      <Suspense fallback=fallback>
+        { entry_reader }
+      </Suspense>
+    </div>
+  })
 }
