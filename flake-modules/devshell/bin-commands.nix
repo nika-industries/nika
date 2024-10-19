@@ -20,7 +20,20 @@
       category = "[local binary actions]";
     }
   ];
-in [ ]
+in [
+  {
+    name = "cart-watch";
+    command = "cargo leptos watch --project cart $@";
+    help = "Watch for changes and run the cart server";
+    category = "[cart actions]";
+  }
+  {
+    name = "cart-serve";
+    command = "cargo leptos serve --project cart $@";
+    help = "Run the cart server";
+    category = "[cart actions]";
+  }
+]
   ++ perBinaryCommands "fetcher"
   ++ perBinaryCommands "api"
   ++ perBinaryCommands "daemon"

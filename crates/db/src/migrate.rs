@@ -40,11 +40,12 @@ impl<T: DatabaseAdapter> Migratable for T {
     };
 
     let albert_cache = models::Cache {
-      id:     CacheRecordId::from_str("01J799MSHXPPY5RJ8KGHVR9GWQ").unwrap(),
-      name:   EntityName::new(StrictSlug::confident("albert")),
-      public: false,
-      store:  local_file_store.id,
-      org:    org.id,
+      id:         CacheRecordId::from_str("01J799MSHXPPY5RJ8KGHVR9GWQ")
+        .unwrap(),
+      name:       EntityName::new(StrictSlug::confident("albert")),
+      visibility: models::Visibility::Private,
+      store:      local_file_store.id,
+      org:        org.id,
     };
 
     let omnitoken_token = models::Token {

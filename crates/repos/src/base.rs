@@ -91,4 +91,9 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
       .fetch_model_by_index(index_name, index_value)
       .await
   }
+
+  #[instrument(skip(self))]
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
+    self.db_adapter.enumerate_models::<Self::Model>().await
+  }
 }

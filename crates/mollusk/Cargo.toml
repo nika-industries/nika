@@ -9,10 +9,12 @@ workspace = true
 
 [dependencies]
 models = { path = "../models" }
-
-axum.workspace = true
 miette.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+bytes.workspace = true
+mime = "0.3.17"
+axum-core.workspace = true
+http.workspace = true

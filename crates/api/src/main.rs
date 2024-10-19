@@ -13,13 +13,14 @@ use axum::{
 };
 use clap::Parser;
 use cmd::Commands;
-use hex::health::{self, HealthAware};
 use miette::{IntoDiagnostic, Result};
 use prime_domain::{
-  models, CacheService, EntryService, StoreService, TempStorageService,
-  TokenService,
+  hex::health::{self, HealthAware},
+  models,
+  repos::TempStorageRepository,
+  DynCacheService, DynEntryService, DynStoreService, DynTempStorageService,
+  DynTokenService,
 };
-use repos::TempStorageRepository;
 use tasks::Task;
 use tracing_subscriber::prelude::*;
 
@@ -80,30 +81,38 @@ async fn naive_upload(
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  cache_service:        Arc<Box<dyn CacheService>>,
-  store_service:        Arc<Box<dyn StoreService>>,
-  token_service:        Arc<Box<dyn TokenService>>,
-  entry_service:        Arc<Box<dyn EntryService>>,
-  temp_storage_service: Arc<Box<dyn TempStorageService>>,
+  cache_service:        DynCacheService,
+  store_service:        DynStoreService,
+  token_service:        DynTokenService,
+  entry_service:        DynEntryService,
+  temp_storage_service: DynTempStorageService,
 }
 
 impl AppState {
   async fn build(config: &RuntimeConfig) -> Result<Self> {
-    let tikv_adapter = Arc::new(db::TikvAdapter::new_from_env().await?);
-    let cache_repo = repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
-    let store_repo = repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
-    let token_repo = repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
-    let entry_repo = repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
+    let tikv_adapter =
+      Arc::new(prime_domain::repos::db::TikvAdapter::new_from_env().await?);
+    let cache_repo =
+      prime_domain::repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
+    let store_repo =
+      prime_domain::repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
+    let token_repo =
+      prime_domain::repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
+    let entry_repo =
+      prime_domain::repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
     let temp_storage_repo: Box<dyn TempStorageRepository> = if config
       .mock_temp_storage
     {
-      Box::new(repos::TempStorageRepositoryMock::new(
+      Box::new(prime_domain::repos::TempStorageRepositoryMock::new(
         std::path::PathBuf::from("/tmp/nika-temp-storage"),
       ))
     } else {
       let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
       Box::new(
-        repos::TempStorageRepositoryCanonical::new(temp_storage_creds).await?,
+        prime_domain::repos::TempStorageRepositoryCanonical::new(
+          temp_storage_creds,
+        )
+        .await?,
       )
     };
 
@@ -124,7 +133,7 @@ impl AppState {
   }
 }
 
-#[hex::health::async_trait]
+#[prime_domain::hex::health::async_trait]
 impl health::HealthReporter for AppState {
   fn name(&self) -> &'static str { stringify!(AppState) }
   async fn health_check(&self) -> health::ComponentHealth {

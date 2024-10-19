@@ -1,6 +1,9 @@
 mod consumptive;
 
-use std::sync::{Arc, LazyLock};
+use std::{
+  ops::Bound,
+  sync::{Arc, LazyLock},
+};
 
 use hex::health::{self, HealthAware};
 use kv::prelude::*;
@@ -266,6 +269,41 @@ impl DatabaseAdapter for TikvAdapter {
     };
 
     Ok(Some(model))
+  }
+
+  #[instrument(skip(self), fields(table = M::TABLE_NAME))]
+  async fn enumerate_models<M: models::Model>(&self) -> Result<Vec<M>> {
+    let first_key = model_base_key::<M>(&models::RecordId::<M>::MIN());
+    let last_key = model_base_key::<M>(&models::RecordId::<M>::MAX());
+
+    let txn = self
+      .0
+      .begin_optimistic_transaction()
+      .await
+      .context("failed to begin optimistic transaction")
+      .map_err(FetchModelError::RetryableTransaction)?;
+
+    let (txn, scan_results) = txn
+      .csm_scan(Bound::Included(first_key), Bound::Included(last_key), 1000)
+      .await
+      .map_err(FetchModelError::Db)?;
+
+    commit(txn)
+      .await
+      .map_err(FetchModelError::RetryableTransaction)?;
+
+    let ids = scan_results
+      .into_iter()
+      .map(|(_, value)| {
+        Value::deserialize::<M>(value)
+          .into_diagnostic()
+          .context("failed to deserialize value into model")
+          .map_err(FetchModelError::Serde)
+          .map_err(miette::Report::from)
+      })
+      .collect::<Result<Vec<M>>>()?;
+
+    Ok(ids)
   }
 }
 

@@ -35,15 +35,19 @@ localFlake: { ... }: {
 
         # service runtimes
         redis
+
+        # leptos development
+        cargo-leptos # builds and runs leptos projects
+        binaryen # for wasm-opt
+        dart-sass # for compiling scss
+        tailwindcss # for tailwindcss
+        yarn # for populating local style node_modules
       ];
 
       motd = "\n  Welcome to the {2}nika{reset} dev shell. Run {1}menu{reset} for commands.\n";
 
       commands = let
         import-commands-module = path: (import path) (ps // { inherit bin-hl; });
-        graphviz-font-config = pkgs.makeFontsConf {
-          fontDirectories = [ pkgs.dejavu_fonts ];
-        };
       in [
         {
           name = "test";
@@ -72,7 +76,7 @@ localFlake: { ... }: {
 
         {
           name = "update-crate-graph";
-          command = "cp $(nix build .#crate-graph-image --print-out-paths)/crate-graph.png $PRJ_ROOT/media/crate-graph.png";
+          command = "cp $(nix build .#crate-graph-image --print-out-paths)/crate-graph.png $PRJ_ROOT/media/crate-graph.png --no-preserve=mode";
           help = "Update the crate graph";
           category = "[repo actions]";
         }

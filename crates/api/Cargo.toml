@@ -9,9 +9,6 @@ workspace = true
 
 [dependencies]
 art = { path = "../art" }
-hex = { path = "../hex" }
-repos = { path = "../repos", features = [ "mock-temp-storage" ] }
-db = { path = "../db" }
 mollusk = { path = "../mollusk" }
 storage = { path = "../storage" }
 tasks = { path = "../tasks" }

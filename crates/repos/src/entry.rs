@@ -1,5 +1,6 @@
 //! Provides a repository for the [`Entry`] domain model.
 
+use db::{FetchModelByIndexError, FetchModelError};
 use hex::health::{self, HealthAware};
 use models::{CacheRecordId, LaxSlug};
 pub use models::{Entry, EntryCreateRequest};
@@ -107,5 +108,10 @@ impl<DB: DatabaseAdapter> ModelRepository for EntryRepositoryCanonical<DB> {
       .base_repo
       .fetch_model_by_index(index_name, index_value)
       .await
+  }
+
+  #[instrument(skip(self))]
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
+    self.base_repo.enumerate_models().await
   }
 }

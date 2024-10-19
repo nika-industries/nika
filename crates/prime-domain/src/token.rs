@@ -1,7 +1,16 @@
+use std::sync::Arc;
+
 use hex::{health, Hexagonal};
-use models::{Token, TokenRecordId};
-use repos::{FetchModelError, ModelRepositoryFetcher, TokenRepository};
+use miette::Result;
+use models::{EitherSlug, Token, TokenRecordId};
+use repos::{
+  db::{FetchModelByIndexError, FetchModelError},
+  ModelRepositoryFetcher, TokenRepository,
+};
 use tracing::instrument;
+
+/// A dynamic [`TokenService`] trait object.
+pub type DynTokenService = Arc<Box<dyn TokenService>>;
 
 /// The error type for token verification.
 #[derive(Debug, thiserror::Error, miette::Diagnostic)]
@@ -73,6 +82,21 @@ impl<R: TokenRepository> ModelRepositoryFetcher for TokenServiceCanonical<R> {
     id: TokenRecordId,
   ) -> Result<Option<Token>, FetchModelError> {
     self.token_repo.fetch_model_by_id(id).await
+  }
+  #[instrument(skip(self))]
+  async fn fetch_model_by_index(
+    &self,
+    index_name: String,
+    index_value: EitherSlug,
+  ) -> Result<Option<Token>, FetchModelByIndexError> {
+    self
+      .token_repo
+      .fetch_model_by_index(index_name, index_value)
+      .await
+  }
+  #[instrument(skip(self))]
+  async fn enumerate_models(&self) -> Result<Vec<Token>> {
+    self.token_repo.enumerate_models().await
   }
 }
 

@@ -1,5 +1,6 @@
 //! Provides a repository for the [`Cache`] domain model.
 
+use db::{FetchModelByIndexError, FetchModelError};
 use hex::health::{self, HealthAware};
 use models::StrictSlug;
 pub use models::{Cache, CacheCreateRequest};
@@ -106,5 +107,10 @@ impl<DB: DatabaseAdapter> ModelRepository for CacheRepositoryCanonical<DB> {
       .base_repo
       .fetch_model_by_index(index_name, index_value)
       .await
+  }
+
+  #[instrument(skip(self))]
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
+    self.base_repo.enumerate_models().await
   }
 }

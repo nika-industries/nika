@@ -21,3 +21,6 @@ result
 
 # mprocs
 mprocs.log
+
+# leptos
+**/node_modules/

@@ -58,7 +58,7 @@ impl rope::Task for PrepareFetchPayloadTask {
       .ok_or(InternalError(format!("store not found: {:?}", cache.store)))?;
 
     // run through authentication
-    if !cache.public {
+    if matches!(cache.visibility, models::Visibility::Private) {
       // if the store is not public, we must have a token
       let token_id = token_id
         .ok_or(UnauthenticatedStoreAccessError(cache_name.to_string()))?;

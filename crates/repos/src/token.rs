@@ -95,4 +95,9 @@ impl<DB: DatabaseAdapter> ModelRepository for TokenRepositoryCanonical<DB> {
       .fetch_model_by_index(index_name, index_value)
       .await
   }
+
+  #[instrument(skip(self))]
+  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
+    self.base_repo.enumerate_models().await
+  }
 }

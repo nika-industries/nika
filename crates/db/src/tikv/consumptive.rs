@@ -1,3 +1,5 @@
+use std::ops::Bound;
+
 use kv::prelude::*;
 use miette::Result;
 
@@ -34,6 +36,24 @@ pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
     };
 
     Ok((self, value))
+  }
+
+  async fn csm_scan(
+    mut self,
+    start: Bound<Key>,
+    end: Bound<Key>,
+    limit: u32,
+  ) -> Result<(Self, Vec<(Key, Value)>)> {
+    let scan = match self.scan(start, end, limit).await {
+      Ok(s) => s,
+      Err(e) => {
+        return Err(
+          rollback_with_error(self, e.into(), "failed to scan values").await,
+        );
+      }
+    };
+
+    Ok((self, scan))
   }
 }
 

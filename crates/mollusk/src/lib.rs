@@ -1,18 +1,17 @@
 //! Provides standardized API schemas and errors for inter-service use.
 
+mod axum_json;
 mod common;
 mod confirm_token_by_secret_has_permission_error;
 mod creds_fetching_error;
 mod prepare_fetch_payload_error;
 
-use axum::{
-  http::StatusCode,
-  response::{IntoResponse, Response},
-  Json,
-};
+use axum_core::response::{IntoResponse, Response};
+use http::StatusCode;
 use miette::Diagnostic;
 use serde::Serialize;
 
+use self::axum_json::Json;
 pub use self::{
   common::*,
   confirm_token_by_secret_has_permission_error::ConfirmTokenBySecretHasPermissionError,
@@ -31,7 +30,7 @@ pub trait MolluskError: Diagnostic + Sized {
   /// This method should run any logging or tracing calls attached to the error.
   fn tracing(&self);
 
-  /// Converts the API error into an [`axum`] [`Response`].
+  /// Converts the API error into an [`axum-core`] [`Response`].
   fn into_external_response(self) -> Response {
     self.tracing();
     (

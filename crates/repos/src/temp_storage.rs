@@ -11,7 +11,6 @@ pub use storage::{
   WriteError as StorageWriteError,
 };
 
-#[cfg(feature = "mock-temp-storage")]
 pub use self::mock::TempStorageRepositoryMock;
 
 /// Descriptor trait for repositories that handle temp storage.
@@ -96,7 +95,6 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
   }
 }
 
-#[cfg(feature = "mock-temp-storage")]
 mod mock {
   use super::*;
 
