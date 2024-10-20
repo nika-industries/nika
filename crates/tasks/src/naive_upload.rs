@@ -56,12 +56,12 @@ impl rope::Task for NaiveUploadTask {
       .read(self.temp_storage_path.clone())
       .await
       .unwrap();
-    target_client.write(&self.path, temp_reader).await.unwrap();
+    let file_size = target_client.write(&self.path, temp_reader).await.unwrap();
 
     // create an Entry
     let entry_cr = models::EntryCreateRequest {
       path:  models::LaxSlug::new(self.path.to_string_lossy().to_string()),
-      size:  0,
+      size:  file_size,
       cache: cache.id,
       org:   cache.org,
     };
