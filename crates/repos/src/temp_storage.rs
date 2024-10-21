@@ -28,24 +28,23 @@ pub trait TempStorageRepository: Hexagonal {
   ) -> Result<TempStoragePath, StorageWriteError>;
 }
 
-// impl for smart pointer to dyn TempStorageRepository
 #[async_trait::async_trait]
-impl<I> TempStorageRepository for Box<I>
+impl<T, I> TempStorageRepository for T
 where
+  T: std::ops::Deref<Target = I> + Send + Sync + 'static,
   I: TempStorageRepository + ?Sized,
-  Box<I>: Hexagonal,
 {
   async fn read(
     &self,
     path: TempStoragePath,
   ) -> Result<DynAsyncReader, StorageReadError> {
-    (**self).read(path).await
+    self.deref().read(path).await
   }
   async fn store(
     &self,
     data: DynAsyncReader,
   ) -> Result<TempStoragePath, StorageWriteError> {
-    (**self).store(data).await
+    self.deref().store(data).await
   }
 }
 
@@ -69,8 +68,11 @@ impl TempStorageRepositoryCanonical {
 impl health::HealthReporter for TempStorageRepositoryCanonical {
   fn name(&self) -> &'static str { stringify!(TempStorageRepositoryCanonical) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::start(self.client.health_report().await)
-      .into()
+    health::AdditiveComponentHealth::from_futures(Some(
+      self.client.health_report(),
+    ))
+    .await
+    .into()
   }
 }
 

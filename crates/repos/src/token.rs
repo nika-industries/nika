@@ -57,8 +57,11 @@ impl<DB: DatabaseAdapter> health::HealthReporter
 {
   fn name(&self) -> &'static str { stringify!(TokenRepositoryCanonical<DB>) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::start(self.base_repo.health_report().await)
-      .into()
+    health::AdditiveComponentHealth::from_futures(Some(
+      self.base_repo.health_report(),
+    ))
+    .await
+    .into()
   }
 }
 
