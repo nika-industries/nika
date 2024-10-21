@@ -1,4 +1,17 @@
 //! Health checks and reporting.
+//!
+//! This crate provides a simple interface for defining health checks on
+//! hexagonal components.
+//!
+//! # Usage
+//! Implement the [`HealthReporter`] trait for your component. That's it.
+//!
+//! There is a blanket
+//! implementation of [`HealthAware`] for all types that implement
+//! [`HealthReporter`], and there is a blanket implementation of
+//! [`HealthReporter`] for any type that derefs to a type that implements
+//! [`HealthReporter`] (e.g. any combination of smart pointer or dynamic
+//! dispatch).
 
 use std::sync::Arc;
 
