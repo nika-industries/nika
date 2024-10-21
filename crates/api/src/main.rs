@@ -1,4 +1,22 @@
-//! API server that handles platform actions for the frontend and CLI.
+//! HTTP server for the Nika API.
+//!
+//! The API server itself runs on Axum, and serves to run tasks from the `tasks`
+//! crate in response to HTTP requests. It also serves as the platform threshold
+//! for authentication.
+//!
+//! # CLI
+//! It has two CLI subcommands: `start` and `health`.
+//! - `start` starts the API server in regular operation.
+//! - `health` runs the health check, dumps it as JSON to `stdout`, and exits.
+//!   This is generally for testing configuration in tests.
+//!
+//! See `api --help` for more information and other options.
+//!
+//! # Environment Variables
+//! It has no extra required environment variables, outside of those required by
+//! its services. If you're missing one, it will tell you. Your exact service
+//! configuration depends on a number of other crates, in addition to which
+//! things you're mocking.
 
 mod cmd;
 mod temp_storage_payload;
