@@ -1,4 +1,18 @@
 //! Provides a proc-macro for rendering logos to ASCII-art strings.
+//!
+//! This crate is really very simple. It provides a single macro, `ascii_art`,
+//! which takes a single argument: a string literal representing the path to an
+//! image file. The macro reads the image file, decodes it, and converts it to
+//! an ASCII-art string using the `artem` crate. The ASCII-art string
+//! is then printed to stderr, plus a newline.
+//!
+//! # Example
+//!
+//! ```rust
+//! use art::ascii_art;
+//!
+//! ascii_art!("../../media/ascii_logo.png");
+//! ```
 
 extern crate proc_macro;
 
