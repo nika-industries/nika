@@ -8,31 +8,30 @@ use crate::{fetchers::*, utils::*};
 fn Cache(#[prop(into)] cache: MaybeSignal<models::Cache>) -> impl IntoView {
   let cache = Signal::derive(move || cache.get());
 
-  let cache_id = move || cache.with(|c| c.id.to_string());
-  let cache_page_url =
-    Signal::derive(move || format!("/model/cache/{}", cache_id()));
+  let cache_id = Signal::derive(move || cache.with(|c| c.id));
 
-  let cache_name = move || cache.with(|c| c.name.to_string());
-  let cache_visibility = move || cache.with(|c| c.visibility.to_string());
-  let cache_store = move || cache.with(|c| c.store.to_string());
-  let cache_store_url =
-    Signal::derive(move || format!("/model/store/{}", cache_store()));
+  let cache_name = Signal::derive(move || cache.with(|c| c.name.clone()));
+  let cache_visibility = Signal::derive(move || cache.with(|c| c.visibility));
+  let cache_store = Signal::derive(move || cache.with(|c| c.store));
 
   view! {
     <Card>
       <TitleRow>
         <SuccessDot />
-        <a href={cache_page_url} class="font-semibold tracking-tight text-2xl link link-underline">
-          { cache_name }
-        </a>
+        <CacheIdTitleLink id=cache_id />
       </TitleRow>
       <PropList>
-        <KeyValue key="ID:"> { cache_id } </KeyValue>
-        <KeyValue key="Visibility:"> { cache_visibility } </KeyValue>
+        <KeyValue key="ID:">
+          <CacheIdLink id=cache_id />
+        </KeyValue>
+        <KeyValue key="Name:">
+          <EntityName name=cache_name />
+        </KeyValue>
+        <KeyValue key="Visibility:">
+          <Visibility vis=cache_visibility />
+        </KeyValue>
         <KeyValue key="Store:">
-          <Link href={cache_store_url}>
-            { cache_store }
-          </Link>
+          <StoreIdLink id=cache_store />
         </KeyValue>
       </PropList>
     </Card>

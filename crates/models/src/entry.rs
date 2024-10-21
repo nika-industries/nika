@@ -17,7 +17,7 @@ pub struct Entry {
   /// The entry's path.
   pub path:  LaxSlug,
   /// The entry's file size
-  pub size:  u64,
+  pub size:  dvf::FileSize,
   /// The entry's cache.
   pub cache: CacheRecordId,
   /// The [`Org`](crate::Org) the store belongs to.
@@ -42,7 +42,7 @@ pub struct EntryCreateRequest {
   /// The entry's path.
   pub path:  LaxSlug,
   /// The entry's file size
-  pub size:  u64,
+  pub size:  dvf::FileSize,
   /// The entry's cache.
   pub cache: CacheRecordId,
   /// The [`Org`](crate::Org) the store belongs to.

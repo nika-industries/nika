@@ -100,18 +100,30 @@ impl StorageClient for S3CompatStorageClient {
     &self,
     input_path: &Path,
     mut reader: DynAsyncReader,
-  ) -> Result<(), WriteError> {
+  ) -> Result<models::FileSize, WriteError> {
+    // sanitize the destination path
     let input_path_string = input_path.to_str().unwrap().to_string();
     let path = object_store::path::Path::parse(input_path_string.clone())
       .map_err(|_| WriteError::InvalidPath(input_path_string))?;
 
+    // chunk size of 10MB
     let chunk_size = 10 * 1024 * 1024;
 
+    // start counting the file size by adapting the reader
+    let mut file_size: u64 = 0;
+    let file_size_ref = &mut file_size;
+    let mut reader = crate::counted_async_reader::CountedAsyncReader::new(
+      &mut reader,
+      file_size_ref,
+    );
+
+    // create a stream of bytes chunks from the reader
     let bytes_chunks = tokio_util::io::ReaderStream::new(
       tokio::io::BufReader::with_capacity(chunk_size, &mut reader),
     )
     .bytes_chunks(chunk_size);
 
+    // initiate the multipart with the destination storage
     tracing::info!("starting multipart");
     let multipart = Arc::new(Mutex::new(
       self
@@ -123,6 +135,7 @@ impl StorageClient for S3CompatStorageClient {
         .map_err(WriteError::MultipartError)?,
     ));
 
+    // create a stream of multipart `put_part` futures, running 3 at a time
     let part_stream = bytes_chunks
       .map_err(|e| {
         Report::from_err(e).wrap_err("failed to get bytes chunk from reader")
@@ -145,11 +158,13 @@ impl StorageClient for S3CompatStorageClient {
       })
       .buffered(3);
 
+    // wait for all parts to be uploaded
     let _ = part_stream
       .try_collect::<Vec<_>>()
       .await
       .map_err(WriteError::MultipartError)?;
 
+    // complete the multipart
     multipart
       .lock()
       .await
@@ -161,6 +176,6 @@ impl StorageClient for S3CompatStorageClient {
 
     tracing::info!("finishing multipart");
 
-    Ok(())
+    Ok(models::FileSize::new(file_size))
   }
 }

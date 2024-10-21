@@ -8,11 +8,10 @@ use crate::{fetchers::*, utils::*};
 fn Token(#[prop(into)] token: MaybeSignal<models::Token>) -> impl IntoView {
   let token = Signal::derive(move || token.get());
 
-  let token_id = move || token.with(|t| t.id.to_string());
-  let token_page_url =
-    Signal::derive(move || format!("/model/token/{}", token_id()));
+  let token_id = Signal::derive(move || token.with(|t| t.id));
 
-  let token_nickname = move || token.with(|t| t.nickname.to_string());
+  let token_nickname =
+    Signal::derive(move || token.with(|t| t.nickname.clone()));
   let token_secret = move || token.with(|t| t.secret.to_string());
   let token_perms = move || token.with(|t| format!("{:#?}", t.perms));
 
@@ -20,13 +19,15 @@ fn Token(#[prop(into)] token: MaybeSignal<models::Token>) -> impl IntoView {
     <Card>
       <TitleRow>
         <SuccessDot />
-        <a href={token_page_url} class="font-semibold tracking-tight text-2xl link link-underline">
-          { token_nickname }
-        </a>
+        <TokenIdTitleLink id=token_id />
       </TitleRow>
       <PropList>
-        <KeyValue key="ID:"> { token_id } </KeyValue>
-        <KeyValue key="Nickname:"> { token_nickname } </KeyValue>
+        <KeyValue key="ID:">
+          <TokenIdLink id=token_id />
+        </KeyValue>
+        <KeyValue key="Nickname:">
+          <EntityNickname nickname=token_nickname />
+        </KeyValue>
         <KeyValue key="Secret:"> { token_secret } </KeyValue>
       </PropList>
       <div class="flex flex-row gap-2 items-start">
