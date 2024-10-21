@@ -14,7 +14,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, LitStr};
 
-/// Produces an ASCII-art string from the the provided file.
+/// Prints ASCII-art decoded from the provided image file.
 #[proc_macro]
 pub fn ascii_art(input: TokenStream) -> TokenStream {
   // Parse the input token stream as a string literal
@@ -47,7 +47,7 @@ pub fn ascii_art(input: TokenStream) -> TokenStream {
 
   // Generate the ASCII art string as a static literal
   let output = quote! {
-      eprintln!("\n{}", #ascii_art);
+      eprintln!(#ascii_art);
   };
 
   TokenStream::from(output)
