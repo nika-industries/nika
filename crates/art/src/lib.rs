@@ -1,4 +1,18 @@
 //! Provides a proc-macro for rendering logos to ASCII-art strings.
+//!
+//! This crate is really very simple. It provides a single macro, `ascii_art`,
+//! which takes a single argument: a string literal representing the path to an
+//! image file. The macro reads the image file, decodes it, and converts it to
+//! an ASCII-art string using the `artem` crate. The ASCII-art string
+//! is then printed to stderr, plus a newline.
+//!
+//! # Example
+//!
+//! ```rust
+//! use art::ascii_art;
+//!
+//! ascii_art!("../../media/ascii_logo.png");
+//! ```
 
 extern crate proc_macro;
 
@@ -14,7 +28,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, LitStr};
 
-/// Produces an ASCII-art string from the the provided file.
+/// Prints ASCII-art decoded from the provided image file.
 #[proc_macro]
 pub fn ascii_art(input: TokenStream) -> TokenStream {
   // Parse the input token stream as a string literal
@@ -47,7 +61,7 @@ pub fn ascii_art(input: TokenStream) -> TokenStream {
 
   // Generate the ASCII art string as a static literal
   let output = quote! {
-      eprintln!("\n{}", #ascii_art);
+      eprintln!(#ascii_art);
   };
 
   TokenStream::from(output)

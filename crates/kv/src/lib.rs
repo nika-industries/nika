@@ -1,4 +1,20 @@
 //! A generic interface for key-value stores.
+//!
+//! Specifically, this crate is for **transactional** key-value stores. We also
+//! assume that the key and value types are both byte arrays. The primary
+//! interface is [`KvTransactional`], which provides methods for beginning
+//! transactions.
+//!
+//! The transactions themselves implement [`KvPrimitive`] and [`KvTransaction`],
+//! which provide basic operations and transaction-specific operations,
+//! respectively.
+//!
+//! Other highlights include a zero-copy segment-based key encoding scheme, and
+//! automatic messagepack ser/de for values.
+//!
+//! `tikv` is the only supported platform at the moment.
+//!
+//! This crate is yet to be hexagonalized.
 
 pub mod key;
 #[cfg(feature = "tikv")]

@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
-use slugger::LaxSlug;
 
-use crate::{CacheRecordId, Model, OrgRecordId, RecordId};
+use crate::{CacheRecordId, LaxSlug, Model, OrgRecordId, RecordId};
 
 /// The [`Entry`] table name.
 pub const ENTRY_TABLE_NAME: &str = "entry";

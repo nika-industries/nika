@@ -1,4 +1,8 @@
 //! Provides repository traits and implementors.
+//!
+//! Repositories are used to abstract the storage layer from the rest of the
+//! application. They are used by services to interact with table-like or object
+//! storage.
 
 mod base;
 mod cache;

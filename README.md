@@ -28,15 +28,18 @@ commands, which you can explore with the `menu` command.
 
 - `api` (bin) - main action entrypoint over HTTP.
 - `art` - macro-based ascii art.
+- `cart-app` - cartographer leptos app logic.
+- `cart-frontend` - cartographer leptos frontend wrapper.
+- `cart-server` (bin) - cartographer leptos server.
 - `cli` (bin) - command line interface (mostly useless right now).
 - `daemon` (bin) - task runner daemon.
 - `db` - model-based database adapter interface, and TiKV implementer.
 - `dvf` - usage-specific newtypes used in models.
-- `fetcher` - temporary binary for the fetch pathway.
+- `fetcher` (bin) - temporary binary for the fetch pathway.
 - `health` - health check framework
 - `hex` - foundational hexagonal architecture traits.
 - `kv` - key-value store interface and types, and TiKV implementer.
-- `migrator` (bin) - database migration tool.
+- `migrator` (bin) - database test data migration tool.
 - `models` - primary db model types.
 - `mollusk` - interfaces for HTTP errors, public and private.
 - `names` - name generator.
