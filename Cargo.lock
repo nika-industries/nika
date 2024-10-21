@@ -2431,7 +2431,6 @@ version = "0.1.0"
 dependencies = [
  "dvf",
  "serde",
- "slugger",
  "ulid",
 ]
 
