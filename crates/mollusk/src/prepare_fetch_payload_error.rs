@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
   common::{
     NoMatchingCacheError, UnauthenticatedStoreAccessError,
-    UnauthorizedStoreAccessError,
+    UnauthorizedCacheAccessError,
   },
   InternalError, MalformedTokenSecretError, MissingPathError, MolluskError,
   NonExistentTokenError,
@@ -22,7 +22,7 @@ pub enum PrepareFetchPayloadError {
   UnauthenticatedStoreAccess(#[from] UnauthenticatedStoreAccessError),
   /// The store access was unauthorized (token supplied but insufficient).
   #[error(transparent)]
-  UnauthorizedStoreAccess(#[from] UnauthorizedStoreAccessError),
+  UnauthorizedStoreAccess(#[from] UnauthorizedCacheAccessError),
   /// The supplied token does not exist.
   #[error(transparent)]
   NonExistentToken(#[from] NonExistentTokenError),

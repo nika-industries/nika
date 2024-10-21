@@ -55,30 +55,30 @@ impl MolluskError for UnauthenticatedStoreAccessError {
 /// the store.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error(
-  "The given token does not have access to the store {store_name:?}; required \
+  "The given token does not have access to the cache {cache_name:?}; required \
    permission: \"{permission}\""
 )]
-pub struct UnauthorizedStoreAccessError {
-  /// The name of the store.
-  pub store_name: String,
+pub struct UnauthorizedCacheAccessError {
+  /// The name of the cache.
+  pub cache_name: String,
   /// The required permission.
   pub permission: models::CachePermissionType,
 }
 
-impl MolluskError for UnauthorizedStoreAccessError {
+impl MolluskError for UnauthorizedCacheAccessError {
   fn status_code(&self) -> StatusCode { StatusCode::FORBIDDEN }
   fn slug(&self) -> &'static str { "unauthorized-store-access" }
   fn description(&self) -> String {
     format!(
       "The given token does not have access to the store {:?}; required \
        permission: {:?}",
-      self.store_name, self.permission
+      self.cache_name, self.permission
     )
   }
   fn tracing(&self) {
     tracing::warn!(
       "access to requested store {:?} is unauthorized: requires {:?}",
-      self.store_name,
+      self.cache_name,
       self.permission
     );
   }
