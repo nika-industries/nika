@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 async-trait.workspace = true
+futures.workspace = true
 serde.workspace = true
 
 [lints]

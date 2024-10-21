@@ -68,8 +68,11 @@ impl TempStorageRepositoryCanonical {
 impl health::HealthReporter for TempStorageRepositoryCanonical {
   fn name(&self) -> &'static str { stringify!(TempStorageRepositoryCanonical) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::start(self.client.health_report().await)
-      .into()
+    health::AdditiveComponentHealth::from_futures(Some(
+      self.client.health_report(),
+    ))
+    .await
+    .into()
   }
 }
 

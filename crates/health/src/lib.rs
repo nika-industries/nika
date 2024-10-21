@@ -13,6 +13,8 @@
 //! [`HealthReporter`] (e.g. any combination of smart pointer or dynamic
 //! dispatch).
 
+use std::future::Future;
+
 pub use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -113,21 +115,15 @@ pub struct AdditiveComponentHealth {
   components: Vec<ComponentHealthReport>,
 }
 
-impl FromIterator<ComponentHealthReport> for AdditiveComponentHealth {
-  fn from_iter<I: IntoIterator<Item = ComponentHealthReport>>(iter: I) -> Self {
-    AdditiveComponentHealth {
-      components: iter.into_iter().collect(),
-    }
-  }
-}
-
 impl AdditiveComponentHealth {
-  /// Create a new `AdditiveComponentHealth`.
-  pub fn start(
-    component: impl Into<ComponentHealthReport>,
-  ) -> AdditiveComponentHealth {
+  /// Create a new `AdditiveComponentHealth` from a collection of futures.
+  pub async fn from_futures<
+    I: IntoIterator<Item = impl Future<Output = ComponentHealthReport>>,
+  >(
+    iter: I,
+  ) -> Self {
     AdditiveComponentHealth {
-      components: vec![component.into()],
+      components: futures::future::join_all(iter).await,
     }
   }
   /// Add a component to the health report.

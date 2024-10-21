@@ -56,9 +56,10 @@ impl<R: EntryRepository> EntryServiceCanonical<R> {
 impl<R: EntryRepository> health::HealthReporter for EntryServiceCanonical<R> {
   fn name(&self) -> &'static str { stringify!(EntryServiceCanonical<R>) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::start(
-      self.entry_repo.health_report().await,
-    )
+    health::AdditiveComponentHealth::from_futures(Some(
+      self.entry_repo.health_report(),
+    ))
+    .await
     .into()
   }
 }

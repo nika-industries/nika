@@ -44,9 +44,10 @@ impl<R: StoreRepository> StoreServiceCanonical<R> {
 impl<R: StoreRepository> health::HealthReporter for StoreServiceCanonical<R> {
   fn name(&self) -> &'static str { stringify!(StoreServiceCanonical<R>) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::start(
-      self.store_repo.health_report().await,
-    )
+    health::AdditiveComponentHealth::from_futures(Some(
+      self.store_repo.health_report(),
+    ))
+    .await
     .into()
   }
 }

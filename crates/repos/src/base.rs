@@ -49,9 +49,10 @@ impl<M: models::Model, DB: DatabaseAdapter> health::HealthReporter
 {
   fn name(&self) -> &'static str { stringify!(BaseRepository<M, DB>) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::start(
-      self.db_adapter.health_report().await,
-    )
+    health::AdditiveComponentHealth::from_futures(Some(
+      self.db_adapter.health_report(),
+    ))
+    .await
     .into()
   }
 }

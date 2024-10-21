@@ -49,9 +49,10 @@ impl<R: CacheRepository> CacheServiceCanonical<R> {
 impl<R: CacheRepository> health::HealthReporter for CacheServiceCanonical<R> {
   fn name(&self) -> &'static str { stringify!(CacheServiceCanonical<R>) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::start(
-      self.cache_repo.health_report().await,
-    )
+    health::AdditiveComponentHealth::from_futures(Some(
+      self.cache_repo.health_report(),
+    ))
+    .await
     .into()
   }
 }

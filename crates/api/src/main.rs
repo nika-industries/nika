@@ -155,13 +155,14 @@ impl AppState {
 impl health::HealthReporter for AppState {
   fn name(&self) -> &'static str { stringify!(AppState) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::from_iter(vec![
-      self.cache_service.health_report().await,
-      self.store_service.health_report().await,
-      self.token_service.health_report().await,
-      self.entry_service.health_report().await,
-      self.temp_storage_service.health_report().await,
+    health::AdditiveComponentHealth::from_futures(vec![
+      self.cache_service.health_report(),
+      self.store_service.health_report(),
+      self.token_service.health_report(),
+      self.entry_service.health_report(),
+      self.temp_storage_service.health_report(),
     ])
+    .await
     .into()
   }
 }
