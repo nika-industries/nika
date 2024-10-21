@@ -13,8 +13,6 @@
 //! [`HealthReporter`] (e.g. any combination of smart pointer or dynamic
 //! dispatch).
 
-use std::sync::Arc;
-
 pub use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -28,17 +26,14 @@ pub trait HealthReporter: Send + Sync + 'static {
 }
 
 #[async_trait::async_trait]
-impl<T: HealthReporter + ?Sized> HealthReporter for Box<T> {
-  fn name(&self) -> &'static str { T::name(self) }
+impl<T, I> HealthReporter for T
+where
+  T: std::ops::Deref<Target = I> + Send + Sync + 'static,
+  I: HealthReporter + ?Sized,
+{
+  fn name(&self) -> &'static str { self.deref().name() }
   async fn health_check(&self) -> ComponentHealth {
-    T::health_check(self).await
-  }
-}
-#[async_trait::async_trait]
-impl<T: HealthReporter + ?Sized> HealthReporter for Arc<T> {
-  fn name(&self) -> &'static str { T::name(self) }
-  async fn health_check(&self) -> ComponentHealth {
-    T::health_check(self).await
+    self.deref().health_check().await
   }
 }
 
