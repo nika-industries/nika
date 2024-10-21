@@ -92,7 +92,7 @@ impl TempStoragePath {
 }
 
 /// An entity's visibility.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Visibility {
   /// The entity is public.
   Public,
