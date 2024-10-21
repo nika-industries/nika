@@ -1,4 +1,10 @@
 //! Generates names.
+//!
+//! Really, this crate is delightfully simple. I stole all the names from
+//! Zellij. I'm not even sorry; they're great names. (Zellij is MIT licensed,
+//! so I'm allowed to do that.)
+//!
+//! This is mainly used to generate random worker names at runtime.
 
 const ADJECTIVES: &[&str] = &[
   "adamant",
@@ -138,16 +144,16 @@ const NOUNS: &[&str] = &[
 
 use nanorand::Rng;
 
-fn pick_from(options: &[&'static str]) -> String {
+fn pick_from(options: &[&'static str]) -> &'static str {
   let mut rng = nanorand::tls_rng();
   let index = rng.generate::<usize>() % options.len();
-  options[index].to_string()
+  options[index]
 }
 
 /// Picks a random noun from the list.
-pub fn noun() -> String { pick_from(NOUNS) }
+pub fn noun() -> &'static str { pick_from(NOUNS) }
 /// Picks a random adjective from the list.
-pub fn adjective() -> String { pick_from(ADJECTIVES) }
+pub fn adjective() -> &'static str { pick_from(ADJECTIVES) }
 
 /// Assembles a name from a random noun and adjective.
 pub fn name() -> String {
