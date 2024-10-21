@@ -66,7 +66,7 @@ impl rope::Task for PrepareFetchPayloadTask {
         .ok_or(UnauthenticatedStoreAccessError(cache_name.to_string()))?;
 
       let required_permission = models::Permission::CachePermission {
-        store_id:   store.id,
+        cache_id:   cache.id,
         permission: models::CachePermissionType::Read,
       };
       let required_permission_set =
@@ -83,8 +83,8 @@ impl rope::Task for PrepareFetchPayloadTask {
       let authorized = token.authorized(&required_permission_set);
 
       if !authorized {
-        Err(UnauthorizedStoreAccessError {
-          store_name: store.nickname.clone().into_inner().into_inner(),
+        Err(UnauthorizedCacheAccessError {
+          cache_name: cache.name.clone().into_inner().into_inner(),
           permission: models::CachePermissionType::Read,
         })?;
       }

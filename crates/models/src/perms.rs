@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::StoreRecordId;
+use crate::CacheRecordId;
 
 /// A permission set for a `Store`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -31,8 +31,8 @@ impl FromIterator<Permission> for PermissionSet {
 pub enum Permission {
   /// A store permission.
   CachePermission {
-    /// The store that the permission is for.
-    store_id:   StoreRecordId,
+    /// The cache that the permission is for.
+    cache_id:   CacheRecordId,
     /// The store permission type.
     permission: CachePermissionType,
   },

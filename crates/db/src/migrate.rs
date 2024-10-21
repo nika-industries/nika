@@ -57,11 +57,11 @@ impl<T: DatabaseAdapter> Migratable for T {
       perms:    PermissionSet(
         vec![
           Permission::CachePermission {
-            store_id:   local_file_store.id,
+            cache_id:   albert_cache.id,
             permission: CachePermissionType::Read,
           },
           Permission::CachePermission {
-            store_id:   local_file_store.id,
+            cache_id:   albert_cache.id,
             permission: CachePermissionType::Write,
           },
         ]
