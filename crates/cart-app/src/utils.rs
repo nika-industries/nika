@@ -1,17 +1,21 @@
 use leptos::prelude::*;
 
-#[component]
-pub fn PageTitle(
-  children: Children,
-  #[prop(default = 1)] level: i32,
-) -> impl IntoView {
-  let size_class = match level {
+fn level_to_title_size_class(level: i32) -> &'static str {
+  match level {
     1 => "text-4xl",
     2 => "text-3xl",
     3 => "text-2xl",
     4 => "text-xl",
     _ => "text-lg",
-  };
+  }
+}
+
+#[component]
+pub fn PageTitle(
+  children: Children,
+  #[prop(default = 1)] level: i32,
+) -> impl IntoView {
+  let size_class = level_to_title_size_class(level);
   let class = format!("font-semibold tracking-tight {size_class}");
 
   view! {
@@ -104,10 +108,15 @@ pub fn Link(
 #[component]
 pub fn TitleLink(
   #[prop(into)] href: MaybeSignal<String>,
+  #[prop(default = 1)] level: i32,
   children: Children,
 ) -> impl IntoView {
+  let size_class = level_to_title_size_class(level);
+  let class =
+    format!("font-semibold tracking-tight {size_class} link link-underline");
+
   view! {
-    <a href={href} class="font-semibold tracking-tight text-2xl link link-underline">
+    <a href={href} class=class>
       { children() }
     </a>
   }
@@ -135,5 +144,103 @@ pub fn Card(children: Children) -> impl IntoView {
     <div class="w-full max-w-3xl p-4 flex flex-col gap-2 bg-gray-2 border border-gray-6 rounded-lg shadow">
       { children() }
     </div>
+  }
+}
+
+macro_rules! id_component_and_link {
+  ($component:ident, $component_link:ident, $component_title_link:ident, $record:ty, $route:expr) => {
+    #[component]
+    pub fn $component(#[prop(into)] id: MaybeSignal<$record>) -> impl IntoView {
+      view! {
+        { move || id().to_string() }
+      }
+    }
+
+    #[component]
+    pub fn $component_link(
+      #[prop(into)] id: MaybeSignal<$record>,
+    ) -> impl IntoView {
+      let id = Signal::derive(id);
+      let id_url =
+        Signal::derive(move || format!("/model/{}/{}", $route, id()));
+
+      view! {
+        <Link href={id_url}>
+          <$component id=id />
+        </Link>
+      }
+    }
+
+    #[component]
+    pub fn $component_title_link(
+      #[prop(into)] id: MaybeSignal<$record>,
+      #[prop(default = 2)] level: i32,
+    ) -> impl IntoView {
+      let id = Signal::derive(id);
+      let id_url =
+        Signal::derive(move || format!("/model/{}/{}", $route, id()));
+
+      view! {
+        <TitleLink href={id_url} level=level>
+          <$component id=id />
+        </TitleLink>
+      }
+    }
+  };
+}
+
+id_component_and_link!(
+  StoreId,
+  StoreIdLink,
+  StoreIdTitleLink,
+  models::StoreRecordId,
+  "store"
+);
+id_component_and_link!(
+  CacheId,
+  CacheIdLink,
+  CacheIdTitleLink,
+  models::CacheRecordId,
+  "cache"
+);
+id_component_and_link!(
+  EntryId,
+  EntryIdLink,
+  EntryIdTitleLink,
+  models::EntryRecordId,
+  "entry"
+);
+id_component_and_link!(
+  TokenId,
+  TokenIdLink,
+  TokenIdTitleLink,
+  models::TokenRecordId,
+  "token"
+);
+
+#[component]
+pub fn Visibility(
+  #[prop(into)] vis: MaybeSignal<models::Visibility>,
+) -> impl IntoView {
+  view! {
+    { move || vis().to_string() }
+  }
+}
+
+#[component]
+pub fn EntityName(
+  #[prop(into)] name: MaybeSignal<models::EntityName>,
+) -> impl IntoView {
+  view! {
+    { move || name().to_string() }
+  }
+}
+
+#[component]
+pub fn EntityNickname(
+  #[prop(into)] nickname: MaybeSignal<models::EntityNickname>,
+) -> impl IntoView {
+  view! {
+    { move || nickname().to_string() }
   }
 }

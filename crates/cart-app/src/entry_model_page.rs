@@ -8,32 +8,24 @@ use crate::{fetchers::*, utils::*};
 fn Entry(#[prop(into)] entry: MaybeSignal<models::Entry>) -> impl IntoView {
   let entry = Signal::derive(move || entry.get());
 
-  let entry_id = move || entry.with(|e| e.id.to_string());
-  let entry_page_url =
-    Signal::derive(move || format!("/model/entry/{}", entry_id()));
+  let entry_id = Signal::derive(move || entry.with(|e| e.id));
 
-  let entry_path = move || entry.with(|e| e.path.to_string());
+  let entry_path = move || entry.with(|e| format!("{:?}", e.path.to_string()));
   let entry_size = move || entry.with(|e| e.size.to_string());
-  let entry_cache = move || entry.with(|e| e.cache.to_string());
-  let entry_cache_url =
-    Signal::derive(move || format!("/model/cache/{}", entry_cache()));
+  let entry_cache = Signal::derive(move || entry.with(|e| e.cache));
 
   view! {
     <Card>
       <TitleRow>
         <SuccessDot />
-        <TitleLink href=entry_page_url>
-          { entry_path }
-        </TitleLink>
+        <EntryIdTitleLink id=entry_id />
       </TitleRow>
       <PropList>
-        <KeyValue key="ID:"> { entry_id } </KeyValue>
+        <KeyValue key="ID:"><EntryIdLink id=entry_id /></KeyValue>
         <KeyValue key="Path:"> { entry_path } </KeyValue>
         <KeyValue key="Size:"> { entry_size } </KeyValue>
         <KeyValue key="Cache:">
-          <Link href=entry_cache_url>
-            { entry_cache }
-          </Link>
+          <CacheIdLink id=entry_cache />
         </KeyValue>
       </PropList>
     </Card>

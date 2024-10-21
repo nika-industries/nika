@@ -8,22 +8,25 @@ use crate::{fetchers::*, utils::*};
 fn Store(#[prop(into)] store: MaybeSignal<models::Store>) -> impl IntoView {
   let store = Signal::derive(move || store.get());
 
-  let store_id = move || store.with(|c| c.id.to_string());
-  let store_page_url = move || format!("/model/store/{}", store_id());
-  let store_config = move || store.with(|c| format!("{:#?}", c.config));
+  let store_id = Signal::derive(move || store.with(|c| c.id));
 
-  let store_nickname = move || store.with(|c| c.nickname.to_string());
+  let store_nickname =
+    Signal::derive(move || store.with(|c| c.nickname.clone()));
+  let store_config = move || store.with(|c| format!("{:#?}", c.config));
 
   view! {
     <Card>
       <TitleRow>
         <SuccessDot />
-        <a href={store_page_url} class="font-semibold tracking-tight text-2xl link link-underline">
-          { store_nickname }
-        </a>
+        <StoreIdTitleLink id=store_id />
       </TitleRow>
       <PropList>
-        <KeyValue key="ID:"> { store_id } </KeyValue>
+        <KeyValue key="ID:">
+          <StoreIdLink id=store_id />
+        </KeyValue>
+        <KeyValue key="Nickname:">
+          <EntityNickname nickname=store_nickname />
+        </KeyValue>
       </PropList>
       <div class="flex flex-row gap-2 items-start">
         <BoxHighlight> "Config:" </BoxHighlight>
