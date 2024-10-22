@@ -64,21 +64,7 @@ impl<DB: DatabaseAdapter> CacheRepositoryCanonical<DB> {
   }
 }
 
-#[async_trait::async_trait]
-impl<DB: DatabaseAdapter> health::HealthReporter
-  for CacheRepositoryCanonical<DB>
-{
-  fn name(&self) -> &'static str { stringify!(CacheRepositoryCanonical<DB>) }
-  async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::from_futures(Some(
-      self.base_repo.health_report(),
-    ))
-    .await
-    .into()
-  }
-}
-
-crate::impl_model_repository!(
+crate::impl_repository_on_base!(
   CacheRepositoryCanonical,
   Cache,
   CacheCreateRequest,

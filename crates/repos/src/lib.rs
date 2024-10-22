@@ -184,8 +184,20 @@ where
 
 /// Macro to implement the `ModelRepository` trait for a given repository.
 #[macro_export]
-macro_rules! impl_model_repository {
+macro_rules! impl_repository_on_base {
   ($canonical:ident, $model:ty, $create_request:ty, $create_error:ty) => {
+    #[async_trait::async_trait]
+    impl<DB: DatabaseAdapter> health::HealthReporter for $canonical<DB> {
+      fn name(&self) -> &'static str { stringify!($canonical<DB>) }
+      async fn health_check(&self) -> health::ComponentHealth {
+        health::AdditiveComponentHealth::from_futures(Some(
+          self.base_repo.health_report(),
+        ))
+        .await
+        .into()
+      }
+    }
+
     #[async_trait::async_trait]
     impl<DB: DatabaseAdapter> ModelRepository for $canonical<DB> {
       type Model = $model;
