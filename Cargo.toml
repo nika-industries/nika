@@ -38,10 +38,10 @@ clap = { version = "4.5", features = [ "derive" ] }
 nutype = { version = "0.5" }
 
 # leptos-specific
-leptos = { version = "0.7.0-gamma3", features = ["nightly", "experimental-islands"] }
-leptos_axum = { version = "0.7.0-gamma3", features = [] }
-leptos_meta = { version = "0.7.0-gamma3", features = [] }
-leptos_router = { version = "0.7.0-gamma3", features = ["nightly"] }
+leptos = { version = "0.7.0-rc0", features = ["nightly", "experimental-islands"] }
+leptos_axum = { version = "0.7.0-rc0", features = [] }
+leptos_meta = { version = "0.7.0-rc0", features = [] }
+leptos_router = { version = "0.7.0-rc0", features = ["nightly"] }
 tower = { version = "0.5", features = ["full"] }
 tower-http = { version = "0.6", features = ["full"] }
 wasm-bindgen = "=0.2.93"
