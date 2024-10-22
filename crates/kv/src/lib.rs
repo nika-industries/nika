@@ -19,6 +19,7 @@
 pub mod key;
 #[cfg(feature = "tikv")]
 pub mod tikv;
+pub mod txn_ext;
 pub mod value;
 
 use std::{future::Future, ops::Bound};
@@ -32,8 +33,8 @@ pub mod prelude {
   #[cfg(feature = "tikv")]
   pub use crate::tikv::TikvClient;
   pub use crate::{
-    key::Key, value::Value, KvError, KvPrimitive, KvResult, KvTransaction,
-    KvTransactional,
+    key::Key, txn_ext::KvTransactionExt, value::Value, KvError, KvPrimitive,
+    KvResult, KvTransaction, KvTransactional,
   };
 }
 

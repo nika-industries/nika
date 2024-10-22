@@ -1,3 +1,5 @@
+//! Key-value store implementation.
+
 mod consumptive;
 
 use std::{
@@ -50,40 +52,6 @@ fn index_base_key<M: models::Model>(index_name: &str) -> Key {
   Key::new_lazy(&INDEX_NS_SEGMENT)
     .with(StrictSlug::new(M::TABLE_NAME.to_string()))
     .with(StrictSlug::new(index_name))
-}
-
-/// Rollback fn for "recoverable" - effectively, *consumable* - errors.
-#[instrument(skip(txn))]
-pub(crate) async fn rollback<T: KvTransaction>(mut txn: T) -> Result<()> {
-  txn
-    .rollback()
-    .await
-    .context("failed to rollback transaction")
-}
-
-/// Rollback fn for "unrecoverable" errors (unexpected error paths).
-#[instrument(skip(txn, error, context))]
-pub(crate) async fn rollback_with_error<T: KvTransaction>(
-  txn: T,
-  error: miette::Report,
-  context: &'static str,
-) -> miette::Report {
-  if let Err(e) = rollback(txn).await {
-    tracing::error!("failed to rollback transaction: {:?}", e);
-    return e;
-  }
-  let e = error.wrap_err(context);
-  tracing::error!("unrecoverable rollback: {:?}", e);
-  e
-}
-
-#[instrument(skip(txn))]
-pub(crate) async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
-  if let Err(e) = txn.commit().await.context("failed to commit transaction") {
-    tracing::error!("failed to commit transaction: {:?}", e);
-    Err(e)?;
-  }
-  Ok(())
 }
 
 #[async_trait::async_trait]
@@ -168,7 +136,8 @@ impl DatabaseAdapter for TikvAdapter {
         .map_err(CreateModelError::Db)?;
     }
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(CreateModelError::RetryableTransaction)?;
 
@@ -194,7 +163,8 @@ impl DatabaseAdapter for TikvAdapter {
     let (txn, model_value) =
       txn.csm_get(&model_key).await.map_err(FetchModelError::Db)?;
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(FetchModelError::RetryableTransaction)?;
 
@@ -238,7 +208,8 @@ impl DatabaseAdapter for TikvAdapter {
       .await
       .map_err(FetchModelByIndexError::Db)?;
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(FetchModelByIndexError::RetryableTransaction)?;
 
@@ -288,7 +259,8 @@ impl DatabaseAdapter for TikvAdapter {
       .await
       .map_err(FetchModelError::Db)?;
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(FetchModelError::RetryableTransaction)?;
 

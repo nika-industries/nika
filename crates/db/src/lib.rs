@@ -29,7 +29,7 @@
 //! a TiKV cluster.
 
 mod adapter;
+mod kv_impl;
 mod migrate;
-mod tikv;
 
-pub use self::{adapter::*, migrate::Migratable, tikv::TikvAdapter};
+pub use self::{adapter::*, kv_impl::TikvAdapter, migrate::Migratable};
