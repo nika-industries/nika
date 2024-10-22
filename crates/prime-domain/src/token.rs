@@ -73,33 +73,11 @@ impl<R: TokenRepository> health::HealthReporter for TokenServiceCanonical<R> {
   }
 }
 
-#[async_trait::async_trait]
-impl<R: TokenRepository> ModelRepositoryFetcher for TokenServiceCanonical<R> {
-  type Model = Token;
-
-  #[instrument(skip(self))]
-  async fn fetch(
-    &self,
-    id: TokenRecordId,
-  ) -> Result<Option<Token>, FetchModelError> {
-    self.token_repo.fetch_model_by_id(id).await
-  }
-  #[instrument(skip(self))]
-  async fn fetch_model_by_index(
-    &self,
-    index_name: String,
-    index_value: EitherSlug,
-  ) -> Result<Option<Token>, FetchModelByIndexError> {
-    self
-      .token_repo
-      .fetch_model_by_index(index_name, index_value)
-      .await
-  }
-  #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<Token>> {
-    self.token_repo.enumerate_models().await
-  }
-}
+crate::impl_model_repository_fetcher_for_service!(
+  TokenServiceCanonical,
+  Token,
+  TokenRepository
+);
 
 #[async_trait::async_trait]
 impl<R: TokenRepository> TokenService for TokenServiceCanonical<R> {
