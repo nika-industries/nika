@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use hex::{health, Hexagonal};
 use miette::Result;
-use models::{EitherSlug, Store, StoreRecordId};
+use models::{EitherSlug, Store};
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
   ModelRepositoryFetcher, StoreRepository,
@@ -52,33 +52,11 @@ impl<R: StoreRepository> health::HealthReporter for StoreServiceCanonical<R> {
   }
 }
 
-#[async_trait::async_trait]
-impl<R: StoreRepository> ModelRepositoryFetcher for StoreServiceCanonical<R> {
-  type Model = Store;
-
-  #[instrument(skip(self))]
-  async fn fetch(
-    &self,
-    id: StoreRecordId,
-  ) -> Result<Option<Store>, FetchModelError> {
-    self.store_repo.fetch_model_by_id(id).await
-  }
-  #[instrument(skip(self))]
-  async fn fetch_model_by_index(
-    &self,
-    index_name: String,
-    index_value: EitherSlug,
-  ) -> Result<Option<Store>, FetchModelByIndexError> {
-    self
-      .store_repo
-      .fetch_model_by_index(index_name, index_value)
-      .await
-  }
-  #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<Store>> {
-    self.store_repo.enumerate_models().await
-  }
-}
+crate::impl_model_repository_fetcher_for_service!(
+  StoreServiceCanonical,
+  Store,
+  StoreRepository
+);
 
 #[async_trait::async_trait]
 impl<R: StoreRepository> StoreService for StoreServiceCanonical<R> {}

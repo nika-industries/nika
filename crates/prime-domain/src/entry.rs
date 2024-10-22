@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use hex::{health, Hexagonal};
 use miette::Result;
-use models::{CacheRecordId, EitherSlug, Entry, EntryRecordId, LaxSlug};
+use models::{CacheRecordId, EitherSlug, Entry, LaxSlug};
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
   CreateModelError, EntryCreateRequest, EntryRepository,
@@ -64,33 +64,11 @@ impl<R: EntryRepository> health::HealthReporter for EntryServiceCanonical<R> {
   }
 }
 
-#[async_trait::async_trait]
-impl<R: EntryRepository> ModelRepositoryFetcher for EntryServiceCanonical<R> {
-  type Model = Entry;
-
-  #[instrument(skip(self))]
-  async fn fetch(
-    &self,
-    id: EntryRecordId,
-  ) -> Result<Option<Entry>, FetchModelError> {
-    self.entry_repo.fetch_model_by_id(id).await
-  }
-  #[instrument(skip(self))]
-  async fn fetch_model_by_index(
-    &self,
-    index_name: String,
-    index_value: EitherSlug,
-  ) -> Result<Option<Entry>, FetchModelByIndexError> {
-    self
-      .entry_repo
-      .fetch_model_by_index(index_name, index_value)
-      .await
-  }
-  #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<Entry>> {
-    self.entry_repo.enumerate_models().await
-  }
-}
+crate::impl_model_repository_fetcher_for_service!(
+  EntryServiceCanonical,
+  Entry,
+  EntryRepository
+);
 
 #[async_trait::async_trait]
 impl<R: EntryRepository> ModelRepositoryCreator for EntryServiceCanonical<R> {

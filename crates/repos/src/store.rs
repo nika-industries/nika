@@ -51,56 +51,9 @@ impl<DB: DatabaseAdapter> StoreRepositoryCanonical<DB> {
   }
 }
 
-#[async_trait::async_trait]
-impl<DB: DatabaseAdapter> health::HealthReporter
-  for StoreRepositoryCanonical<DB>
-{
-  fn name(&self) -> &'static str { stringify!(StoreRepositoryCanonical<DB>) }
-  async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::from_futures(Some(
-      self.base_repo.health_report(),
-    ))
-    .await
-    .into()
-  }
-}
-
-#[async_trait::async_trait]
-impl<DB: DatabaseAdapter> ModelRepository for StoreRepositoryCanonical<DB> {
-  type Model = Store;
-  type ModelCreateRequest = StoreCreateRequest;
-  type CreateError = CreateModelError;
-
-  #[instrument(skip(self))]
-  async fn create_model(
-    &self,
-    input: Self::ModelCreateRequest,
-  ) -> Result<(), Self::CreateError> {
-    self.base_repo.create_model(input.into()).await
-  }
-
-  #[instrument(skip(self))]
-  async fn fetch_model_by_id(
-    &self,
-    id: models::RecordId<Self::Model>,
-  ) -> Result<Option<Self::Model>, FetchModelError> {
-    self.base_repo.fetch_model_by_id(id).await
-  }
-
-  #[instrument(skip(self))]
-  async fn fetch_model_by_index(
-    &self,
-    index_name: String,
-    index_value: EitherSlug,
-  ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
-    self
-      .base_repo
-      .fetch_model_by_index(index_name, index_value)
-      .await
-  }
-
-  #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
-    self.base_repo.enumerate_models().await
-  }
-}
+crate::impl_repository_on_base!(
+  StoreRepositoryCanonical,
+  Store,
+  StoreCreateRequest,
+  CreateModelError
+);

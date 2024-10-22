@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use hex::{health, Hexagonal};
 use miette::Result;
-use models::{Cache, CacheRecordId, EitherSlug, StrictSlug};
+use models::{Cache, EitherSlug, StrictSlug};
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
   CacheRepository, ModelRepositoryFetcher,
@@ -57,33 +57,11 @@ impl<R: CacheRepository> health::HealthReporter for CacheServiceCanonical<R> {
   }
 }
 
-#[async_trait::async_trait]
-impl<R: CacheRepository> ModelRepositoryFetcher for CacheServiceCanonical<R> {
-  type Model = Cache;
-
-  #[instrument(skip(self))]
-  async fn fetch(
-    &self,
-    id: CacheRecordId,
-  ) -> Result<Option<Cache>, FetchModelError> {
-    self.cache_repo.fetch_model_by_id(id).await
-  }
-  #[instrument(skip(self))]
-  async fn fetch_model_by_index(
-    &self,
-    index_name: String,
-    index_value: EitherSlug,
-  ) -> Result<Option<Cache>, FetchModelByIndexError> {
-    self
-      .cache_repo
-      .fetch_model_by_index(index_name, index_value)
-      .await
-  }
-  #[instrument(skip(self))]
-  async fn enumerate_models(&self) -> Result<Vec<Cache>> {
-    self.cache_repo.enumerate_models().await
-  }
-}
+crate::impl_model_repository_fetcher_for_service!(
+  CacheServiceCanonical,
+  Cache,
+  CacheRepository
+);
 
 #[async_trait::async_trait]
 impl<R: CacheRepository> CacheService for CacheServiceCanonical<R> {
