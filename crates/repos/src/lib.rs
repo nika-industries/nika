@@ -181,3 +181,49 @@ where
     I::create_model(self, input).await
   }
 }
+
+/// Macro to implement the `ModelRepository` trait for a given repository.
+#[macro_export]
+macro_rules! impl_model_repository {
+  ($canonical:ident, $model:ty, $create_request:ty, $create_error:ty) => {
+    #[async_trait::async_trait]
+    impl<DB: DatabaseAdapter> ModelRepository for $canonical<DB> {
+      type Model = $model;
+      type ModelCreateRequest = $create_request;
+      type CreateError = $create_error;
+
+      #[instrument(skip(self))]
+      async fn create_model(
+        &self,
+        input: Self::ModelCreateRequest,
+      ) -> Result<(), Self::CreateError> {
+        self.base_repo.create_model(input.into()).await
+      }
+
+      #[instrument(skip(self))]
+      async fn fetch_model_by_id(
+        &self,
+        id: models::RecordId<Self::Model>,
+      ) -> Result<Option<Self::Model>, FetchModelError> {
+        self.base_repo.fetch_model_by_id(id).await
+      }
+
+      #[instrument(skip(self))]
+      async fn fetch_model_by_index(
+        &self,
+        index_name: String,
+        index_value: EitherSlug,
+      ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
+        self
+          .base_repo
+          .fetch_model_by_index(index_name, index_value)
+          .await
+      }
+
+      #[instrument(skip(self))]
+      async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
+        self.base_repo.enumerate_models().await
+      }
+    }
+  };
+}
