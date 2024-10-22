@@ -29,8 +29,8 @@ pub use self::{
   token::{DynTokenService, TokenService, TokenServiceCanonical},
 };
 
-/// Implement the [`ModelRepositoryFetcher`] trait for a service which is
-/// generic on its repo trait.
+/// Implement the [`ModelRepositoryFetcher`](repos::ModelRepositoryFetcher)
+/// trait for a service which is generic on its repo trait.
 #[macro_export]
 macro_rules! impl_model_repository_fetcher_for_service {
   ($service:ident, $model:ty, $repo_trait:ident) => {
