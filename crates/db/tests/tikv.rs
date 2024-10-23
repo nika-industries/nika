@@ -1,9 +1,10 @@
-use db::{DatabaseAdapter, KvDatabaseAdapter};
+use db::DatabaseAdapter;
 
 #[tokio::test]
 #[ignore]
 async fn test_tikv() {
-  let db = KvDatabaseAdapter::new_from_env().await.unwrap();
+  let tikv_store = db::kv::tikv::TikvClient::new_from_env().await.unwrap();
+  let db = db::KvDatabaseAdapter::new(tikv_store);
 
   let model = models::Org {
     id:   models::OrgRecordId::new(),
