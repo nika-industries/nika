@@ -26,31 +26,42 @@ commands, which you can explore with the `menu` command.
 ## Crate Map
 ![Crate Graph](./media/crate-graph.svg)
 
+**Binaries:**
 - `api` (bin) - main action entrypoint over HTTP.
-- `art` - macro-based ascii art.
+- `cli` (bin) - command line interface (mostly useless right now).
+- `daemon` (bin) - task runner daemon.
+- `fetcher` (bin) - temporary binary for the fetch pathway.
+- `migrator` (bin) - database test data migration tool.
+
+**Leptos Projects:**
 - `cart-app` - cartographer leptos app logic.
 - `cart-frontend` - cartographer leptos frontend wrapper.
 - `cart-server` (bin) - cartographer leptos server.
-- `cli` (bin) - command line interface (mostly useless right now).
-- `daemon` (bin) - task runner daemon.
+
+**Hexagonal:**
 - `db` - model-based database adapter interface, and TiKV implementer.
-- `dvf` - usage-specific newtypes used in models.
-- `fetcher` (bin) - temporary binary for the fetch pathway.
 - `health` - health check framework
 - `hex` - foundational hexagonal architecture traits.
 - `kv` - key-value store interface and types, and TiKV implementer.
-- `migrator` (bin) - database test data migration tool.
+- `prime-domain` - service-level entrypoints for logic in the prime domain.
+- `repos` - repository interfaces and implementers.
+- `storage` - storage interface and implementers.
+
+**Tasks:**
+- `rope` - persistent distributed task interface.
+- `tasks` - task types and logic.
+
+**Data:**
+- `dvf` - usage-specific newtypes used in models.
 - `models` - primary db model types.
+- `slugger` - slug types.
+- `starc` - smart pointer for static, owned, or ref-counted data.
+
+**Miscellaneous:**
+- `art` - macro-based ascii art.
 - `mollusk` - interfaces for HTTP errors, public and private.
 - `names` - name generator.
 - `nasty` - nix daemon interactions.
-- `prime-domain` - service-level entrypoints for logic in the prime domain.
-- `repos` - repository interfaces and implementers.
-- `rope` - persistent distributed task interface.
-- `slugger` - slug types.
-- `starc` - smart pointer for static, owned, or ref-counted data.
-- `storage` - storage interface and implementers.
-- `tasks` - task types and logic.
 
 ## License
 
