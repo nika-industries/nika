@@ -96,9 +96,17 @@ pub trait KvTransaction {
 /// Defines methods and types for performing transactions on a key-value store.
 pub trait KvTransactional: hex::Hexagonal {
   /// The type of optimistic transactions.
-  type OptimisticTransaction: KvPrimitive + KvTransaction;
+  type OptimisticTransaction: KvPrimitive
+    + KvTransaction
+    + Send
+    + Sync
+    + 'static;
   /// The type of pessimistic transactions.
-  type PessimisticTransaction: KvPrimitive + KvTransaction;
+  type PessimisticTransaction: KvPrimitive
+    + KvTransaction
+    + Send
+    + Sync
+    + 'static;
 
   /// Begin an optimistic transaction.
   fn begin_optimistic_transaction(

@@ -29,16 +29,18 @@ async fn main() -> miette::Result<()> {
   let leptos_options = conf.leptos_options;
   let routes = generate_route_list(App);
 
-  let tikv_adapter =
-    Arc::new(prime_domain::repos::db::TikvAdapter::new_from_env().await?);
+  let tikv_store =
+    prime_domain::repos::db::kv::tikv::TikvClient::new_from_env().await?;
+  let kv_db_adapter =
+    Arc::new(prime_domain::repos::db::KvDatabaseAdapter::new(tikv_store));
   let cache_repo =
-    prime_domain::repos::CacheRepositoryCanonical::new(tikv_adapter.clone());
+    prime_domain::repos::CacheRepositoryCanonical::new(kv_db_adapter.clone());
   let entry_repo =
-    prime_domain::repos::EntryRepositoryCanonical::new(tikv_adapter.clone());
+    prime_domain::repos::EntryRepositoryCanonical::new(kv_db_adapter.clone());
   let store_repo =
-    prime_domain::repos::StoreRepositoryCanonical::new(tikv_adapter.clone());
+    prime_domain::repos::StoreRepositoryCanonical::new(kv_db_adapter.clone());
   let token_repo =
-    prime_domain::repos::TokenRepositoryCanonical::new(tikv_adapter.clone());
+    prime_domain::repos::TokenRepositoryCanonical::new(kv_db_adapter.clone());
   let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
   let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
   let store_service = prime_domain::StoreServiceCanonical::new(store_repo);

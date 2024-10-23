@@ -2,12 +2,9 @@
 
 mod consumptive;
 
-use std::{
-  ops::Bound,
-  sync::{Arc, LazyLock},
-};
+use std::{ops::Bound, sync::LazyLock};
 
-use hex::health::{self, HealthAware};
+use hex::health;
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
@@ -20,19 +17,13 @@ use crate::{
 
 /// A TiKV-based database adapter.
 #[derive(Clone)]
-pub struct TikvAdapter(Arc<kv::tikv::TikvClient>);
+pub struct KvDatabaseAdapter<KV: KvTransactional>(KV);
 
-impl TikvAdapter {
+impl<KV: KvTransactional> KvDatabaseAdapter<KV> {
   /// Creates a new TiKV adapter.
-  pub async fn new(endpoints: Vec<&str>) -> Result<Self> {
-    tracing::info!("creating new `TikvAdapter` instance");
-    Ok(Self(Arc::new(kv::tikv::TikvClient::new(endpoints).await?)))
-  }
-
-  /// Creates a new TiKV adapter from environment variables.
-  pub async fn new_from_env() -> Result<Self> {
-    tracing::info!("creating new `TikvAdapter` instance");
-    Ok(Self(Arc::new(kv::tikv::TikvClient::new_from_env().await?)))
+  pub fn new(kv_store: KV) -> Self {
+    tracing::info!("creating new `KvDatabaseAdapter` instance");
+    Self(kv_store)
   }
 }
 
@@ -55,7 +46,7 @@ fn index_base_key<M: models::Model>(index_name: &str) -> Key {
 }
 
 #[async_trait::async_trait]
-impl DatabaseAdapter for TikvAdapter {
+impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
   #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
   async fn create_model<M: models::Model>(
     &self,
@@ -280,7 +271,7 @@ impl DatabaseAdapter for TikvAdapter {
 }
 
 #[async_trait::async_trait]
-impl health::HealthReporter for TikvAdapter {
+impl<KV: KvTransactional> health::HealthReporter for KvDatabaseAdapter<KV> {
   fn name(&self) -> &'static str { stringify!(TikvAdapter) }
   async fn health_check(&self) -> health::ComponentHealth {
     health::AdditiveComponentHealth::from_futures(Some(self.0.health_report()))
