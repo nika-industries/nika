@@ -24,12 +24,14 @@
 //! [`miette::Report`].
 //!
 //! # Implementers
-//! The [`TikvAdapter`] is a concrete implementation of the [`DatabaseAdapter`]
-//! trait. It uses the [`tikv-client`](tikv::TikvAdapter) crate to interact with
-//! a TiKV cluster.
+//! The [`KvDatabaseAdapter`] is the only implementer of the [`DatabaseAdapter`]
+//! trait. It's generic on a [`KvTransactional`](kv::prelude::KvTransactional)
+//! implementation.
 
 mod adapter;
+mod kv_impl;
 mod migrate;
-mod tikv;
 
-pub use self::{adapter::*, migrate::Migratable, tikv::TikvAdapter};
+pub use kv;
+
+pub use self::{adapter::*, kv_impl::KvDatabaseAdapter, migrate::Migratable};

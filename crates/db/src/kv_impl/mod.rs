@@ -1,11 +1,10 @@
+//! Key-value store implementation.
+
 mod consumptive;
 
-use std::{
-  ops::Bound,
-  sync::{Arc, LazyLock},
-};
+use std::{ops::Bound, sync::LazyLock};
 
-use hex::health::{self, HealthAware};
+use hex::health;
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
@@ -18,19 +17,13 @@ use crate::{
 
 /// A TiKV-based database adapter.
 #[derive(Clone)]
-pub struct TikvAdapter(Arc<kv::tikv::TikvClient>);
+pub struct KvDatabaseAdapter<KV: KvTransactional>(KV);
 
-impl TikvAdapter {
+impl<KV: KvTransactional> KvDatabaseAdapter<KV> {
   /// Creates a new TiKV adapter.
-  pub async fn new(endpoints: Vec<&str>) -> Result<Self> {
-    tracing::info!("creating new `TikvAdapter` instance");
-    Ok(Self(Arc::new(kv::tikv::TikvClient::new(endpoints).await?)))
-  }
-
-  /// Creates a new TiKV adapter from environment variables.
-  pub async fn new_from_env() -> Result<Self> {
-    tracing::info!("creating new `TikvAdapter` instance");
-    Ok(Self(Arc::new(kv::tikv::TikvClient::new_from_env().await?)))
+  pub fn new(kv_store: KV) -> Self {
+    tracing::info!("creating new `KvDatabaseAdapter` instance");
+    Self(kv_store)
   }
 }
 
@@ -52,42 +45,8 @@ fn index_base_key<M: models::Model>(index_name: &str) -> Key {
     .with(StrictSlug::new(index_name))
 }
 
-/// Rollback fn for "recoverable" - effectively, *consumable* - errors.
-#[instrument(skip(txn))]
-pub(crate) async fn rollback<T: KvTransaction>(mut txn: T) -> Result<()> {
-  txn
-    .rollback()
-    .await
-    .context("failed to rollback transaction")
-}
-
-/// Rollback fn for "unrecoverable" errors (unexpected error paths).
-#[instrument(skip(txn, error, context))]
-pub(crate) async fn rollback_with_error<T: KvTransaction>(
-  txn: T,
-  error: miette::Report,
-  context: &'static str,
-) -> miette::Report {
-  if let Err(e) = rollback(txn).await {
-    tracing::error!("failed to rollback transaction: {:?}", e);
-    return e;
-  }
-  let e = error.wrap_err(context);
-  tracing::error!("unrecoverable rollback: {:?}", e);
-  e
-}
-
-#[instrument(skip(txn))]
-pub(crate) async fn commit<T: KvTransaction>(mut txn: T) -> Result<()> {
-  if let Err(e) = txn.commit().await.context("failed to commit transaction") {
-    tracing::error!("failed to commit transaction: {:?}", e);
-    Err(e)?;
-  }
-  Ok(())
-}
-
 #[async_trait::async_trait]
-impl DatabaseAdapter for TikvAdapter {
+impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
   #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
   async fn create_model<M: models::Model>(
     &self,
@@ -168,7 +127,8 @@ impl DatabaseAdapter for TikvAdapter {
         .map_err(CreateModelError::Db)?;
     }
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(CreateModelError::RetryableTransaction)?;
 
@@ -194,7 +154,8 @@ impl DatabaseAdapter for TikvAdapter {
     let (txn, model_value) =
       txn.csm_get(&model_key).await.map_err(FetchModelError::Db)?;
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(FetchModelError::RetryableTransaction)?;
 
@@ -238,7 +199,8 @@ impl DatabaseAdapter for TikvAdapter {
       .await
       .map_err(FetchModelByIndexError::Db)?;
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(FetchModelByIndexError::RetryableTransaction)?;
 
@@ -288,7 +250,8 @@ impl DatabaseAdapter for TikvAdapter {
       .await
       .map_err(FetchModelError::Db)?;
 
-    commit(txn)
+    txn
+      .to_commit()
       .await
       .map_err(FetchModelError::RetryableTransaction)?;
 
@@ -308,7 +271,7 @@ impl DatabaseAdapter for TikvAdapter {
 }
 
 #[async_trait::async_trait]
-impl health::HealthReporter for TikvAdapter {
+impl<KV: KvTransactional> health::HealthReporter for KvDatabaseAdapter<KV> {
   fn name(&self) -> &'static str { stringify!(TikvAdapter) }
   async fn health_check(&self) -> health::ComponentHealth {
     health::AdditiveComponentHealth::from_futures(Some(self.0.health_report()))

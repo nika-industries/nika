@@ -1,11 +1,11 @@
 use std::ops::Bound;
 
-use kv::prelude::*;
+use kv::{prelude::*, txn_ext::KvTransactionExt};
 use miette::Result;
 
-use super::rollback_with_error;
-
-pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
+pub trait ConsumptiveTransaction:
+  KvPrimitive + KvTransaction + Send + Sync + 'static + Sized
+{
   /// Checks if a key exists.
   ///
   /// Consumes the transaction. If the operation succeeds, the transaction is
@@ -18,7 +18,9 @@ pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
   async fn csm_insert(mut self, key: &Key, value: Value) -> Result<Self> {
     if let Err(e) = self.insert(key, value).await {
       return Err(
-        rollback_with_error(self, e.into(), "failed to insert value").await,
+        self
+          .to_rollback_with_error(e.into(), "failed to insert value")
+          .await,
       );
     }
 
@@ -30,7 +32,9 @@ pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
       Ok(v) => v,
       Err(e) => {
         return Err(
-          rollback_with_error(self, e.into(), "failed to get value").await,
+          self
+            .to_rollback_with_error(e.into(), "failed to get value")
+            .await,
         );
       }
     };
@@ -48,7 +52,9 @@ pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
       Ok(s) => s,
       Err(e) => {
         return Err(
-          rollback_with_error(self, e.into(), "failed to scan values").await,
+          self
+            .to_rollback_with_error(e.into(), "failed to scan values")
+            .await,
         );
       }
     };
@@ -57,4 +63,7 @@ pub trait ConsumptiveTransaction: KvPrimitive + KvTransaction + Sized {
   }
 }
 
-impl<T> ConsumptiveTransaction for T where T: KvPrimitive + KvTransaction {}
+impl<T> ConsumptiveTransaction for T where
+  T: KvPrimitive + KvTransaction + Send + Sync + 'static
+{
+}

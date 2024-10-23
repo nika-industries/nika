@@ -19,6 +19,7 @@
 pub mod key;
 #[cfg(feature = "tikv")]
 pub mod tikv;
+pub mod txn_ext;
 pub mod value;
 
 use std::{future::Future, ops::Bound};
@@ -32,8 +33,8 @@ pub mod prelude {
   #[cfg(feature = "tikv")]
   pub use crate::tikv::TikvClient;
   pub use crate::{
-    key::Key, value::Value, KvError, KvPrimitive, KvResult, KvTransaction,
-    KvTransactional,
+    key::Key, txn_ext::KvTransactionExt, value::Value, KvError, KvPrimitive,
+    KvResult, KvTransaction, KvTransactional,
   };
 }
 
@@ -95,9 +96,17 @@ pub trait KvTransaction {
 /// Defines methods and types for performing transactions on a key-value store.
 pub trait KvTransactional: hex::Hexagonal {
   /// The type of optimistic transactions.
-  type OptimisticTransaction: KvPrimitive + KvTransaction;
+  type OptimisticTransaction: KvPrimitive
+    + KvTransaction
+    + Send
+    + Sync
+    + 'static;
   /// The type of pessimistic transactions.
-  type PessimisticTransaction: KvPrimitive + KvTransaction;
+  type PessimisticTransaction: KvPrimitive
+    + KvTransaction
+    + Send
+    + Sync
+    + 'static;
 
   /// Begin an optimistic transaction.
   fn begin_optimistic_transaction(

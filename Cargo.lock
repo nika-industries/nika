@@ -1965,6 +1965,7 @@ dependencies = [
 name = "kv"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "hex",
  "miette",
  "rmp-serde",

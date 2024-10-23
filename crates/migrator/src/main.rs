@@ -9,7 +9,8 @@ async fn main() -> Result<()> {
     .unwrap_or(tracing_subscriber::EnvFilter::new("info"));
   tracing_subscriber::fmt().with_env_filter(filter).init();
 
-  let db = db::TikvAdapter::new_from_env().await?;
+  let tikv_store = db::kv::tikv::TikvClient::new_from_env().await?;
+  let db = db::KvDatabaseAdapter::new(tikv_store);
   db.migrate().await?;
 
   tokio::time::sleep(std::time::Duration::from_secs(1)).await;
