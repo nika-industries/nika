@@ -76,7 +76,7 @@ localFlake: { ... }: {
 
         {
           name = "update-crate-graph";
-          command = "cp $(nix build .#crate-graph-image --print-out-paths)/crate-graph.png $PRJ_ROOT/media/crate-graph.png --no-preserve=mode";
+          command = "cp $(nix build .#crate-graph-image --print-out-paths)/crate-graph.svg $PRJ_ROOT/media/crate-graph.svg --no-preserve=mode";
           help = "Update the crate graph";
           category = "[repo actions]";
         }

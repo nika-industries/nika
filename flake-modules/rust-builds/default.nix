@@ -60,11 +60,11 @@ localFlake: { inputs, ... }: {
       version = "0.1";
       buildPhaseCargoCommand = ''
         export XDG_CACHE_HOME="$(mktemp -d)"
-        cargo depgraph --workspace-only | dot -Tpng > crate-graph.png
+        cargo depgraph --workspace-only | dot -Tsvg > crate-graph.svg
       '';
       installPhaseCommand = ''
         mkdir $out
-        cp crate-graph.png $out
+        cp crate-graph.svg $out
       '';
       FONTCONFIG_FILE = pkgs.makeFontsConf {
         fontDirectories = [ pkgs.dejavu_fonts ];

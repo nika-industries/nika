@@ -1,12 +1,12 @@
 localFlake: { ... }: {
   perSystem = { pkgs, config, ... }: let
-    # run `cmp` to compare config.packages.crate-graph-image with ./media/crate-graph.png
+    # run `cmp` to compare config.packages.crate-graph-image with ./media/crate-graph.svg
     crate-graph-image-is-updated = pkgs.stdenv.mkDerivation {
       src = ../../media;
       name = "crate-graph-image-is-updated";
       # buildInputs = [ pkgs.cmp ];
       buildPhase = ''
-        if cmp ${config.packages.crate-graph-image}/crate-graph.png crate-graph.png; then
+        if cmp ${config.packages.crate-graph-image}/crate-graph.svg crate-graph.svg; then
           echo "Crate graph image is up to date.";
         else
           echo "Crate graph image is outdated. Run 'update-crate-graph' to update it.";

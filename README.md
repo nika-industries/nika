@@ -24,7 +24,7 @@ commands, which you can explore with the `menu` command.
 - Before submitting a PR, run the `check` command (an alias of `nix flake check -L`). This will test many things, and will also be run in CI.
 
 ## Crate Map
-![Crate Graph](./media/crate-graph.png)
+![Crate Graph](./media/crate-graph.svg)
 
 - `api` (bin) - main action entrypoint over HTTP.
 - `art` - macro-based ascii art.
