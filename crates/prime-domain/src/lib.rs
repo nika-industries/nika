@@ -14,6 +14,7 @@ mod entry;
 mod store;
 mod temp_storage;
 mod token;
+mod user_storage;
 
 pub use hex;
 pub use models;

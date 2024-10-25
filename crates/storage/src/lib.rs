@@ -79,3 +79,21 @@ pub trait StorageClient: Hexagonal {
     reader: DynAsyncReader,
   ) -> Result<models::FileSize, WriteError>;
 }
+
+#[async_trait::async_trait]
+impl<T, I> StorageClient for T
+where
+  T: std::ops::Deref<Target = I> + Send + Sync + 'static,
+  I: StorageClient + ?Sized,
+{
+  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError> {
+    self.deref().read(path).await
+  }
+  async fn write(
+    &self,
+    path: &Path,
+    reader: DynAsyncReader,
+  ) -> Result<models::FileSize, WriteError> {
+    self.deref().write(path, reader).await
+  }
+}
