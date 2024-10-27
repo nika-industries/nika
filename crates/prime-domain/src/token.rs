@@ -76,7 +76,8 @@ impl<R: TokenRepository> health::HealthReporter for TokenServiceCanonical<R> {
 crate::impl_model_repository_fetcher_for_service!(
   TokenServiceCanonical,
   Token,
-  TokenRepository
+  TokenRepository,
+  token_repo
 );
 
 #[async_trait::async_trait]

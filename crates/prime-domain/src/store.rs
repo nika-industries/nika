@@ -55,7 +55,8 @@ impl<R: StoreRepository> health::HealthReporter for StoreServiceCanonical<R> {
 crate::impl_model_repository_fetcher_for_service!(
   StoreServiceCanonical,
   Store,
-  StoreRepository
+  StoreRepository,
+  store_repo
 );
 
 #[async_trait::async_trait]
