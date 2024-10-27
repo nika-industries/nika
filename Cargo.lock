@@ -4104,7 +4104,6 @@ dependencies = [
  "prime-domain",
  "rope",
  "serde",
- "storage",
  "tracing",
 ]
 
