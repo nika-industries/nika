@@ -67,7 +67,8 @@ impl<R: EntryRepository> health::HealthReporter for EntryServiceCanonical<R> {
 crate::impl_model_repository_fetcher_for_service!(
   EntryServiceCanonical,
   Entry,
-  EntryRepository
+  EntryRepository,
+  entry_repo
 );
 
 #[async_trait::async_trait]

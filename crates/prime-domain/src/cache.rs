@@ -60,7 +60,8 @@ impl<R: CacheRepository> health::HealthReporter for CacheServiceCanonical<R> {
 crate::impl_model_repository_fetcher_for_service!(
   CacheServiceCanonical,
   Cache,
-  CacheRepository
+  CacheRepository,
+  cache_repo
 );
 
 #[async_trait::async_trait]

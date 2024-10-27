@@ -2817,6 +2817,7 @@ dependencies = [
  "miette",
  "models",
  "repos",
+ "storage",
  "thiserror",
  "tracing",
 ]
@@ -4103,7 +4104,6 @@ dependencies = [
  "prime-domain",
  "rope",
  "serde",
- "storage",
  "tracing",
 ]
 

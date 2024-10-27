@@ -14,6 +14,7 @@ mod entry;
 mod store;
 mod temp_storage;
 mod token;
+mod user_storage;
 
 pub use hex;
 pub use models;
@@ -27,13 +28,17 @@ pub use self::{
     DynTempStorageService, TempStorageService, TempStorageServiceCanonical,
   },
   token::{DynTokenService, TokenService, TokenServiceCanonical},
+  user_storage::{
+    DynUserStorageService, UserStorageClient, UserStorageService,
+    UserStorageServiceCanonical,
+  },
 };
 
 /// Implement the [`ModelRepositoryFetcher`](repos::ModelRepositoryFetcher)
 /// trait for a service which is generic on its repo trait.
 #[macro_export]
 macro_rules! impl_model_repository_fetcher_for_service {
-  ($service:ident, $model:ty, $repo_trait:ident) => {
+  ($service:ident, $model:ty, $repo_trait:ident, $repo_field:ident) => {
     #[async_trait::async_trait]
     impl<R: $repo_trait> ModelRepositoryFetcher for $service<R> {
       type Model = $model;
@@ -43,7 +48,7 @@ macro_rules! impl_model_repository_fetcher_for_service {
         &self,
         id: models::RecordId<Self::Model>,
       ) -> Result<Option<Self::Model>, FetchModelError> {
-        self.fetch(id).await
+        self.$repo_field.fetch_model_by_id(id).await
       }
       #[instrument(skip(self))]
       async fn fetch_model_by_index(
@@ -51,11 +56,14 @@ macro_rules! impl_model_repository_fetcher_for_service {
         index_name: String,
         index_value: EitherSlug,
       ) -> Result<Option<Self::Model>, FetchModelByIndexError> {
-        self.fetch_model_by_index(index_name, index_value).await
+        self
+          .$repo_field
+          .fetch_model_by_index(index_name, index_value)
+          .await
       }
       #[instrument(skip(self))]
       async fn enumerate_models(&self) -> Result<Vec<Self::Model>> {
-        self.enumerate_models().await
+        self.$repo_field.enumerate_models().await
       }
     }
   };
