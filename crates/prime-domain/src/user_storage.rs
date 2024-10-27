@@ -11,7 +11,7 @@ pub type DynUserStorageService =
 /// The definition for the user storage service.
 #[async_trait::async_trait]
 pub trait UserStorageService: Hexagonal {
-  /// The client type returned by the [`connect`] method.
+  /// The client type returned by the [`connect`](Self::connect) method.
   type Client: UserStorageClient;
   /// Connects to user storage and returns a client.
   async fn connect(
