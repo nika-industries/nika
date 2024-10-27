@@ -37,7 +37,7 @@ use prime_domain::{
   models,
   repos::TempStorageRepository,
   DynCacheService, DynEntryService, DynStoreService, DynTempStorageService,
-  DynTokenService,
+  DynTokenService, DynUserStorageService,
 };
 use tasks::Task;
 use tracing_subscriber::prelude::*;
@@ -92,6 +92,7 @@ async fn naive_upload(
     app_state.store_service.clone(),
     app_state.entry_service.clone(),
     app_state.temp_storage_service.clone(),
+    app_state.user_storage_service.clone(),
   ))
   .await
   .unwrap();
@@ -104,6 +105,7 @@ struct AppState {
   token_service:        DynTokenService,
   entry_service:        DynEntryService,
   temp_storage_service: DynTempStorageService,
+  user_storage_service: DynUserStorageService,
 }
 
 impl AppState {
@@ -142,6 +144,7 @@ impl AppState {
     let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
     let temp_storage_service =
       prime_domain::TempStorageServiceCanonical::new(temp_storage_repo);
+    let user_storage_service = prime_domain::UserStorageServiceCanonical::new();
 
     Ok(AppState {
       cache_service:        Arc::new(Box::new(cache_service)),
@@ -149,6 +152,7 @@ impl AppState {
       token_service:        Arc::new(Box::new(token_service)),
       entry_service:        Arc::new(Box::new(entry_service)),
       temp_storage_service: Arc::new(Box::new(temp_storage_service)),
+      user_storage_service: Arc::new(Box::new(user_storage_service)),
     })
   }
 }

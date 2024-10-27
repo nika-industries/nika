@@ -1,11 +1,11 @@
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use prime_domain::{
   models::{self, StrictSlug},
-  CacheService, EntryService, StoreService, TempStorageService,
+  DynCacheService, DynEntryService, DynStoreService, DynTempStorageService,
+  DynUserStorageService, UserStorageClient,
 };
 use serde::{Deserialize, Serialize};
-use storage::StorageClientGenerator;
 
 /// The health check task.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -25,32 +25,43 @@ impl rope::Task for NaiveUploadTask {
   type Response = ();
   type Error = ();
   type State = (
-    Arc<Box<dyn CacheService>>,
-    Arc<Box<dyn StoreService>>,
-    Arc<Box<dyn EntryService>>,
-    Arc<Box<dyn TempStorageService>>,
+    DynCacheService,
+    DynStoreService,
+    DynEntryService,
+    DynTempStorageService,
+    DynUserStorageService,
   );
 
+  #[tracing::instrument(name = "NaiveUpload", skip(self, state))]
   async fn run(
     self,
     state: Self::State,
   ) -> Result<Self::Response, Self::Error> {
-    let (cache_service, store_service, entry_service, temp_storage_service) =
-      state;
+    let (
+      cache_service,
+      store_service,
+      entry_service,
+      temp_storage_service,
+      user_storage_service,
+    ) = state;
 
+    tracing::info!("fetching cache");
     let cache = cache_service
       .find_by_name(self.cache_name.clone())
       .await
       .expect("failed to fetch cache")
       .expect("cache not found");
 
+    tracing::info!("fetching store");
     let store = store_service
       .fetch(cache.store)
       .await
       .expect("failed to fetch store")
       .expect("store not found");
 
-    let target_client = store.config.client().await.unwrap();
+    tracing::info!("connecting to user storage");
+    let target_client =
+      user_storage_service.connect(store.config).await.unwrap();
 
     let temp_reader = temp_storage_service
       .read(self.temp_storage_path.clone())
