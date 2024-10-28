@@ -74,7 +74,6 @@ async fn prepare_fetch_payload(
   )
 }
 
-#[axum::debug_handler]
 #[tracing::instrument(skip(app_state, payload))]
 async fn naive_upload(
   State(app_state): State<AppState>,
@@ -96,6 +95,11 @@ async fn naive_upload(
   ))
   .await
   .unwrap();
+}
+
+async fn dummy_root_handler() -> impl IntoResponse {
+  "You've reached the root endpoint of the Nika API binary.\nYou probably \
+   meant to go somewhere else."
 }
 
 #[derive(Clone, FromRef)]
@@ -236,6 +240,7 @@ async fn main() -> Result<()> {
   let app = Router::new()
     .route("/naive-upload/:name/*path", post(naive_upload))
     .route("/fetch_payload", get(prepare_fetch_payload))
+    .route("/", get(dummy_root_handler))
     .with_state(state);
 
   let bind_address = format!("{bind_address}:{bind_port}");
