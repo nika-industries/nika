@@ -102,6 +102,13 @@ async fn dummy_root_handler() -> impl IntoResponse {
    meant to go somewhere else."
 }
 
+#[tracing::instrument(skip(app_state))]
+async fn health_handler(
+  State(app_state): State<AppState>,
+) -> impl IntoResponse {
+  Json(app_state.health_report().await)
+}
+
 #[derive(Clone, FromRef)]
 struct AppState {
   cache_service:        DynCacheService,
@@ -217,10 +224,12 @@ async fn main() -> Result<()> {
   let state = AppState::build(&config).await?;
 
   tracing::info!("finished initializing services");
+  let health_report = state.health_report().await;
   tracing::info!(
     "service health: {}",
-    serde_json::to_string(&state.health_report().await).unwrap()
+    serde_json::to_string(&health_report).unwrap()
   );
+  tracing::info!("overall health: {:#?}", health_report.overall_status());
 
   let (bind_address, bind_port) = match &config.command {
     Commands::Health => {
@@ -238,6 +247,7 @@ async fn main() -> Result<()> {
   tracing::info!("starting server");
 
   let app = Router::new()
+    .route("/health", get(health_handler))
     .route("/naive-upload/:name/*path", post(naive_upload))
     .route("/fetch_payload", get(prepare_fetch_payload))
     .route("/", get(dummy_root_handler))
