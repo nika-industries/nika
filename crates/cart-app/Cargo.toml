@@ -17,7 +17,7 @@ models = { path = "../models" }
 default = []
 hydrate = ["leptos/hydrate"]
 ssr = [
-  "leptos/ssr", "leptos/tracing", "leptos_meta/ssr", "leptos_router/ssr",
+  "leptos/ssr", "leptos_meta/ssr", "leptos_router/ssr",
   "dep:leptos_axum", "dep:prime-domain"
 ]
 
