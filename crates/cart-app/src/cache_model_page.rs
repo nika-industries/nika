@@ -42,8 +42,6 @@ fn Cache(#[prop(into)] cache: MaybeSignal<models::Cache>) -> impl IntoView {
 pub fn CacheModelListPage() -> impl IntoView {
   let caches_resource = Resource::new_blocking(|| (), |_| fetch_all_caches());
 
-  let fallback = move || "Loading...".into_view();
-
   let caches_reader = move || {
     Suspend::new(async move {
       match caches_resource.await {
@@ -64,7 +62,7 @@ pub fn CacheModelListPage() -> impl IntoView {
     <div class="flex flex-col gap-4">
       <PageTitle level=1>"Cache Model"</PageTitle>
       <p class="text-lg text-content2">"See the caches present in the database below."</p>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { caches_reader }
       </Suspense>
     </div>
@@ -90,8 +88,6 @@ pub fn CacheModelSinglePage() -> impl IntoView {
 
   let cache_resource = Resource::new_blocking(move || cache_id, fetch_cache);
 
-  let fallback = move || "Loading...".into_view();
-
   let cache_reader = move || {
     Suspend::new(async move {
       match cache_resource.await {
@@ -111,7 +107,7 @@ pub fn CacheModelSinglePage() -> impl IntoView {
         "Cache: "
         <CodeHighlight>{ cache_id.to_string() }</CodeHighlight>
       </PageTitle>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { cache_reader }
       </Suspense>
     </div>

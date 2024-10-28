@@ -40,8 +40,6 @@ fn Store(#[prop(into)] store: MaybeSignal<models::Store>) -> impl IntoView {
 pub fn StoreModelListPage() -> impl IntoView {
   let stores_resource = Resource::new(|| (), |_| fetch_all_stores());
 
-  let fallback = move || "Loading...".into_view();
-
   let stores_reader = move || {
     Suspend::new(async move {
       match stores_resource.await {
@@ -62,7 +60,7 @@ pub fn StoreModelListPage() -> impl IntoView {
     <div class="flex flex-col gap-4">
       <PageTitle level=1>"Store Model"</PageTitle>
       <p class="text-lg text-content2">"See the stores present in the database below."</p>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { stores_reader }
       </Suspense>
     </div>
@@ -88,8 +86,6 @@ pub fn StoreModelSinglePage() -> impl IntoView {
 
   let store_resource = Resource::new(move || store_id, fetch_store);
 
-  let fallback = move || "Loading...".into_view();
-
   let store_reader = move || {
     Suspend::new(async move {
       match store_resource.await {
@@ -109,7 +105,7 @@ pub fn StoreModelSinglePage() -> impl IntoView {
         "Store: "
         <CodeHighlight>{ store_id.to_string() }</CodeHighlight>
       </PageTitle>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { store_reader }
       </Suspense>
     </div>

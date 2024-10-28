@@ -42,8 +42,6 @@ fn Token(#[prop(into)] token: MaybeSignal<models::Token>) -> impl IntoView {
 pub fn TokenModelListPage() -> impl IntoView {
   let tokens_resource = Resource::new(|| (), |_| fetch_all_tokens());
 
-  let fallback = move || "Loading...".into_view();
-
   let tokens_reader = move || {
     Suspend::new(async move {
       match tokens_resource.await {
@@ -64,7 +62,7 @@ pub fn TokenModelListPage() -> impl IntoView {
     <div class="flex flex-col gap-4">
       <PageTitle level=1>"Token Model"</PageTitle>
       <p class="text-lg text-content2">"See the tokens present in the database below."</p>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { tokens_reader }
       </Suspense>
     </div>
@@ -90,8 +88,6 @@ pub fn TokenModelSinglePage() -> impl IntoView {
 
   let token_resource = Resource::new(move || token_id, fetch_token);
 
-  let fallback = move || "Loading...".into_view();
-
   let token_reader = move || {
     Suspend::new(async move {
       match token_resource.await {
@@ -111,7 +107,7 @@ pub fn TokenModelSinglePage() -> impl IntoView {
         "Token: "
         <CodeHighlight>{ token_id.to_string() }</CodeHighlight>
       </PageTitle>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { token_reader }
       </Suspense>
     </div>

@@ -27,6 +27,8 @@ use self::{
   token_model_page::{TokenModelListPage, TokenModelSinglePage},
 };
 
+pub(crate) fn fallback() -> impl IntoView {}
+
 /// Builds the HTML shell for the application.
 pub fn shell(options: LeptosOptions) -> impl IntoView {
   view! {

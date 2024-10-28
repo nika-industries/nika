@@ -36,8 +36,6 @@ fn Entry(#[prop(into)] entry: MaybeSignal<models::Entry>) -> impl IntoView {
 pub fn EntryModelListPage() -> impl IntoView {
   let entries_resource = Resource::new(|| (), |_| fetch_all_entries());
 
-  let fallback = move || "Loading...".into_view();
-
   let entries_reader = move || {
     Suspend::new(async move {
       match entries_resource.await {
@@ -59,7 +57,7 @@ pub fn EntryModelListPage() -> impl IntoView {
     <div class="flex flex-col gap-4">
       <PageTitle level=1>"Entry Model"</PageTitle>
       <p class="text-lg text-content2">"See the entries present in the database below."</p>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { entries_reader }
       </Suspense>
     </div>
@@ -85,8 +83,6 @@ pub fn EntryModelSinglePage() -> impl IntoView {
 
   let entry_resource = Resource::new(move || entry_id, fetch_entry);
 
-  let fallback = move || "Loading...".into_view();
-
   let entry_reader = move || {
     Suspend::new(async move {
       match entry_resource.await {
@@ -106,7 +102,7 @@ pub fn EntryModelSinglePage() -> impl IntoView {
         "Entry: "
         <CodeHighlight>{ entry_id.to_string() }</CodeHighlight>
       </PageTitle>
-      <Suspense fallback=fallback>
+      <Suspense fallback=crate::fallback>
         { entry_reader }
       </Suspense>
     </div>
