@@ -140,12 +140,21 @@ pub fn SuccessDot() -> impl IntoView {
 
 #[component]
 pub fn Card(children: Children) -> impl IntoView {
+  let class = "w-full max-w-3xl min-h-32 p-4 flex flex-col gap-2 bg-gray-2 \
+               border border-gray-6 rounded-lg shadow animate-fade-in";
   view! {
-    <div class="w-full max-w-3xl p-4 flex flex-col gap-2 bg-gray-2 border border-gray-6 rounded-lg shadow">
+    <div class=class>
       { children() }
     </div>
   }
 }
+
+// #[component]
+// pub fn SkeletonCard() -> impl IntoView {
+//   view! {
+//     <div class="w-full max-w-3xl min-h-32 skeleton rounded-lg" />
+//   }
+// }
 
 macro_rules! id_component_and_link {
   ($component:ident, $component_link:ident, $component_title_link:ident, $record:ty, $route:expr) => {
