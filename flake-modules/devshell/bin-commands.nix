@@ -29,7 +29,7 @@ in [
   }
   {
     name = "cart-serve";
-    command = "cargo leptos serve --project cart $@";
+    command = "cargo leptos serve --project cart --release $@";
     help = "Run the cart server";
     category = "[cart actions]";
   }
