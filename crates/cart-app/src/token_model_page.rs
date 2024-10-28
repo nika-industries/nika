@@ -59,13 +59,13 @@ pub fn TokenModelListPage() -> impl IntoView {
   };
 
   view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>"Token Model"</PageTitle>
       <p class="text-lg text-content2">"See the tokens present in the database below."</p>
       <Suspense fallback=crate::fallback>
         { tokens_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   }
 }
 
@@ -102,7 +102,7 @@ pub fn TokenModelSinglePage() -> impl IntoView {
   };
 
   Either::Right(view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>
         "Token: "
         <CodeHighlight>{ token_id.to_string() }</CodeHighlight>
@@ -110,6 +110,6 @@ pub fn TokenModelSinglePage() -> impl IntoView {
       <Suspense fallback=crate::fallback>
         { token_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   })
 }

@@ -59,13 +59,13 @@ pub fn CacheModelListPage() -> impl IntoView {
   };
 
   view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>"Cache Model"</PageTitle>
       <p class="text-lg text-content2">"See the caches present in the database below."</p>
       <Suspense fallback=crate::fallback>
         { caches_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   }
 }
 
@@ -102,7 +102,7 @@ pub fn CacheModelSinglePage() -> impl IntoView {
   };
 
   Either::Right(view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>
         "Cache: "
         <CodeHighlight>{ cache_id.to_string() }</CodeHighlight>
@@ -110,6 +110,6 @@ pub fn CacheModelSinglePage() -> impl IntoView {
       <Suspense fallback=crate::fallback>
         { cache_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   })
 }

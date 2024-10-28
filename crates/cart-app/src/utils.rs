@@ -156,6 +156,15 @@ pub fn Card(children: Children) -> impl IntoView {
 //   }
 // }
 
+#[component]
+pub fn PageWrapper(children: Children) -> impl IntoView {
+  view! {
+    <div class="flex flex-col gap-4 animate-fade-in">
+      { children() }
+    </div>
+  }
+}
+
 macro_rules! id_component_and_link {
   ($component:ident, $component_link:ident, $component_title_link:ident, $record:ty, $route:expr) => {
     #[component]

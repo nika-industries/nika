@@ -54,13 +54,13 @@ pub fn EntryModelListPage() -> impl IntoView {
   };
 
   view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>"Entry Model"</PageTitle>
       <p class="text-lg text-content2">"See the entries present in the database below."</p>
       <Suspense fallback=crate::fallback>
         { entries_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   }
 }
 
@@ -97,7 +97,7 @@ pub fn EntryModelSinglePage() -> impl IntoView {
   };
 
   Either::Right(view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>
         "Entry: "
         <CodeHighlight>{ entry_id.to_string() }</CodeHighlight>
@@ -105,6 +105,6 @@ pub fn EntryModelSinglePage() -> impl IntoView {
       <Suspense fallback=crate::fallback>
         { entry_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   })
 }

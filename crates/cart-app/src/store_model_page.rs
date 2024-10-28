@@ -57,13 +57,13 @@ pub fn StoreModelListPage() -> impl IntoView {
   };
 
   view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>"Store Model"</PageTitle>
       <p class="text-lg text-content2">"See the stores present in the database below."</p>
       <Suspense fallback=crate::fallback>
         { stores_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   }
 }
 
@@ -100,7 +100,7 @@ pub fn StoreModelSinglePage() -> impl IntoView {
   };
 
   Either::Right(view! {
-    <div class="flex flex-col gap-4">
+    <PageWrapper>
       <PageTitle level=1>
         "Store: "
         <CodeHighlight>{ store_id.to_string() }</CodeHighlight>
@@ -108,6 +108,6 @@ pub fn StoreModelSinglePage() -> impl IntoView {
       <Suspense fallback=crate::fallback>
         { store_reader }
       </Suspense>
-    </div>
+    </PageWrapper>
   })
 }
