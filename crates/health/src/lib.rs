@@ -63,6 +63,13 @@ pub struct ComponentHealthReport {
   health: ComponentHealth,
 }
 
+impl ComponentHealthReport {
+  /// Calculate the overall status of this component.
+  pub fn overall_status(&self) -> HealthStatus {
+    self.health.recursive_status()
+  }
+}
+
 /// A description of the health of a component.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ComponentHealth {
@@ -76,6 +83,31 @@ pub enum ComponentHealth {
   IntrensicallyUp,
   /// The component is intrinsically down.
   IntrensicallyDown,
+}
+
+impl ComponentHealth {
+  /// Recursively calculate the [`HealthStatus`] of this [`ComponentHealth`].
+  fn recursive_status(&self) -> HealthStatus {
+    match self {
+      ComponentHealth::Composite(health) => {
+        let mut status = HealthStatus::Ok;
+        for report in &health.composite_statuses {
+          status = status.merge(&report.health.recursive_status());
+        }
+        status
+      }
+      ComponentHealth::Additive(health) => {
+        let mut status = HealthStatus::Ok;
+        for report in &health.components {
+          status = status.merge(&report.health.recursive_status());
+        }
+        status
+      }
+      ComponentHealth::Singular(health) => health.status.clone(),
+      ComponentHealth::IntrensicallyUp => HealthStatus::Ok,
+      ComponentHealth::IntrensicallyDown => HealthStatus::Down(vec![]),
+    }
+  }
 }
 
 impl From<CompositeComponentHealth> for ComponentHealth {
@@ -167,6 +199,45 @@ pub enum HealthStatus {
   Down(Vec<FailureMessage>),
 }
 
+impl HealthStatus {
+  /// Merge two health statuses.
+  pub fn merge(&self, other: &HealthStatus) -> HealthStatus {
+    match (self, other) {
+      (HealthStatus::Ok, HealthStatus::Ok) => HealthStatus::Ok,
+      (HealthStatus::Degraded(a), HealthStatus::Degraded(b)) => {
+        HealthStatus::Degraded(a.iter().chain(b.iter()).cloned().collect())
+      }
+      (HealthStatus::Down(a), HealthStatus::Down(b)) => {
+        HealthStatus::Down(a.iter().chain(b.iter()).cloned().collect())
+      }
+      (HealthStatus::Ok, HealthStatus::Degraded(b)) => {
+        HealthStatus::Degraded(b.clone())
+      }
+      (HealthStatus::Ok, HealthStatus::Down(b)) => {
+        HealthStatus::Down(b.clone())
+      }
+      (HealthStatus::Degraded(a), HealthStatus::Ok) => {
+        HealthStatus::Degraded(a.clone())
+      }
+      (HealthStatus::Degraded(a), HealthStatus::Down(b)) => HealthStatus::Down(
+        a.iter()
+          .map(DegredationMessage::as_failure_message)
+          .chain(b.iter().cloned())
+          .collect(),
+      ),
+      (HealthStatus::Down(a), HealthStatus::Ok) => {
+        HealthStatus::Down(a.clone())
+      }
+      (HealthStatus::Down(a), HealthStatus::Degraded(b)) => HealthStatus::Down(
+        a.iter()
+          .cloned()
+          .chain(b.iter().map(DegredationMessage::as_failure_message))
+          .collect(),
+      ),
+    }
+  }
+}
+
 /// A message describing why a component is degraded.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DegredationMessage(String);
@@ -175,6 +246,10 @@ impl DegredationMessage {
   /// Create a new `DegredationMessage`.
   pub fn new(message: &str) -> DegredationMessage {
     DegredationMessage(message.to_string())
+  }
+  /// Convert this `DegredationMessage` into a `FailureMessage`.
+  pub(crate) fn as_failure_message(&self) -> FailureMessage {
+    FailureMessage(self.0.clone())
   }
 }
 
