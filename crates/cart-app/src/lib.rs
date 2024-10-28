@@ -59,7 +59,7 @@ pub fn App() -> impl IntoView {
     <Style>{include_str!("../style/fonts.css")}</Style>
     <Link rel="preload" href="/fonts/inter.ttf" as_="font" type_="font/ttf" crossorigin="anonymous" />
 
-    <Title text="Welcome to Leptos"/>
+    <Title text="Nika - Cartographer"/>
 
     <Router>
       <div class="h-screen flex justify-items-start items-start gap-4">
