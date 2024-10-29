@@ -4,7 +4,7 @@ localFlake: { self, ... } @ moduleTop: {
     test-prefix = "nixvm-test-";
 
     # the common module
-    common = import ./common.nix { inherit self pkgs; };
+    common = import ./common { inherit self pkgs; };
     # the args we'll give to each module
     module-args = moduleTop // perSystemTop // { inherit common; };
     # helper to call a module with the args
@@ -15,10 +15,10 @@ localFlake: { self, ... } @ moduleTop: {
     callTestModule = source: pkgs.lib.attrsets.mapAttrs' test-renamer (call source);
   in {
     checks = { }
-      // (callTestModule ./tikv-basic-connect.nix)
-      // (callTestModule ./tikv-cluster-connect.nix)
-      // (callTestModule ./first-party-api-validate-tikv-urls.nix)
-      // (callTestModule ./api-upload-pathway.nix)
+      // (callTestModule ./domain/api-validate-tikv-urls.nix)
+      // (callTestModule ./domain/api-upload-pathway.nix)
+      // (callTestModule ./tikv/bare-metal-basic-connect.nix)
+      // (callTestModule ./tikv/bare-metal-cluster-connect.nix)
     ;
   };
 }

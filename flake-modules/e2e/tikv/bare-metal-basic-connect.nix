@@ -1,6 +1,6 @@
 { pkgs, common, config, ... }: {
-  tikv-basic-connect = pkgs.testers.runNixOSTest {
-    name = "tikv-basic-connect";
+  tikv-bare-metal-basic-connect = pkgs.testers.runNixOSTest {
+    name = "tikv-bare-metal-basic-connect";
 
     nodes = {
       tikv1 = common.basic-tikv-cluster.tikv;

@@ -1,6 +1,6 @@
 { pkgs, config, common, ... }: {
-  first-party-api-validate-tikv-urls = pkgs.testers.runNixOSTest {
-    name = "first-party-api-validate-tikv-urls";
+  domain-api-validate-tikv-urls = pkgs.testers.runNixOSTest {
+    name = "domain-api-validate-tikv-urls";
 
     nodes = {
       tikv1 = common.basic-tikv-cluster.tikv;
