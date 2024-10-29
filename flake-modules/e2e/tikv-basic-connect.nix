@@ -1,4 +1,4 @@
-{ pkgs, common, ... }: {
+{ pkgs, common, config, ... }: {
   tikv-basic-connect = pkgs.testers.runNixOSTest {
     name = "tikv-basic-connect";
 
@@ -9,7 +9,7 @@
       client = { pkgs, ... }: {
         imports = [ (common.assign-static 12) ];
 
-        environment.systemPackages = with pkgs; [ curl jq ];
+        environment.systemPackages = with pkgs; [ curl jq config.packages.migrator ];
       };
     };
 
@@ -24,6 +24,9 @@
       client.succeed("ping 10.0.0.10 -c 1")
       # make sure pd reports the tikv node as up
       client.wait_until_succeeds("curl http://10.0.0.11:2379/pd/api/v1/stores | jq -e '.[\"stores\"][0][\"store\"][\"state_name\"] == \"Up\"'")
+
+      # perform some writes
+      client.succeed("TIKV_URLS=10.0.0.11:2379 migrator")
     '';
   };
 }

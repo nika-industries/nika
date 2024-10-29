@@ -16,6 +16,7 @@ localFlake: { self, ... } @ moduleTop: {
   in {
     checks = { }
       // (callTestModule ./tikv-basic-connect.nix)
+      // (callTestModule ./tikv-cluster-connect.nix)
       // (callTestModule ./first-party-api-validate-tikv-urls.nix)
     ;
   };
