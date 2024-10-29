@@ -39,12 +39,12 @@ in {
       config = lib.mkOption {
         type = lib.types.nullOr lib.types.path;
         default = null;
-        description = "The configuration file for TiKV. If you set the configuration using the command line, the same setting in the config file is overwritten.";
+        description = "The configuration file for PD. If you set the configuration using the command line, the same setting in the config file is overwritten.";
       };
 
       dataDir = lib.mkOption {
         type = lib.types.str;
-        default = "/tmp/tikv/store";
+        default = "/var/pd/store";
         description = "The path to the data directory";
       };
 
@@ -90,8 +90,8 @@ in {
         --data-dir=${cfg.dataDir} \
         ${optional-array-flag "initial-cluster" "initialCluster"} \
         --log-level=${cfg.logLevel} \
+        ${optional-flag "config" "config"} \
         ${optional-flag "log-file" "logFile"}
-        ${optional-flag "config" "config"}
     '';
   in lib.mkIf cfg.enable {
     networking.firewall.allowedTCPPorts = [ 2379 2380 ];

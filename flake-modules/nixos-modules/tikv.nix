@@ -50,7 +50,7 @@ in {
 
       dataDir = lib.mkOption {
         type = lib.types.str;
-        default = "/tmp/tikv/store";
+        default = "/var/tikv/store";
         description = "The path to the data directory";
       };
 

@@ -31,6 +31,8 @@
       (importApply ./flake-modules/tikv { })
       # builds workspace rust packages
       (importApply ./flake-modules/rust-builds { })
+      # defines nixos modules
+      (importApply ./flake-modules/nixos-modules { })
       # defines e2e tests as nix checks
       (importApply ./flake-modules/e2e { })
       # extraneous and miscellaneous tests
