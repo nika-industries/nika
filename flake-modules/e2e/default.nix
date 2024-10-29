@@ -18,6 +18,7 @@ localFlake: { self, ... } @ moduleTop: {
       // (callTestModule ./tikv-basic-connect.nix)
       // (callTestModule ./tikv-cluster-connect.nix)
       // (callTestModule ./first-party-api-validate-tikv-urls.nix)
+      // (callTestModule ./api-upload-pathway.nix)
     ;
   };
 }
