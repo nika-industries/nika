@@ -16,7 +16,7 @@ thiserror.workspace = true
 serde.workspace = true
 miette.workspace = true
 
-tikv-client = { version = "0.3", optional = true, default-features = false }
+tikv-client = { git = "https://github.com/tikv/client-rust", optional = true, default-features = false }
 
 smallvec = "1.13.2"
 rmp-serde = "1.3.0"
