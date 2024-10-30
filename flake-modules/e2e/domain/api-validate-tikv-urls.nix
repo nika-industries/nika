@@ -3,13 +3,11 @@
     name = "domain-api-validate-tikv-urls";
 
     nodes = {
-      tikv1 = common.basic-tikv-cluster.tikv;
-      pd1 = common.basic-tikv-cluster.pd;
       api = {
         imports = [ (common.assign-static 5) ];
         environment.systemPackages = [ config.packages.api ];
       };
-    };
+    } // common.tikv-basic;
 
     testScript = ''
       pd1.wait_for_unit("network-online.target")
