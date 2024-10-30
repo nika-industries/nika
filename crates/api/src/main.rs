@@ -21,7 +21,7 @@
 mod cmd;
 mod temp_storage_payload;
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
   extract::{FromRef, Path, State},
@@ -33,7 +33,10 @@ use clap::Parser;
 use cmd::Commands;
 use miette::{IntoDiagnostic, Result};
 use prime_domain::{
-  hex::health::{self, HealthAware},
+  hex::{
+    health::{self, HealthAware},
+    retryable::Retryable,
+  },
   models,
   repos::TempStorageRepository,
   DynCacheService, DynEntryService, DynStoreService, DynTempStorageService,
@@ -106,7 +109,12 @@ async fn dummy_root_handler() -> impl IntoResponse {
 async fn health_handler(
   State(app_state): State<AppState>,
 ) -> impl IntoResponse {
-  Json(app_state.health_report().await)
+  let report = app_state.health_report().await;
+  let overall_status = report.overall_status();
+  Json(serde_json::json!({
+    "report": report,
+    "overall_status": overall_status,
+  }))
 }
 
 #[derive(Clone, FromRef)]
@@ -121,10 +129,14 @@ struct AppState {
 
 impl AppState {
   async fn build(config: &RuntimeConfig) -> Result<Self> {
-    let tikv_store =
-      prime_domain::repos::db::kv::tikv::TikvClient::new_from_env().await?;
-    let kv_db_adapter =
-      Arc::new(prime_domain::repos::db::KvDatabaseAdapter::new(tikv_store));
+    let tikv_store_init = move || async move {
+      prime_domain::repos::db::kv::tikv::TikvClient::new_from_env().await
+    };
+    let retryable_tikv_store =
+      Retryable::init(5, Duration::from_secs(2), tikv_store_init).await;
+    let kv_db_adapter = Arc::new(
+      prime_domain::repos::db::KvDatabaseAdapter::new(retryable_tikv_store),
+    );
     let cache_repo =
       prime_domain::repos::CacheRepositoryCanonical::new(kv_db_adapter.clone());
     let store_repo =

@@ -1,6 +1,6 @@
 { pkgs, common, self, config, ... }: {
-  api-upload-pathway = pkgs.testers.runNixOSTest {
-    name = "api-upload-pathway";
+  domain-api-upload-pathway = pkgs.testers.runNixOSTest {
+    name = "domain-api-upload-pathway";
 
     nodes = {
       api = {
@@ -29,7 +29,7 @@
       api.wait_for_unit("api.service")
       api.succeed("TIKV_URLS='10.0.0.10:2379,10.0.0.11:2379,10.0.0.12:2379' migrator")
 
-      client.execute("curl -X POST -F 'file=@${../../flake.nix}' http://10.0.0.16:3000/naive-upload/albert/a")
+      client.execute("curl -X POST -F 'file=@${../../../flake.nix}' http://10.0.0.16:3000/naive-upload/albert/a")
     '';
   };
 }

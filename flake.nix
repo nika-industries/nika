@@ -23,10 +23,12 @@
     imports = let
       inherit (top.flake-parts-lib) importApply;
     in [
-      # configures an "images" flake output for OCI images
-      (importApply ./flake-modules/images-output { })
+      # configures extra flake outputs
+      (importApply ./flake-modules/flake-outputs { })
       # configures nixpkgs with overlays
       (importApply ./flake-modules/nixpkgs { })
+      # kubernetes manifests
+      (importApply ./flake-modules/kubernetes { })
       # builds tikv packages and images
       (importApply ./flake-modules/tikv { })
       # builds workspace rust packages

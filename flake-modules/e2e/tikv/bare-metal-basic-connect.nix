@@ -1,17 +1,14 @@
 { pkgs, common, config, ... }: {
-  tikv-basic-connect = pkgs.testers.runNixOSTest {
-    name = "tikv-basic-connect";
+  tikv-bare-metal-basic-connect = pkgs.testers.runNixOSTest {
+    name = "tikv-bare-metal-basic-connect";
 
     nodes = {
-      tikv1 = common.basic-tikv-cluster.tikv;
-      pd1 = common.basic-tikv-cluster.pd;
-
       client = { pkgs, ... }: {
         imports = [ (common.assign-static 12) ];
 
         environment.systemPackages = with pkgs; [ curl jq config.packages.migrator ];
       };
-    };
+    } // common.tikv-basic;
 
     testScript = ''
       pd1.wait_for_unit("network-online.target")

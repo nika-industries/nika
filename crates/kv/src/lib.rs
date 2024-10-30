@@ -17,6 +17,7 @@
 //! This crate is yet to be hexagonalized.
 
 pub mod key;
+mod retryable;
 #[cfg(feature = "tikv")]
 pub mod tikv;
 pub mod txn_ext;

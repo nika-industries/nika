@@ -8,6 +8,8 @@
 //! is [`HealthAware`]` + `[`Send`]` + `[`Sync`]`+ 'static`, but this may
 //! change in the future. [`Hexagonal`] is a blanket implemented.
 
+pub mod retryable;
+
 pub use health;
 use health::HealthAware;
 
