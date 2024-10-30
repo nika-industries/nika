@@ -1529,6 +1529,8 @@ name = "hex"
 version = "0.1.0"
 dependencies = [
  "health",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
