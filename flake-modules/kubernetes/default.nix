@@ -1,8 +1,13 @@
 localFlake: { self, ... } @ moduleTop: {
   perSystem = { pkgs, ... } @ perSystemTop: let
-    test = pkgs.writeText "test" ''
-      Hello, world!
-    '';
+    yaml = (pkgs.formats.yaml { }).generate;
+  
+    test = yaml "test" {
+      this = {
+        is = "a test";
+      };
+    };
+  
   in {
     kubernetes = { inherit test; };
   };
