@@ -1,6 +1,6 @@
 //! Provides a generic `Retryable` that allows type-encoded errors to
 //! become stateful errors.
-use std::{error::Error, fmt::Debug, future::Future, time::Duration};
+use std::{fmt::Debug, future::Future, time::Duration};
 
 use tokio::time::sleep;
 
@@ -11,7 +11,7 @@ pub struct Retryable<R, E>(Result<R, E>);
 
 impl<R, E> Retryable<R, E>
 where
-  E: Debug + Error + Send + Sync + 'static,
+  E: Debug + Send + Sync + 'static,
 {
   /// Initializes a new `Retryable` with the given function, attempt limit, and
   /// delay.
@@ -56,7 +56,7 @@ where
 impl<R, E> health::HealthReporter for Retryable<R, E>
 where
   R: Hexagonal,
-  E: Debug + Error + Send + Sync + 'static,
+  E: Debug + Send + Sync + 'static,
 {
   fn name(&self) -> &'static str { stringify!(Retryable) }
   async fn health_check(&self) -> health::ComponentHealth {

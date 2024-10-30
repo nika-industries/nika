@@ -1,11 +1,11 @@
-use std::{error::Error, fmt::Debug};
+use std::fmt::Debug;
 
 use hex::retryable::Retryable;
 
 use crate::prelude::*;
 
-impl<KV: KvTransactional, E: Debug + Error + Send + Sync + 'static>
-  KvTransactional for Retryable<KV, E>
+impl<KV: KvTransactional, E: Debug + Send + Sync + 'static> KvTransactional
+  for Retryable<KV, E>
 {
   type OptimisticTransaction = KV::OptimisticTransaction;
   type PessimisticTransaction = KV::PessimisticTransaction;
