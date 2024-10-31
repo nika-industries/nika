@@ -17,7 +17,6 @@ mod entry;
 mod org;
 mod perms;
 mod record_id;
-mod storage_creds;
 mod store;
 mod token;
 mod user;
@@ -30,8 +29,8 @@ pub use slugger::*;
 pub use ulid::Ulid;
 
 pub use self::{
-  cache::*, entry::*, org::*, perms::*, record_id::RecordId, storage_creds::*,
-  store::*, token::*, user::*,
+  cache::*, entry::*, org::*, perms::*, record_id::RecordId, store::*,
+  token::*, user::*,
 };
 
 type SlugFieldGetter<T> = fn(&T) -> EitherSlug;
