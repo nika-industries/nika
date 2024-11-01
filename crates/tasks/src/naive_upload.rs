@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use prime_domain::{
   models::{self, LaxSlug, StrictSlug},
   DynPrimeDomainService,
