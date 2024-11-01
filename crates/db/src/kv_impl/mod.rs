@@ -51,7 +51,7 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
   async fn create_model<M: models::Model>(
     &self,
     model: M,
-  ) -> Result<(), CreateModelError> {
+  ) -> Result<M, CreateModelError> {
     tracing::info!("creating model");
 
     // the model itself will be stored under [model_name]:[id] -> model
@@ -132,7 +132,7 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
       .await
       .map_err(CreateModelError::RetryableTransaction)?;
 
-    Ok(())
+    Ok(model)
   }
 
   #[instrument(skip(self), fields(table = M::TABLE_NAME))]

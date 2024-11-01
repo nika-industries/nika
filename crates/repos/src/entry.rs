@@ -21,7 +21,7 @@ pub trait EntryRepository:
 {
   /// Find an [`Entry`] by its cache ID and path.
   #[instrument(skip(self))]
-  async fn find_by_entry_id_and_path(
+  async fn find_entry_by_id_and_path(
     &self,
     cache_id: CacheRecordId,
     path: LaxSlug,

@@ -69,7 +69,7 @@ impl<M: models::Model, DB: DatabaseAdapter> ModelRepository
   async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
-  ) -> Result<(), CreateModelError> {
+  ) -> Result<Self::Model, CreateModelError> {
     self.db_adapter.create_model::<Self::Model>(input).await
   }
 
