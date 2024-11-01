@@ -39,8 +39,7 @@ use prime_domain::{
   },
   models,
   repos::TempStorageRepository,
-  DynCacheService, DynEntryService, DynStoreService, DynTempStorageService,
-  DynTokenService, DynUserStorageService,
+  DynPrimeDomainService,
 };
 use tasks::Task;
 use tracing_subscriber::prelude::*;
@@ -66,12 +65,7 @@ async fn prepare_fetch_payload(
         .map(|s| models::TokenSecret::new(models::StrictSlug::new(s))),
       path:         models::LaxSlug::new(path),
     }
-    .run((
-      app_state.cache_service.clone(),
-      app_state.store_service.clone(),
-      app_state.token_service.clone(),
-      app_state.entry_service.clone(),
-    ))
+    .run(app_state.prime_domain_service.clone())
     .await
     .map(Json)?,
   )
@@ -89,13 +83,7 @@ async fn naive_upload(
     path:              path.into(),
     temp_storage_path: payload_path,
   }
-  .run((
-    app_state.cache_service.clone(),
-    app_state.store_service.clone(),
-    app_state.entry_service.clone(),
-    app_state.temp_storage_service.clone(),
-    app_state.user_storage_service.clone(),
-  ))
+  .run(app_state.prime_domain_service.clone())
   .await
   .unwrap();
 }
@@ -119,12 +107,7 @@ async fn health_handler(
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  cache_service:        DynCacheService,
-  store_service:        DynStoreService,
-  token_service:        DynTokenService,
-  entry_service:        DynEntryService,
-  temp_storage_service: DynTempStorageService,
-  user_storage_service: DynUserStorageService,
+  prime_domain_service: DynPrimeDomainService,
 }
 
 impl AppState {
@@ -160,22 +143,20 @@ impl AppState {
         .await?,
       )
     };
+    let user_storage_repo =
+      prime_domain::repos::UserStorageRepositoryCanonical::new();
 
-    let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
-    let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
-    let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
-    let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
-    let temp_storage_service =
-      prime_domain::TempStorageServiceCanonical::new(temp_storage_repo);
-    let user_storage_service = prime_domain::UserStorageServiceCanonical::new();
+    let prime_domain_service = prime_domain::PrimeDomainServiceCanonical::new(
+      cache_repo,
+      entry_repo,
+      store_repo,
+      token_repo,
+      temp_storage_repo,
+      user_storage_repo,
+    );
 
     Ok(AppState {
-      cache_service:        Arc::new(Box::new(cache_service)),
-      store_service:        Arc::new(Box::new(store_service)),
-      token_service:        Arc::new(Box::new(token_service)),
-      entry_service:        Arc::new(Box::new(entry_service)),
-      temp_storage_service: Arc::new(Box::new(temp_storage_service)),
-      user_storage_service: Arc::new(Box::new(user_storage_service)),
+      prime_domain_service: Arc::new(Box::new(prime_domain_service)),
     })
   }
 }
@@ -184,13 +165,9 @@ impl AppState {
 impl health::HealthReporter for AppState {
   fn name(&self) -> &'static str { stringify!(AppState) }
   async fn health_check(&self) -> health::ComponentHealth {
-    health::AdditiveComponentHealth::from_futures(vec![
-      self.cache_service.health_report(),
-      self.store_service.health_report(),
-      self.token_service.health_report(),
-      self.entry_service.health_report(),
-      self.temp_storage_service.health_report(),
-    ])
+    health::AdditiveComponentHealth::from_futures(vec![self
+      .prime_domain_service
+      .health_report()])
     .await
     .into()
   }

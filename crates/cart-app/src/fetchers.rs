@@ -1,23 +1,22 @@
 macro_rules! fetchers {
-  ($service:ty, $model:ty, $singular_fn_name:ident, $plural_fn_name:ident) => {
+  ($model:ty, $singular_fn_name:ident, $enumerate_fn_name:ident, $fetch_single_fn_name:ident, $plural_fn_name:ident) => {
     #[leptos::prelude::server]
     pub async fn $plural_fn_name(
     ) -> Result<Vec<$model>, leptos::prelude::ServerFnError> {
       let service: Option<_> = leptos::prelude::use_context();
-      let service: $service =
-        service.ok_or(leptos::prelude::ServerFnError::new(stringify!(
-          $service,
-          " service is not available."
-        )))?;
+      let service: prime_domain::DynPrimeDomainService =
+        service.ok_or(leptos::prelude::ServerFnError::new(
+          "`PrimeDomainService` is not available.",
+        ))?;
 
-      let ids = service.enumerate_models().await.map_err(|e| {
+      let models = service.$enumerate_fn_name().await.map_err(|e| {
         leptos::prelude::ServerFnError::new(format!(
           "Failed to enumerate {} models: {}",
           stringify!($model),
           e
         ))
       })?;
-      Ok(ids)
+      Ok(models)
     }
 
     #[leptos::prelude::server]
@@ -25,14 +24,13 @@ macro_rules! fetchers {
       id: models::RecordId<$model>,
     ) -> Result<$model, leptos::prelude::ServerFnError> {
       let service: Option<_> = leptos::prelude::use_context();
-      let service: $service =
-        service.ok_or(leptos::prelude::ServerFnError::new(stringify!(
-          $service,
-          " service is not available."
-        )))?;
+      let service: prime_domain::DynPrimeDomainService =
+        service.ok_or(leptos::prelude::ServerFnError::new(
+          "`PrimeDomainService` is not available.",
+        ))?;
 
       let model = service
-        .fetch(id)
+        .$fetch_single_fn_name(id)
         .await
         .map_err(|e| {
           leptos::prelude::ServerFnError::new(format!(
@@ -51,26 +49,30 @@ macro_rules! fetchers {
 }
 
 fetchers!(
-  prime_domain::DynCacheService,
   models::Cache,
   fetch_cache,
+  enumerate_caches,
+  fetch_cache_by_id,
   fetch_all_caches
 );
 fetchers!(
-  prime_domain::DynEntryService,
   models::Entry,
   fetch_entry,
+  enumerate_entries,
+  fetch_entry_by_id,
   fetch_all_entries
 );
 fetchers!(
-  prime_domain::DynStoreService,
   models::Store,
   fetch_store,
+  enumerate_stores,
+  fetch_store_by_id,
   fetch_all_stores
 );
 fetchers!(
-  prime_domain::DynTokenService,
   models::Token,
   fetch_token,
+  enumerate_tokens,
+  fetch_token_by_id,
   fetch_all_tokens
 );

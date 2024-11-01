@@ -1,7 +1,4 @@
-use std::{
-  io::{self},
-  sync::Arc,
-};
+use std::io::{self};
 
 use axum::{
   async_trait,
@@ -9,13 +6,15 @@ use axum::{
   extract::{FromRef, FromRequest, Request},
   response::Response,
 };
-use prime_domain::{models::TempStoragePath, TempStorageService};
+use prime_domain::{
+  models::TempStoragePath, DynPrimeDomainService, PrimeDomainService,
+};
 use tokio_stream::StreamExt;
 
 use crate::AppState;
 
 /// An extractor that reads the request body into temp storage.
-pub struct TempStoragePayload(Body, Arc<Box<dyn TempStorageService>>);
+pub struct TempStoragePayload(Body, DynPrimeDomainService);
 
 #[async_trait]
 impl<S> FromRequest<S> for TempStoragePayload
@@ -34,7 +33,7 @@ where
 
     Ok(Self(
       req.into_body(),
-      app_state.temp_storage_service.clone(),
+      app_state.prime_domain_service.clone(),
     ))
   }
 }
@@ -61,7 +60,7 @@ impl TempStoragePayload {
     ));
 
     let path = temp_storage_service
-      .store(body_stream)
+      .store_in_temp_storage(body_stream)
       .await
       .map_err(TempStoragePayloadError::WriteError)?;
 

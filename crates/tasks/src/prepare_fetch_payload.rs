@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use mollusk::*;
 use prime_domain::{
   models::{self, LaxSlug, StrictSlug, TokenRecordId, TokenSecret},
-  CacheService, EntryService, StoreService, TokenService,
+  DynPrimeDomainService,
 };
 use serde::{Deserialize, Serialize};
 
@@ -26,14 +24,12 @@ impl rope::Task for PrepareFetchPayloadTask {
 
   type Response = models::StorageCredentials;
   type Error = PrepareFetchPayloadError;
-  type State = (
-    Arc<Box<dyn CacheService>>,
-    Arc<Box<dyn StoreService>>,
-    Arc<Box<dyn TokenService>>,
-    Arc<Box<dyn EntryService>>,
-  );
+  type State = DynPrimeDomainService;
 
-  async fn run(self, db: Self::State) -> Result<Self::Response, Self::Error> {
+  async fn run(
+    self,
+    state: Self::State,
+  ) -> Result<Self::Response, Self::Error> {
     let PrepareFetchPayloadTask {
       cache_name,
       token_id,
@@ -41,18 +37,18 @@ impl rope::Task for PrepareFetchPayloadTask {
       path,
     } = self;
 
-    let (cache_service, store_service, token_service, entry_service) = db;
+    let prime_domain_service = state;
 
-    let cache = cache_service
-      .find_by_name(cache_name.clone())
+    let cache = prime_domain_service
+      .find_cache_by_name(cache_name.clone())
       .await
       .map_err(|e| {
         PrepareFetchPayloadError::InternalError(InternalError(format!("{e:?}")))
       })?
       .ok_or(NoMatchingCacheError(cache_name.to_string()))?;
 
-    let store = store_service
-      .fetch(cache.store)
+    let store = prime_domain_service
+      .fetch_store_by_id(cache.store)
       .await
       .map_err(|e| InternalError(format!("{e:?}")))?
       .ok_or(InternalError(format!("store not found: {:?}", cache.store)))?;
@@ -72,7 +68,7 @@ impl rope::Task for PrepareFetchPayloadTask {
       let required_permission_set =
         models::PermissionSet::from_iter(vec![required_permission.clone()]);
 
-      let token = token_service
+      let token = prime_domain_service
         .verify_token_id_and_secret(token_id, token_secret.clone())
         .await
         .map_err(|e| {
@@ -90,8 +86,8 @@ impl rope::Task for PrepareFetchPayloadTask {
       }
     }
 
-    let _entry = entry_service
-      .find_by_entry_id_and_path(cache.id, path.clone())
+    let _entry = prime_domain_service
+      .find_entry_by_id_and_path(cache.id, path.clone())
       .await
       .map_err(|e| InternalError(format!("{e:?}")))?;
 
