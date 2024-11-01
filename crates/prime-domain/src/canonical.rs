@@ -169,7 +169,7 @@ where
 
     let client = self
       .user_storage_repo
-      .connect_to_user_storage(store.config.clone())
+      .connect_to_user_storage(store.credentials.clone())
       .await
       .map_err(crate::WriteToStoreError::StorageConnectionError)?;
 
@@ -196,7 +196,7 @@ where
 
     let client = self
       .user_storage_repo
-      .connect_to_user_storage(store.config.clone())
+      .connect_to_user_storage(store.credentials.clone())
       .await
       .map_err(crate::ReadFromStoreError::StorageConnectionError)?;
 

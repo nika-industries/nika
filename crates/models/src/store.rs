@@ -12,13 +12,13 @@ pub type StoreRecordId = RecordId<Store>;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Store {
   /// The store's ID.
-  pub id:       StoreRecordId,
+  pub id:          StoreRecordId,
   /// The store's nickname.
-  pub nickname: dvf::EntityNickname,
+  pub nickname:    dvf::EntityNickname,
   /// The store's credentials.
-  pub config:   StorageCredentials,
+  pub credentials: StorageCredentials,
   /// The [`Org`](crate::Org) the store belongs to.
-  pub org:      OrgRecordId,
+  pub org:         OrgRecordId,
 }
 
 impl Model for Store {
@@ -45,10 +45,10 @@ pub struct StoreCreateRequest {
 impl From<StoreCreateRequest> for Store {
   fn from(req: StoreCreateRequest) -> Self {
     Self {
-      id:       Default::default(),
-      nickname: req.nickname,
-      config:   req.config,
-      org:      req.org,
+      id:          Default::default(),
+      nickname:    req.nickname,
+      credentials: req.config,
+      org:         req.org,
     }
   }
 }

@@ -91,6 +91,6 @@ impl rope::Task for PrepareFetchPayloadTask {
       .await
       .map_err(|e| InternalError(format!("{e:?}")))?;
 
-    Ok(store.config)
+    Ok(store.credentials)
   }
 }
