@@ -170,7 +170,7 @@ where
   ) -> Result<DynAsyncReader, StorageReadError> {
     self.temp_storage_repo.read(path).await
   }
-  async fn store_in_temp_storage(
+  async fn write_to_temp_storage(
     &self,
     data: DynAsyncReader,
   ) -> Result<models::TempStoragePath, StorageWriteError> {

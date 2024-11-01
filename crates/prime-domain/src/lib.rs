@@ -118,7 +118,7 @@ pub trait PrimeDomainService: Hexagonal {
     path: models::TempStoragePath,
   ) -> Result<DynAsyncReader, StorageReadError>;
   /// Store data in the temp storage.
-  async fn store_in_temp_storage(
+  async fn write_to_temp_storage(
     &self,
     data: DynAsyncReader,
   ) -> Result<models::TempStoragePath, StorageWriteError>;

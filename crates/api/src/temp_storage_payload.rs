@@ -60,7 +60,7 @@ impl TempStoragePayload {
     ));
 
     let path = temp_storage_service
-      .store_in_temp_storage(body_stream)
+      .write_to_temp_storage(body_stream)
       .await
       .map_err(TempStoragePayloadError::WriteError)?;
 

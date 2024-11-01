@@ -94,10 +94,10 @@ where
   ) -> Result<DynAsyncReader, StorageReadError> {
     self.deref().read_from_temp_storage(path).await
   }
-  async fn store_in_temp_storage(
+  async fn write_to_temp_storage(
     &self,
     data: DynAsyncReader,
   ) -> Result<models::TempStoragePath, StorageWriteError> {
-    self.deref().store_in_temp_storage(data).await
+    self.deref().write_to_temp_storage(data).await
   }
 }
