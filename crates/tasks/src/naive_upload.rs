@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use prime_domain::{
-  models::{self, StrictSlug},
+  models::{self, LaxSlug, StrictSlug},
   DynPrimeDomainService,
 };
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ pub struct NaiveUploadTask {
   /// The target store name.
   pub cache_name:        StrictSlug,
   /// The target path.
-  pub path:              PathBuf,
+  pub path:              LaxSlug,
   /// The temporary storage path where the payload is currently stored.
   pub temp_storage_path: models::TempStoragePath,
 }
@@ -39,28 +39,18 @@ impl rope::Task for NaiveUploadTask {
       .expect("failed to fetch cache")
       .expect("cache not found");
 
-    tracing::info!("fetching store");
-    let store = prime_domain_service
-      .fetch_store_by_id(cache.store)
-      .await
-      .expect("failed to fetch store")
-      .expect("store not found");
-
-    tracing::info!("connecting to user storage");
-    let target_client = prime_domain_service
-      .connect_to_user_storage(store.config)
-      .await
-      .unwrap();
-
     let temp_reader = prime_domain_service
       .read_from_temp_storage(self.temp_storage_path.clone())
       .await
-      .unwrap();
-    let file_size = target_client.write(&self.path, temp_reader).await.unwrap();
+      .expect("failed to read from temp storage");
+    let file_size = prime_domain_service
+      .write_to_store(cache.store, self.path.clone(), temp_reader)
+      .await
+      .expect("failed to write to store");
 
     // create an Entry
     let entry_cr = models::EntryCreateRequest {
-      path:  models::LaxSlug::new(self.path.to_string_lossy().to_string()),
+      path:  models::LaxSlug::new(self.path.to_string().to_string()),
       size:  file_size,
       cache: cache.id,
       org:   cache.org,

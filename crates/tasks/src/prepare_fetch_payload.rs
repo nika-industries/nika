@@ -45,7 +45,7 @@ impl rope::Task for PrepareFetchPayloadTask {
       .map_err(|e| {
         PrepareFetchPayloadError::InternalError(InternalError(format!("{e:?}")))
       })?
-      .ok_or(NoMatchingCacheError(cache_name.to_string()))?;
+      .ok_or(NonExistentCacheError(cache_name.to_string()))?;
 
     let store = prime_domain_service
       .fetch_store_by_id(cache.store)

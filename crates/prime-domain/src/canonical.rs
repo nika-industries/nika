@@ -1,3 +1,5 @@
+use std::{path::PathBuf, str::FromStr};
+
 pub use hex;
 use hex::health;
 use miette::Result;
@@ -152,16 +154,59 @@ where
     Ok(token)
   }
 
-  async fn connect_to_user_storage(
+  async fn write_to_store(
     &self,
-    creds: models::StorageCredentials,
-  ) -> Result<Box<dyn UserStorageClient>> {
-    Ok(Box::new(
-      self
-        .user_storage_repo
-        .connect_to_user_storage(creds)
-        .await?,
-    ))
+    store_id: StoreRecordId,
+    path: models::LaxSlug,
+    data: DynAsyncReader,
+  ) -> Result<models::FileSize, crate::WriteToStoreError> {
+    let store = self
+      .store_repo
+      .fetch_model_by_id(store_id)
+      .await
+      .map_err(crate::WriteToStoreError::FetchError)?
+      .ok_or_else(|| crate::WriteToStoreError::StoreNotFound(store_id))?;
+
+    let client = self
+      .user_storage_repo
+      .connect_to_user_storage(store.config.clone())
+      .await
+      .map_err(crate::WriteToStoreError::StorageConnectionError)?;
+
+    let path = PathBuf::from_str(path.as_ref()).unwrap();
+    let file_size = client
+      .write(&path, data)
+      .await
+      .map_err(crate::WriteToStoreError::StorageWriteError)?;
+
+    Ok(file_size)
+  }
+
+  async fn read_from_store(
+    &self,
+    store_id: StoreRecordId,
+    path: models::LaxSlug,
+  ) -> Result<DynAsyncReader, crate::ReadFromStoreError> {
+    let store = self
+      .store_repo
+      .fetch_model_by_id(store_id)
+      .await
+      .map_err(crate::ReadFromStoreError::FetchError)?
+      .ok_or_else(|| crate::ReadFromStoreError::StoreNotFound(store_id))?;
+
+    let client = self
+      .user_storage_repo
+      .connect_to_user_storage(store.config.clone())
+      .await
+      .map_err(crate::ReadFromStoreError::StorageConnectionError)?;
+
+    let path = PathBuf::from_str(path.as_ref()).unwrap();
+    let reader = client
+      .read(&path)
+      .await
+      .map_err(crate::ReadFromStoreError::StorageReadError)?;
+
+    Ok(reader)
   }
 
   async fn read_from_temp_storage(

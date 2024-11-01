@@ -5,10 +5,12 @@ use models::{
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
   Cache, DynAsyncReader, Entry, EntryCreateRequest, StorageReadError,
-  StorageWriteError, Store, Token, UserStorageClient,
+  StorageWriteError, Store, Token,
 };
 
-use crate::{PrimeDomainService, TokenVerifyError};
+use crate::{
+  PrimeDomainService, ReadFromStoreError, TokenVerifyError, WriteToStoreError,
+};
 
 // impl for smart pointers
 #[async_trait::async_trait]
@@ -81,11 +83,20 @@ where
     self.deref().verify_token_id_and_secret(id, secret).await
   }
 
-  async fn connect_to_user_storage(
+  async fn write_to_store(
     &self,
-    creds: models::StorageCredentials,
-  ) -> Result<Box<dyn UserStorageClient>> {
-    Ok(Box::new(self.deref().connect_to_user_storage(creds).await?))
+    store_id: StoreRecordId,
+    path: models::LaxSlug,
+    data: DynAsyncReader,
+  ) -> Result<models::FileSize, WriteToStoreError> {
+    self.deref().write_to_store(store_id, path, data).await
+  }
+  async fn read_from_store(
+    &self,
+    store_id: StoreRecordId,
+    path: models::LaxSlug,
+  ) -> Result<DynAsyncReader, ReadFromStoreError> {
+    self.deref().read_from_store(store_id, path).await
   }
 
   async fn read_from_temp_storage(

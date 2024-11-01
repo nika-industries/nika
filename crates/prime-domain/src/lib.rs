@@ -28,25 +28,10 @@ pub use repos::{
 };
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
-  DynAsyncReader, UserStorageClient,
+  DynAsyncReader,
 };
 
 pub use self::canonical::*;
-
-/// The error type for token verification.
-#[derive(Debug, thiserror::Error, miette::Diagnostic)]
-pub enum TokenVerifyError {
-  /// The token ID was not found.
-  #[error("token ID not found")]
-  IdNotFound,
-  /// The token secret does not match the expected secret.
-  #[error("token secret mismatch")]
-  SecretMismatch,
-  /// An error occurred while fetching the token.
-  #[error("error fetching token")]
-  #[diagnostic_source]
-  FetchError(FetchModelError),
-}
 
 /// A dynamic [`PrimeDomainService`] trait object.
 pub type DynPrimeDomainService = Arc<Box<dyn PrimeDomainService>>;
@@ -106,11 +91,19 @@ pub trait PrimeDomainService: Hexagonal {
     secret: models::TokenSecret,
   ) -> Result<Token, TokenVerifyError>;
 
-  /// Connect to a user storage.
-  async fn connect_to_user_storage(
+  /// Write to store contents.
+  async fn write_to_store(
     &self,
-    creds: models::StorageCredentials,
-  ) -> Result<Box<dyn UserStorageClient>>;
+    store_id: StoreRecordId,
+    path: models::LaxSlug,
+    data: DynAsyncReader,
+  ) -> Result<models::FileSize, WriteToStoreError>;
+  /// Read from store contents.
+  async fn read_from_store(
+    &self,
+    store_id: StoreRecordId,
+    path: models::LaxSlug,
+  ) -> Result<DynAsyncReader, ReadFromStoreError>;
 
   /// Read data from the temp storage.
   async fn read_from_temp_storage(
@@ -122,4 +115,53 @@ pub trait PrimeDomainService: Hexagonal {
     &self,
     data: DynAsyncReader,
   ) -> Result<models::TempStoragePath, StorageWriteError>;
+}
+
+/// The error type for token verification.
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
+pub enum TokenVerifyError {
+  /// The token ID was not found.
+  #[error("token ID not found")]
+  IdNotFound,
+  /// The token secret does not match the expected secret.
+  #[error("token secret mismatch")]
+  SecretMismatch,
+  /// An error occurred while fetching the token.
+  #[error("error fetching token")]
+  #[diagnostic_source]
+  FetchError(FetchModelError),
+}
+
+/// The error type for writing to a store.
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
+pub enum WriteToStoreError {
+  /// The store was not found.
+  #[error("store not found")]
+  StoreNotFound(StoreRecordId),
+  /// An error occurred while fetching the store.
+  #[error("failed to fetch store")]
+  FetchError(FetchModelError),
+  /// An error occurred while connecting to user storage.
+  #[error("failed to connect to user storage")]
+  StorageConnectionError(miette::Report),
+  /// An error occurred while writing to the store.
+  #[error("failed to write to store")]
+  StorageWriteError(StorageWriteError),
+}
+
+/// The error type for reading from a store.
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
+pub enum ReadFromStoreError {
+  /// The store was not found.
+  #[error("store not found")]
+  StoreNotFound(StoreRecordId),
+  /// An error occurred while fetching the store.
+  #[error("failed to fetch store")]
+  FetchError(FetchModelError),
+  /// An error occurred while connecting to user storage.
+  #[error("failed to connect to user storage")]
+  StorageConnectionError(miette::Report),
+  /// An error occurred while reading from the store.
+  #[error("failed to read from store")]
+  StorageReadError(StorageReadError),
 }

@@ -74,18 +74,29 @@ async fn prepare_fetch_payload(
 #[tracing::instrument(skip(app_state, payload))]
 async fn naive_upload(
   State(app_state): State<AppState>,
-  Path((cache_name, path)): Path<(String, String)>,
+  Path((cache_name, original_path)): Path<(String, String)>,
   payload: TempStoragePayload,
-) -> impl IntoResponse {
+) -> Result<(), mollusk::ExternalApiError> {
+  let path = models::LaxSlug::new(original_path.clone());
+  if path.to_string() != original_path {
+    return Err(
+      mollusk::InvalidPathError {
+        path: original_path,
+      }
+      .into(),
+    );
+  }
+
   let payload_path = payload.upload().await.unwrap();
   tasks::NaiveUploadTask {
-    cache_name:        models::StrictSlug::new(cache_name),
-    path:              path.into(),
+    cache_name: models::StrictSlug::new(cache_name),
+    path,
     temp_storage_path: payload_path,
   }
   .run(app_state.prime_domain_service.clone())
   .await
   .unwrap();
+  Ok(())
 }
 
 async fn dummy_root_handler() -> impl IntoResponse {
