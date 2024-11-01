@@ -8,7 +8,6 @@ publish = false
 hex = { path = "../hex" }
 repos = { path = "../repos" }
 models = { path = "../models" }
-storage = { path = "../storage" }
 
 async-trait.workspace = true
 miette.workspace = true

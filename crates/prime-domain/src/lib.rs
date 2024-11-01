@@ -16,16 +16,18 @@ use hex::{health, Hexagonal};
 use miette::Result;
 pub use models;
 use models::{
-  Cache, CacheRecordId, Entry, EntryRecordId, Store, StoreRecordId, StrictSlug,
-  Token, TokenRecordId,
+  Cache, CacheRecordId, Entry, EntryCreateRequest, EntryRecordId, Store,
+  StoreRecordId, StrictSlug, Token, TokenRecordId,
 };
-pub use repos;
+pub use repos::{
+  self, StorageReadError, StorageWriteError, TempStorageCreds,
+  TempStorageCredsError,
+};
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
   CacheRepository, DynAsyncReader, EntryRepository, StoreRepository,
   TempStorageRepository, TokenRepository, UserStorageClient,
 };
-use storage::{ReadError as StorageReadError, WriteError as StorageWriteError};
 use tracing::instrument;
 
 /// The error type for token verification.
@@ -92,7 +94,7 @@ pub trait PrimeDomainService: Hexagonal {
   /// Creates an [`Entry`] from an [`EntryCreateRequest`].
   async fn create_entry(
     &self,
-    entry_cr: models::EntryCreateRequest,
+    entry_cr: EntryCreateRequest,
   ) -> Result<Entry, repos::CreateModelError>;
   /// Verify a [`Token`] by its ID and secret.
   async fn verify_token_id_and_secret(
@@ -178,7 +180,7 @@ where
   }
   async fn create_entry(
     &self,
-    entry_cr: models::EntryCreateRequest,
+    entry_cr: EntryCreateRequest,
   ) -> Result<Entry, repos::CreateModelError> {
     self.deref().create_entry(entry_cr).await
   }
@@ -324,7 +326,7 @@ where
   }
   async fn create_entry(
     &self,
-    entry_cr: models::EntryCreateRequest,
+    entry_cr: EntryCreateRequest,
   ) -> Result<Entry, repos::CreateModelError> {
     self.entry_repo.create_model(entry_cr).await
   }

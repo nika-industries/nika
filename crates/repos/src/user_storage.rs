@@ -6,7 +6,8 @@ use storage::{DynAsyncReader, ReadError, StorageClientGenerator, WriteError};
 /// The definition for the user storage service.
 #[async_trait::async_trait]
 pub trait UserStorageRepository: Hexagonal {
-  /// The client type returned by the [`connect`](Self::connect) method.
+  /// The client type returned by the [`connect`](Self::connect_to_user_storage)
+  /// method.
   type Client: UserStorageClient;
   /// Connects to user storage and returns a client.
   async fn connect_to_user_storage(
@@ -16,7 +17,7 @@ pub trait UserStorageRepository: Hexagonal {
 }
 
 /// The definition for the user storage client, produced by the
-/// [`UserStorageService`].
+/// [`UserStorageRepository`].
 #[async_trait::async_trait]
 pub trait UserStorageClient: Hexagonal {
   /// Reads a file. Returns a [`DynAsyncReader`].

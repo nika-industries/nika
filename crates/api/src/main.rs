@@ -135,7 +135,7 @@ impl AppState {
         std::path::PathBuf::from("/tmp/nika-temp-storage"),
       ))
     } else {
-      let temp_storage_creds = storage::temp::TempStorageCreds::new_from_env()?;
+      let temp_storage_creds = prime_domain::TempStorageCreds::new_from_env()?;
       Box::new(
         prime_domain::repos::TempStorageRepositoryCanonical::new(
           temp_storage_creds,

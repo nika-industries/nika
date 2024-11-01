@@ -17,7 +17,7 @@ impl<'a, R> CountedAsyncReader<'a, R> {
   }
 }
 
-impl<'a, R> AsyncRead for CountedAsyncReader<'a, R>
+impl<R> AsyncRead for CountedAsyncReader<'_, R>
 where
   R: AsyncRead + Unpin,
 {

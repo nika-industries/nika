@@ -44,7 +44,7 @@ where
 pub enum TempStoragePayloadError {
   /// Error writing to temp storage.
   #[error("Error writing to temp storage: {0}")]
-  WriteError(storage::WriteError),
+  WriteError(prime_domain::StorageWriteError),
 }
 
 impl TempStoragePayload {
