@@ -246,7 +246,7 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
       .map_err(FetchModelError::RetryableTransaction)?;
 
     let (txn, scan_results) = txn
-      .csm_scan(Bound::Included(first_key), Bound::Included(last_key), 1000)
+      .csm_scan(Bound::Included(first_key), Bound::Included(last_key), None)
       .await
       .map_err(FetchModelError::Db)?;
 

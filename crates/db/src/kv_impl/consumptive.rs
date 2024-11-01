@@ -46,7 +46,7 @@ pub trait ConsumptiveTransaction:
     mut self,
     start: Bound<Key>,
     end: Bound<Key>,
-    limit: u32,
+    limit: Option<u32>,
   ) -> Result<(Self, Vec<(Key, Value)>)> {
     let scan = match self.scan(start, end, limit).await {
       Ok(s) => s,
