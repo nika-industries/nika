@@ -10,12 +10,12 @@ workspace = true
 [dependencies]
 hex = { path = "../hex" }
 models = { path = "../models" }
+object_store = { path = "../object_store_s3_wasm", features = ["aws"] }
 
 async-trait.workspace = true
 serde.workspace = true
 thiserror.workspace = true
-tokio = { workspace = true, features = [ "fs" ] }
-object_store = { version = "0.10.1", features = ["aws"] }
+tokio = { workspace = true, features = ["fs"] }
 miette.workspace = true
 futures.workspace = true
 tokio-util = { workspace = true, features = ["compat"] }
@@ -24,4 +24,4 @@ bytes-stream = "0.0.3"
 
 [dev-dependencies]
 temp-dir = { version = "0.1" }
-tokio = { workspace = true, features = [ "fs", "rt", "macros", "io-util" ] }
+tokio = { workspace = true, features = ["fs", "rt", "macros", "io-util"] }
