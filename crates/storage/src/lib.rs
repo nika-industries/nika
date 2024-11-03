@@ -1,6 +1,5 @@
 //! Provides traits and implementations for storage clients.
 
-mod counted_async_reader;
 mod local;
 mod s3_compat;
 pub mod temp;

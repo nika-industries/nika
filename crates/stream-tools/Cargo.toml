@@ -1,0 +1,11 @@
+[package]
+name = "stream-tools"
+version = "0.1.0"
+edition = "2021"
+publish = true
+
+[dependencies]
+tokio = { workspace = true }
+
+[lints]
+workspace = true

@@ -3951,11 +3951,19 @@ dependencies = [
  "models",
  "object_store",
  "serde",
+ "stream-tools",
  "temp-dir",
  "thiserror",
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "stream-tools"
+version = "0.1.0"
+dependencies = [
+ "tokio",
 ]
 
 [[package]]

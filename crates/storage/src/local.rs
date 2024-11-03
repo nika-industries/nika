@@ -3,10 +3,11 @@ use std::path::{Path, PathBuf};
 use hex::health;
 use miette::{Context, IntoDiagnostic};
 use models::LocalStorageCredentials;
+use stream_tools::CountedAsyncReader;
 use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
 
 use super::{DynAsyncReader, ReadError, StorageClient};
-use crate::{counted_async_reader::CountedAsyncReader, WriteError};
+use crate::WriteError;
 
 pub struct LocalStorageClient(PathBuf);
 
