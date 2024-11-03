@@ -39,7 +39,7 @@ impl<T: DatabaseAdapter> Migratable for T {
       credentials:        StorageCredentials::Local(LocalStorageCredentials(
         PathBuf::from_str("/tmp/local-store").unwrap(),
       )),
-      compression_config: models::CompressionConfig { algorithm: None },
+      compression_config: models::CompressionConfig::new(None),
       org:                org.id,
     };
 
