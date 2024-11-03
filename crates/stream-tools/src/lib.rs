@@ -1,6 +1,11 @@
-//! Various stream utilities.
+//! Various stream tools.
 
-pub use counted_async_reader::CountedAsyncReader;
+use tokio::io::AsyncRead;
+
+pub use self::counted_async_reader::CountedAsyncReader;
+
+/// Trait alias for `Box<dyn AsyncReader + ...>`
+pub type DynAsyncReader = Box<dyn AsyncRead + Send + Unpin + 'static>;
 
 mod counted_async_reader {
   use std::{
