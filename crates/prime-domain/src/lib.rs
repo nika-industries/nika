@@ -146,6 +146,9 @@ pub enum WriteToStoreError {
 /// The error type for writing to a store.
 #[derive(Debug, thiserror::Error, miette::Diagnostic)]
 pub enum CreateEntryError {
+  /// A matching entry already exists.
+  #[error("entry already exists")]
+  EntryAlreadyExists,
   /// The cache was not found.
   #[error("cache not found")]
   CacheNotFound(CacheRecordId),
@@ -161,6 +164,9 @@ pub enum CreateEntryError {
   /// An error occurred while fetching a model.
   #[error("failed to fetch model")]
   FetchModelError(FetchModelError),
+  /// An error occurred while fetching a model by index.
+  #[error("failed to fetch model by index")]
+  FetchModelByIndexError(FetchModelByIndexError),
   /// An error occurred due to data integrity failure.
   #[error("data integrity error")]
   DataIntegrityError(miette::Report),

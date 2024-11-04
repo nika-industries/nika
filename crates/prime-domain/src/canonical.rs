@@ -96,6 +96,8 @@ where
       None => data,
     };
 
+    let (data, compressed_counter) = CountedAsyncReader::new(data);
+
     // get the user storage client
     let client = self
       .user_storage_repo
@@ -105,18 +107,19 @@ where
 
     // write the data to the store
     let path = PathBuf::from_str(path.as_ref()).unwrap();
-    let compressed_file_size = client
-      .write(&path, data)
+    let _ = client
+      .write(&path, Box::new(data))
       .await
       .map_err(crate::WriteToStoreError::StorageWriteError)?;
 
-    // get the uncompressed size
+    // get the sizes
     let uncompressed_file_size = uncompressed_counter.current_size().await;
+    let compressed_file_size = compressed_counter.current_size().await;
 
     // return the compression status
     let c_status = match algorithm {
       Some(algorithm) => models::CompressionStatus::Compressed {
-        compressed_size: compressed_file_size,
+        compressed_size: models::FileSize::new(compressed_file_size),
         uncompressed_size: models::FileSize::new(uncompressed_file_size),
         algorithm,
       },
@@ -217,6 +220,15 @@ where
     path: LaxSlug,
     data: DynAsyncReader,
   ) -> Result<Entry, CreateEntryError> {
+    // check if the entry already exists
+    let existing_entry = self
+      .find_entry_by_id_and_path(owning_cache, path.clone())
+      .await
+      .map_err(CreateEntryError::FetchModelByIndexError)?;
+    if existing_entry.is_some() {
+      return Err(CreateEntryError::EntryAlreadyExists);
+    }
+
     let cache = self
       .fetch_cache_by_id(owning_cache)
       .await
