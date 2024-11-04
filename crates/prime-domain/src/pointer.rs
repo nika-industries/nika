@@ -1,15 +1,16 @@
 use miette::Result;
 use models::{
-  CacheRecordId, EntryRecordId, StoreRecordId, StrictSlug, TokenRecordId,
+  CacheRecordId, EntryRecordId, LaxSlug, StoreRecordId, StrictSlug,
+  TokenRecordId,
 };
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
-  Cache, DynAsyncReader, Entry, EntryCreateRequest, StorageReadError,
-  StorageWriteError, Store, Token,
+  Cache, DynAsyncReader, Entry, StorageReadError, StorageWriteError, Store,
+  Token,
 };
 
 use crate::{
-  PrimeDomainService, ReadFromStoreError, TokenVerifyError, WriteToStoreError,
+  CreateEntryError, PrimeDomainService, ReadFromEntryError, TokenVerifyError,
 };
 
 // impl for smart pointers
@@ -69,12 +70,6 @@ where
   ) -> Result<Option<Entry>, FetchModelByIndexError> {
     self.deref().find_entry_by_id_and_path(cache_id, path).await
   }
-  async fn create_entry(
-    &self,
-    entry_cr: EntryCreateRequest,
-  ) -> Result<Entry, repos::CreateModelError> {
-    self.deref().create_entry(entry_cr).await
-  }
   async fn verify_token_id_and_secret(
     &self,
     id: TokenRecordId,
@@ -83,20 +78,19 @@ where
     self.deref().verify_token_id_and_secret(id, secret).await
   }
 
-  async fn write_to_store(
+  async fn create_entry(
     &self,
-    store_id: StoreRecordId,
-    path: models::LaxSlug,
+    owning_cache: CacheRecordId,
+    path: LaxSlug,
     data: DynAsyncReader,
-  ) -> Result<models::CompressionStatus, WriteToStoreError> {
-    self.deref().write_to_store(store_id, path, data).await
+  ) -> Result<Entry, CreateEntryError> {
+    self.deref().create_entry(owning_cache, path, data).await
   }
-  async fn read_from_store(
+  async fn read_from_entry(
     &self,
-    store_id: StoreRecordId,
-    path: models::LaxSlug,
-  ) -> Result<DynAsyncReader, ReadFromStoreError> {
-    self.deref().read_from_store(store_id, path).await
+    entry_id: EntryRecordId,
+  ) -> Result<DynAsyncReader, ReadFromEntryError> {
+    self.deref().read_from_entry(entry_id).await
   }
 
   async fn read_from_temp_storage(

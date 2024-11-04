@@ -19,8 +19,8 @@ use hex::Hexagonal;
 use miette::Result;
 pub use models;
 use models::{
-  Cache, CacheRecordId, Entry, EntryCreateRequest, EntryRecordId, Store,
-  StoreRecordId, StrictSlug, Token, TokenRecordId,
+  Cache, CacheRecordId, Entry, EntryRecordId, LaxSlug, Store, StoreRecordId,
+  StrictSlug, Token, TokenRecordId,
 };
 pub use repos::{
   self, StorageReadError, StorageWriteError, TempStorageCreds,
@@ -79,11 +79,6 @@ pub trait PrimeDomainService: Hexagonal {
     cache_id: CacheRecordId,
     path: models::LaxSlug,
   ) -> Result<Option<Entry>, FetchModelByIndexError>;
-  /// Creates an [`Entry`] from an [`EntryCreateRequest`].
-  async fn create_entry(
-    &self,
-    entry_cr: EntryCreateRequest,
-  ) -> Result<Entry, repos::CreateModelError>;
   /// Verify a [`Token`] by its ID and secret.
   async fn verify_token_id_and_secret(
     &self,
@@ -91,19 +86,18 @@ pub trait PrimeDomainService: Hexagonal {
     secret: models::TokenSecret,
   ) -> Result<Token, TokenVerifyError>;
 
-  /// Write to store contents.
-  async fn write_to_store(
+  /// Creates an [`Entry`] in a given [`Cache`], with the given path and data.
+  async fn create_entry(
     &self,
-    store_id: StoreRecordId,
-    path: models::LaxSlug,
+    owning_cache: CacheRecordId,
+    path: LaxSlug,
     data: DynAsyncReader,
-  ) -> Result<models::CompressionStatus, WriteToStoreError>;
-  /// Read from store contents.
-  async fn read_from_store(
+  ) -> Result<Entry, CreateEntryError>;
+  /// Reads data from an [`Entry`].
+  async fn read_from_entry(
     &self,
-    store_id: StoreRecordId,
-    path: models::LaxSlug,
-  ) -> Result<DynAsyncReader, ReadFromStoreError>;
+    entry_id: EntryRecordId,
+  ) -> Result<DynAsyncReader, ReadFromEntryError>;
 
   /// Read data from the temp storage.
   async fn read_from_temp_storage(
@@ -149,19 +143,64 @@ pub enum WriteToStoreError {
   StorageWriteError(StorageWriteError),
 }
 
+/// The error type for writing to a store.
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
+pub enum CreateEntryError {
+  /// The cache was not found.
+  #[error("cache not found")]
+  CacheNotFound(CacheRecordId),
+  /// Failed to create the entry.
+  #[error("failed to create entry")]
+  CreateError(repos::CreateModelError),
+  /// An error occurred while connecting to user storage.
+  #[error("failed to connect to user storage")]
+  StorageConnectionError(miette::Report),
+  /// An error occurred while writing to the store.
+  #[error("failed to write to store")]
+  StorageWriteError(StorageWriteError),
+  /// An error occurred while fetching a model.
+  #[error("failed to fetch model")]
+  FetchModelError(FetchModelError),
+  /// An error occurred due to data integrity failure.
+  #[error("data integrity error")]
+  DataIntegrityError(miette::Report),
+}
+
+impl From<WriteToStoreError> for CreateEntryError {
+  fn from(value: WriteToStoreError) -> Self {
+    match value {
+      WriteToStoreError::StoreNotFound(id) => {
+        CreateEntryError::DataIntegrityError(miette::miette!(
+          "store {id} not found, but should exist"
+        ))
+      }
+      WriteToStoreError::FetchError(e) => CreateEntryError::FetchModelError(e),
+      WriteToStoreError::StorageConnectionError(e) => {
+        CreateEntryError::StorageConnectionError(e)
+      }
+      WriteToStoreError::StorageWriteError(e) => {
+        CreateEntryError::StorageWriteError(e)
+      }
+    }
+  }
+}
+
 /// The error type for reading from a store.
 #[derive(Debug, thiserror::Error, miette::Diagnostic)]
-pub enum ReadFromStoreError {
-  /// The store was not found.
-  #[error("store not found")]
-  StoreNotFound(StoreRecordId),
-  /// An error occurred while fetching the store.
-  #[error("failed to fetch store")]
-  FetchError(FetchModelError),
+pub enum ReadFromEntryError {
+  /// The entry was not found.
+  #[error("entry not found")]
+  EntryNotFound(EntryRecordId),
   /// An error occurred while connecting to user storage.
   #[error("failed to connect to user storage")]
   StorageConnectionError(miette::Report),
   /// An error occurred while reading from the store.
   #[error("failed to read from store")]
   StorageReadError(StorageReadError),
+  /// An error occurred while fetching a model.
+  #[error("failed to fetch model")]
+  FetchModelError(FetchModelError),
+  /// An error occurred due to data integrity failure.
+  #[error("data integrity error")]
+  DataIntegrityError(miette::Report),
 }

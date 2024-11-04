@@ -20,6 +20,16 @@ pub enum CompressionStatus {
   },
 }
 
+impl CompressionStatus {
+  /// Returns the compression algorithm used to compress the file.
+  pub fn algorithm(&self) -> Option<CompressionAlgorithm> {
+    match self {
+      Self::Compressed { algorithm, .. } => Some(*algorithm),
+      Self::Uncompressed { .. } => None,
+    }
+  }
+}
+
 /// Represents a configuration for compression.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CompressionConfig {
