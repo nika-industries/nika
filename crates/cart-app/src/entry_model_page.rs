@@ -11,7 +11,7 @@ fn Entry(#[prop(into)] entry: MaybeSignal<models::Entry>) -> impl IntoView {
   let entry_id = Signal::derive(move || entry.with(|e| e.id));
 
   let entry_path = move || entry.with(|e| format!("{:?}", e.path.to_string()));
-  let entry_size = move || entry.with(|e| e.size.to_string());
+  let entry_c_status = move || entry.with(|e| format!("{:?}", e.c_status));
   let entry_cache = Signal::derive(move || entry.with(|e| e.cache));
 
   view! {
@@ -23,7 +23,7 @@ fn Entry(#[prop(into)] entry: MaybeSignal<models::Entry>) -> impl IntoView {
       <PropList>
         <KeyValue key="ID:"><EntryIdLink id=entry_id /></KeyValue>
         <KeyValue key="Path:"> { entry_path } </KeyValue>
-        <KeyValue key="Size:"> { entry_size } </KeyValue>
+        <KeyValue key="C-Status:"> { entry_c_status } </KeyValue>
         <KeyValue key="Cache:">
           <CacheIdLink id=entry_cache />
         </KeyValue>

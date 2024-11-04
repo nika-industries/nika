@@ -6,9 +6,10 @@ publish = false
 
 [dependencies]
 hex = { path = "../hex" }
+crunch = { path = "../crunch" }
 repos = { path = "../repos" }
 models = { path = "../models" }
-storage = { path = "../storage" }
+stream-tools = { path = "../stream-tools" }
 
 async-trait.workspace = true
 miette.workspace = true

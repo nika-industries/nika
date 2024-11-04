@@ -10,7 +10,6 @@ workspace = true
 [dependencies]
 art = { path = "../art" }
 mollusk = { path = "../mollusk" }
-storage = { path = "../storage" }
 tasks = { path = "../tasks" }
 prime-domain = { path = "../prime-domain" }
 

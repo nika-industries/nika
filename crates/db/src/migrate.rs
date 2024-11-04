@@ -31,12 +31,18 @@ impl<T: DatabaseAdapter> Migratable for T {
     };
 
     let local_file_store = models::Store {
-      id:       StoreRecordId::from_str("01J53YYCCJW4B4QBM1CG0CHAMP").unwrap(),
-      config:   StorageCredentials::Local(LocalStorageCredentials(
+      id:                 StoreRecordId::from_str("01J53YYCCJW4B4QBM1CG0CHAMP")
+        .unwrap(),
+      nickname:           EntityNickname::new(StrictSlug::confident(
+        "local-file-store",
+      )),
+      credentials:        StorageCredentials::Local(LocalStorageCredentials(
         PathBuf::from_str("/tmp/local-store").unwrap(),
       )),
-      nickname: EntityNickname::new(StrictSlug::confident("local-file-store")),
-      org:      org.id,
+      compression_config: models::CompressionConfig::new(Some(
+        models::CompressionAlgorithm::Snappy,
+      )),
+      org:                org.id,
     };
 
     let albert_cache = models::Cache {

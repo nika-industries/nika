@@ -21,9 +21,9 @@ impl MolluskError for InternalError {
 /// An error that occurs when the cache does not exist.
 #[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
 #[error("The cache does not exist: {0:?}")]
-pub struct NoMatchingCacheError(pub String);
+pub struct NonExistentCacheError(pub String);
 
-impl MolluskError for NoMatchingCacheError {
+impl MolluskError for NonExistentCacheError {
   fn status_code(&self) -> StatusCode { StatusCode::NOT_FOUND }
   fn slug(&self) -> &'static str { "missing-cache" }
   fn description(&self) -> String {
@@ -81,6 +81,25 @@ impl MolluskError for UnauthorizedCacheAccessError {
       self.cache_name,
       self.permission
     );
+  }
+}
+
+/// An error that occurs when the path given is not a valid Nix path.
+#[derive(thiserror::Error, Diagnostic, Debug, Serialize, Deserialize)]
+#[error("The given path is not a valid Nix path: {path:?}")]
+pub struct InvalidPathError {
+  /// The invalid path.
+  pub path: String,
+}
+
+impl MolluskError for InvalidPathError {
+  fn status_code(&self) -> StatusCode { StatusCode::BAD_REQUEST }
+  fn slug(&self) -> &'static str { "invalid-path" }
+  fn description(&self) -> String {
+    format!("The given path {:?} is not a valid Nix path.", self.path)
+  }
+  fn tracing(&self) {
+    tracing::warn!("invalid path: {:?}", self.path);
   }
 }
 

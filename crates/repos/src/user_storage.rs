@@ -1,27 +1,23 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use hex::{health, Hexagonal};
-use repos::StorageClientGenerator;
-use storage::{DynAsyncReader, ReadError, WriteError};
-
-/// A dynamic [`UserStorageService`] trait object.
-pub type DynUserStorageService =
-  Arc<Box<dyn UserStorageService<Client = UserStorageClientCanonical>>>;
+use storage::{DynAsyncReader, ReadError, StorageClientGenerator, WriteError};
 
 /// The definition for the user storage service.
 #[async_trait::async_trait]
-pub trait UserStorageService: Hexagonal {
-  /// The client type returned by the [`connect`](Self::connect) method.
+pub trait UserStorageRepository: Hexagonal {
+  /// The client type returned by the [`connect`](Self::connect_to_user_storage)
+  /// method.
   type Client: UserStorageClient;
   /// Connects to user storage and returns a client.
-  async fn connect(
+  async fn connect_to_user_storage(
     &self,
     creds: models::StorageCredentials,
   ) -> miette::Result<Self::Client>;
 }
 
 /// The definition for the user storage client, produced by the
-/// [`UserStorageService`].
+/// [`UserStorageRepository`].
 #[async_trait::async_trait]
 pub trait UserStorageClient: Hexagonal {
   /// Reads a file. Returns a [`DynAsyncReader`].
@@ -52,6 +48,7 @@ where
   }
 }
 
+/// The canonical user storage client.
 pub struct UserStorageClientCanonical(Box<dyn storage::StorageClient>);
 
 impl UserStorageClientCanonical {
@@ -81,9 +78,9 @@ impl UserStorageClient for UserStorageClientCanonical {
 }
 
 /// The canonical user storage service.
-pub struct UserStorageServiceCanonical {}
+pub struct UserStorageRepositoryCanonical {}
 
-impl UserStorageServiceCanonical {
+impl UserStorageRepositoryCanonical {
   /// Create a new instance of the canonical user storage service.
   #[allow(
     clippy::new_without_default,
@@ -97,7 +94,7 @@ impl UserStorageServiceCanonical {
 }
 
 #[async_trait::async_trait]
-impl health::HealthReporter for UserStorageServiceCanonical {
+impl health::HealthReporter for UserStorageRepositoryCanonical {
   fn name(&self) -> &'static str { stringify!(UserStorageServiceCanonical) }
   async fn health_check(&self) -> health::ComponentHealth {
     health::IntrensicallyUp.into()
@@ -105,10 +102,10 @@ impl health::HealthReporter for UserStorageServiceCanonical {
 }
 
 #[async_trait::async_trait]
-impl UserStorageService for UserStorageServiceCanonical {
+impl UserStorageRepository for UserStorageRepositoryCanonical {
   type Client = UserStorageClientCanonical;
 
-  async fn connect(
+  async fn connect_to_user_storage(
     &self,
     creds: models::StorageCredentials,
   ) -> miette::Result<Self::Client> {

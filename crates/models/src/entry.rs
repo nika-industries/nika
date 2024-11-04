@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CacheRecordId, LaxSlug, Model, OrgRecordId, RecordId};
+use crate::{
+  CacheRecordId, CompressionStatus, LaxSlug, Model, OrgRecordId, RecordId,
+};
 
 /// The [`Entry`] table name.
 pub const ENTRY_TABLE_NAME: &str = "entry";
@@ -12,15 +14,15 @@ pub type EntryRecordId = RecordId<Entry>;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Entry {
   /// The entry's ID.
-  pub id:    EntryRecordId,
+  pub id:       EntryRecordId,
   /// The entry's path.
-  pub path:  LaxSlug,
-  /// The entry's file size
-  pub size:  dvf::FileSize,
+  pub path:     LaxSlug,
+  /// The entry's compression status.
+  pub c_status: CompressionStatus,
   /// The entry's cache.
-  pub cache: CacheRecordId,
+  pub cache:    CacheRecordId,
   /// The [`Org`](crate::Org) the store belongs to.
-  pub org:   OrgRecordId,
+  pub org:      OrgRecordId,
 }
 
 impl Model for Entry {
@@ -39,23 +41,23 @@ impl Model for Entry {
 #[derive(Clone, Debug)]
 pub struct EntryCreateRequest {
   /// The entry's path.
-  pub path:  LaxSlug,
-  /// The entry's file size
-  pub size:  dvf::FileSize,
+  pub path:     LaxSlug,
+  /// The entry's compression status.
+  pub c_status: CompressionStatus,
   /// The entry's cache.
-  pub cache: CacheRecordId,
+  pub cache:    CacheRecordId,
   /// The [`Org`](crate::Org) the store belongs to.
-  pub org:   OrgRecordId,
+  pub org:      OrgRecordId,
 }
 
 impl From<EntryCreateRequest> for Entry {
   fn from(req: EntryCreateRequest) -> Self {
     Self {
-      id:    Default::default(),
-      path:  req.path,
-      size:  req.size,
-      cache: req.cache,
-      org:   req.org,
+      id:       Default::default(),
+      path:     req.path,
+      c_status: req.c_status,
+      cache:    req.cache,
+      org:      req.org,
     }
   }
 }

@@ -12,7 +12,7 @@ fn Store(#[prop(into)] store: MaybeSignal<models::Store>) -> impl IntoView {
 
   let store_nickname =
     Signal::derive(move || store.with(|c| c.nickname.clone()));
-  let store_config = move || store.with(|c| format!("{:#?}", c.config));
+  let store_config = move || store.with(|c| format!("{:#?}", c.credentials));
 
   view! {
     <Card>
@@ -29,7 +29,7 @@ fn Store(#[prop(into)] store: MaybeSignal<models::Store>) -> impl IntoView {
         </KeyValue>
       </PropList>
       <div class="flex flex-row gap-2 items-start">
-        <BoxHighlight> "Config:" </BoxHighlight>
+        <BoxHighlight> "Credentials:" </BoxHighlight>
         <CodeBlock> { store_config } </CodeBlock>
       </div>
     </Card>

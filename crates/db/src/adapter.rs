@@ -11,7 +11,7 @@ pub trait DatabaseAdapter: Hexagonal {
   async fn create_model<M: models::Model>(
     &self,
     model: M,
-  ) -> Result<(), CreateModelError>;
+  ) -> Result<M, CreateModelError>;
   /// Fetches a model by its ID.
   async fn fetch_model_by_id<M: models::Model>(
     &self,
@@ -40,7 +40,7 @@ impl<
   async fn create_model<M: models::Model>(
     &self,
     model: M,
-  ) -> Result<(), CreateModelError> {
+  ) -> Result<M, CreateModelError> {
     (**self).create_model(model).await
   }
 

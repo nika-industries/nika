@@ -10,14 +10,18 @@ mod entry;
 mod store;
 mod temp_storage;
 mod token;
+mod user_storage;
 
 pub use db;
 use db::{FetchModelByIndexError, FetchModelError};
 use hex::Hexagonal;
 use miette::Result;
 use models::EitherSlug;
+pub use storage::temp::{TempStorageCreds, TempStorageCredsError};
 
-pub use self::{cache::*, entry::*, store::*, temp_storage::*, token::*};
+pub use self::{
+  cache::*, entry::*, store::*, temp_storage::*, token::*, user_storage::*,
+};
 
 /// Defines a repository interface for models.
 #[async_trait::async_trait]
@@ -33,7 +37,7 @@ pub trait ModelRepository: Hexagonal {
   async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
-  ) -> Result<(), Self::CreateError>;
+  ) -> Result<Self::Model, Self::CreateError>;
 
   /// Fetches a model by its ID.
   async fn fetch_model_by_id(
@@ -67,7 +71,7 @@ where
   async fn create_model(
     &self,
     input: Self::ModelCreateRequest,
-  ) -> Result<(), Self::CreateError> {
+  ) -> Result<Self::Model, Self::CreateError> {
     I::create_model(self, input).await
   }
   async fn fetch_model_by_id(
@@ -208,7 +212,7 @@ macro_rules! impl_repository_on_base {
       async fn create_model(
         &self,
         input: Self::ModelCreateRequest,
-      ) -> Result<(), Self::CreateError> {
+      ) -> Result<Self::Model, Self::CreateError> {
         self.base_repo.create_model(input.into()).await
       }
 

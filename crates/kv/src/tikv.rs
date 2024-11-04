@@ -85,37 +85,12 @@ impl KvPrimitive for TikvTransaction {
     &mut self,
     start: Bound<Key>,
     end: Bound<Key>,
-    limit: u32,
+    limit: Option<u32>,
   ) -> KvResult<Vec<(Key, Value)>> {
-    let start_bound: Bound<tikv_client::Key> = match start {
-      Bound::Included(k) => Bound::Included(k.into()),
-      Bound::Excluded(k) => Bound::Excluded(k.into()),
-      Bound::Unbounded => Bound::Unbounded,
-    };
-    let end_bound: Bound<tikv_client::Key> = match end {
-      Bound::Included(k) => Bound::Included(k.into()),
-      Bound::Excluded(k) => Bound::Excluded(k.into()),
-      Bound::Unbounded => Bound::Unbounded,
-    };
-    let range = tikv_client::BoundRange {
-      from: start_bound,
-      to:   end_bound,
-    };
-
-    Ok(
-      self
-        .0
-        .scan(range, limit)
-        .await?
-        .filter_map(|kp| match Key::try_from(Vec::<u8>::from(kp.0)) {
-          Ok(key) => Some((key, Value::from(kp.1))),
-          Err(e) => {
-            tracing::error!("failed to parse key from kv store: {}", e);
-            None
-          }
-        })
-        .collect(),
-    )
+    match limit {
+      Some(limit) => scan(self, start, end, limit).await,
+      None => scan_unlimited(self, start, end).await,
+    }
   }
 }
 
@@ -129,4 +104,85 @@ impl KvTransaction for TikvTransaction {
     self.0.rollback().await?;
     Ok(())
   }
+}
+
+async fn scan(
+  txn: &mut TikvTransaction,
+  start: Bound<Key>,
+  end: Bound<Key>,
+  limit: u32,
+) -> KvResult<Vec<(Key, Value)>> {
+  let start_bound: Bound<tikv_client::Key> = match start {
+    Bound::Included(k) => Bound::Included(k.into()),
+    Bound::Excluded(k) => Bound::Excluded(k.into()),
+    Bound::Unbounded => Bound::Unbounded,
+  };
+  let end_bound: Bound<tikv_client::Key> = match end {
+    Bound::Included(k) => Bound::Included(k.into()),
+    Bound::Excluded(k) => Bound::Excluded(k.into()),
+    Bound::Unbounded => Bound::Unbounded,
+  };
+  let range = tikv_client::BoundRange {
+    from: start_bound,
+    to:   end_bound,
+  };
+
+  Ok(
+    txn
+      .0
+      .scan(range, limit)
+      .await?
+      .filter_map(|kp| match Key::try_from(Vec::<u8>::from(kp.0)) {
+        Ok(key) => Some((key, Value::from(kp.1))),
+        Err(e) => {
+          tracing::error!("failed to parse key from kv store: {}", e);
+          None
+        }
+      })
+      .collect(),
+  )
+}
+
+async fn scan_unlimited(
+  txn: &mut TikvTransaction,
+  start: Bound<Key>,
+  end: Bound<Key>,
+) -> KvResult<Vec<(Key, Value)>> {
+  let mut start_bound: Bound<tikv_client::Key> = match start {
+    Bound::Included(k) => Bound::Included(k.into()),
+    Bound::Excluded(k) => Bound::Excluded(k.into()),
+    Bound::Unbounded => Bound::Unbounded,
+  };
+  let end_bound: Bound<tikv_client::Key> = match end {
+    Bound::Included(k) => Bound::Included(k.into()),
+    Bound::Excluded(k) => Bound::Excluded(k.into()),
+    Bound::Unbounded => Bound::Unbounded,
+  };
+
+  let mut results = Vec::new();
+  loop {
+    let range = tikv_client::BoundRange {
+      from: start_bound,
+      to:   end_bound.clone(),
+    };
+    let scan_result = txn.0.scan(range.clone(), 1000).await?;
+    let scan = scan_result
+      .filter_map(|kp| match Key::try_from(Vec::<u8>::from(kp.0)) {
+        Ok(key) => Some((key, Value::from(kp.1))),
+        Err(e) => {
+          tracing::error!("failed to parse key from kv store: {}", e);
+          None
+        }
+      })
+      .collect::<Vec<_>>();
+
+    if scan.is_empty() {
+      break;
+    }
+
+    start_bound = Bound::Excluded(scan.last().unwrap().0.clone().into());
+    results.extend(scan);
+  }
+
+  Ok(results)
 }

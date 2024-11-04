@@ -9,6 +9,7 @@ use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
   Error as ObjectStoreError, ObjectStore, PutPayload,
 };
+use stream_tools::CountedAsyncReader;
 use tokio::sync::Mutex;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
@@ -109,13 +110,7 @@ impl StorageClient for S3CompatStorageClient {
     // chunk size of 10MB
     let chunk_size = 10 * 1024 * 1024;
 
-    // start counting the file size by adapting the reader
-    let mut file_size: u64 = 0;
-    let file_size_ref = &mut file_size;
-    let mut reader = crate::counted_async_reader::CountedAsyncReader::new(
-      &mut reader,
-      file_size_ref,
-    );
+    let (mut reader, counter) = CountedAsyncReader::new(&mut reader);
 
     // create a stream of bytes chunks from the reader
     let bytes_chunks = tokio_util::io::ReaderStream::new(
@@ -176,6 +171,8 @@ impl StorageClient for S3CompatStorageClient {
 
     tracing::info!("finishing multipart");
 
-    Ok(models::FileSize::new(file_size))
+    let file_size = models::FileSize::new(counter.current_size().await);
+
+    Ok(file_size)
   }
 }

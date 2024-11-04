@@ -82,7 +82,7 @@ pub trait KvPrimitive {
     &mut self,
     start: Bound<Key>,
     end: Bound<Key>,
-    limit: u32,
+    limit: Option<u32>,
   ) -> impl Future<Output = KvResult<Vec<(Key, Value)>>> + Send;
 }
 

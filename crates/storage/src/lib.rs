@@ -1,6 +1,5 @@
 //! Provides traits and implementations for storage clients.
 
-mod counted_async_reader;
 mod local;
 mod s3_compat;
 pub mod temp;
@@ -8,14 +7,12 @@ pub mod temp;
 use std::path::{Path, PathBuf};
 
 use hex::Hexagonal;
-use tokio::io::AsyncRead;
+pub use stream_tools::DynAsyncReader;
 
 use self::{local::LocalStorageClient, s3_compat::S3CompatStorageClient};
 
 /// Trait alias for `Box<dyn StorageClient + ...>`
 pub type DynStorageClient = Box<dyn StorageClient + Send + Sync + 'static>;
-/// Trait alias for `Box<dyn AsyncReader + ...>`
-pub type DynAsyncReader = Box<dyn AsyncRead + Send + Unpin + 'static>;
 
 /// Extension trait that allows generating a dynamic client from
 /// `StorageCredentials`.

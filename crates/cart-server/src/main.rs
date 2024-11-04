@@ -6,16 +6,11 @@ use axum::{extract::FromRef, Router};
 use cart_app::*;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
-use prime_domain::{
-  DynCacheService, DynEntryService, DynStoreService, DynTokenService,
-};
+use prime_domain::DynPrimeDomainService;
 
 #[derive(Clone, FromRef)]
 struct AppState {
-  cache_service: DynCacheService,
-  entry_service: DynEntryService,
-  store_service: DynStoreService,
-  token_service: DynTokenService,
+  prime_domain_service: DynPrimeDomainService,
 }
 
 #[tokio::main]
@@ -41,16 +36,22 @@ async fn main() -> miette::Result<()> {
     prime_domain::repos::StoreRepositoryCanonical::new(kv_db_adapter.clone());
   let token_repo =
     prime_domain::repos::TokenRepositoryCanonical::new(kv_db_adapter.clone());
-  let cache_service = prime_domain::CacheServiceCanonical::new(cache_repo);
-  let entry_service = prime_domain::EntryServiceCanonical::new(entry_repo);
-  let store_service = prime_domain::StoreServiceCanonical::new(store_repo);
-  let token_service = prime_domain::TokenServiceCanonical::new(token_repo);
+  let temp_storage_repo = prime_domain::repos::TempStorageRepositoryMock::new(
+    std::path::PathBuf::from("/tmp/nika-temp-storage"),
+  );
+  let user_storage_repo =
+    prime_domain::repos::UserStorageRepositoryCanonical::new();
+  let prime_domain_service = prime_domain::PrimeDomainServiceCanonical::new(
+    cache_repo,
+    entry_repo,
+    store_repo,
+    token_repo,
+    temp_storage_repo,
+    user_storage_repo,
+  );
 
   let app_state = AppState {
-    cache_service: Arc::new(Box::new(cache_service)),
-    entry_service: Arc::new(Box::new(entry_service)),
-    store_service: Arc::new(Box::new(store_service)),
-    token_service: Arc::new(Box::new(token_service)),
+    prime_domain_service: Arc::new(Box::new(prime_domain_service)),
   };
 
   let app = Router::new()
@@ -60,10 +61,7 @@ async fn main() -> miette::Result<()> {
       {
         let app_state = app_state.clone();
         move || {
-          provide_context(app_state.cache_service.clone());
-          provide_context(app_state.entry_service.clone());
-          provide_context(app_state.store_service.clone());
-          provide_context(app_state.token_service.clone());
+          provide_context(app_state.prime_domain_service.clone());
         }
       },
       {
