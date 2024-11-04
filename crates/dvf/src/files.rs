@@ -59,25 +59,23 @@ pub struct FileSize(u64);
 
 impl fmt::Display for FileSize {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let size = *self.as_ref();
-    if size < 1024 {
-      write!(f, "{} B", size)
-    } else if size < 1024 * 1024 {
-      write!(f, "{:.2} KB", size as f64 / 1024.0)
-    } else if size < 1024 * 1024 * 1024 {
-      write!(f, "{:.2} MB", size as f64 / const { 1024.0 * 1024.0 })
-    } else {
-      write!(
-        f,
-        "{:.2} GB",
-        size as f64 / const { 1024.0 * 1024.0 * 1024.0 }
-      )
+    const KB: u64 = 1000;
+    const MB: u64 = 1000 * KB;
+    const GB: u64 = 1000 * MB;
+
+    match *self.as_ref() {
+      size if size < KB => write!(f, "{} B", size),
+      size if size < MB => write!(f, "{:.2} KB", size as f64 / KB as f64),
+      size if size < GB => {
+        write!(f, "{:.2} MB", size as f64 / MB as f64)
+      }
+      size => write!(f, "{:.2} GB", size as f64 / GB as f64),
     }
   }
 }
 
 impl fmt::Debug for FileSize {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_tuple("FileSize").field(self.as_ref()).finish()
+    f.debug_tuple("FileSize").field(&self.to_string()).finish()
   }
 }

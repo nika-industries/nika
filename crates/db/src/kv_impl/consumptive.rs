@@ -6,10 +6,6 @@ use miette::Result;
 pub trait ConsumptiveTransaction:
   KvPrimitive + KvTransaction + Send + Sync + 'static + Sized
 {
-  /// Checks if a key exists.
-  ///
-  /// Consumes the transaction. If the operation succeeds, the transaction is
-  /// given back. Otherwise, the transaction is consumed by the rollback.
   async fn csm_exists(self, key: &Key) -> Result<(Self, bool)> {
     let (txn, value) = self.csm_get(key).await?;
     Ok((txn, value.is_some()))

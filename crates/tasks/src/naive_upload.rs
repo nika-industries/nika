@@ -37,25 +37,15 @@ impl rope::Task for NaiveUploadTask {
       .expect("failed to fetch cache")
       .expect("cache not found");
 
-    let temp_reader = prime_domain_service
-      .read_from_temp_storage(self.temp_storage_path.clone())
-      .await
-      .expect("failed to read from temp storage");
-    let c_status = prime_domain_service
-      .write_to_store(cache.store, self.path.clone(), temp_reader)
-      .await
-      .expect("failed to write to store");
-
-    // create an Entry
-    let entry_cr = models::EntryCreateRequest {
-      path: models::LaxSlug::new(self.path.to_string().to_string()),
-      c_status,
-      cache: cache.id,
-      org: cache.org,
-    };
-
     prime_domain_service
-      .create_entry(entry_cr)
+      .create_entry(
+        cache.id,
+        self.path,
+        prime_domain_service
+          .read_from_temp_storage(self.temp_storage_path)
+          .await
+          .expect("failed to read from temp storage"),
+      )
       .await
       .expect("failed to create entry");
 

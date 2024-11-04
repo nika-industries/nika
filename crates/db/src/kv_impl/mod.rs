@@ -89,6 +89,10 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
       .context("failed to check if model exists")
       .map_err(CreateModelError::Db)?;
     if exists {
+      txn
+        .to_rollback()
+        .await
+        .map_err(CreateModelError::RetryableTransaction)?;
       return Err(CreateModelError::ModelAlreadyExists);
     }
 
@@ -113,6 +117,10 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
         .map_err(CreateModelError::Db)?;
       txn = _txn;
       if exists {
+        txn
+          .to_rollback()
+          .await
+          .map_err(CreateModelError::RetryableTransaction)?;
         return Err(CreateModelError::IndexAlreadyExists {
           index_name:  index_name.to_string(),
           index_value: index_fn(&model),

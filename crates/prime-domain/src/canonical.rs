@@ -5,8 +5,8 @@ use hex::health;
 use miette::Result;
 pub use models;
 use models::{
-  Cache, CacheRecordId, Entry, EntryCreateRequest, EntryRecordId, Store,
-  StoreRecordId, StrictSlug, Token, TokenRecordId,
+  Cache, CacheRecordId, Entry, EntryCreateRequest, EntryRecordId, LaxSlug,
+  Store, StoreRecordId, StrictSlug, Token, TokenRecordId,
 };
 pub use repos::{self, StorageReadError, StorageWriteError};
 use repos::{
@@ -14,9 +14,12 @@ use repos::{
   CacheRepository, DynAsyncReader, EntryRepository, StoreRepository,
   TempStorageRepository, TokenRepository, UserStorageClient,
 };
+use stream_tools::CountedAsyncReader;
 use tracing::instrument;
 
-use crate::{PrimeDomainService, TokenVerifyError};
+use crate::{
+  CreateEntryError, PrimeDomainService, ReadFromEntryError, TokenVerifyError,
+};
 
 /// The canonical implementation of [`PrimeDomainService`].
 pub struct PrimeDomainServiceCanonical<
@@ -63,6 +66,69 @@ where
       temp_storage_repo,
       user_storage_repo,
     }
+  }
+
+  /// Write data to a store, respecting compression settings.
+  async fn write_to_store(
+    &self,
+    store_id: StoreRecordId,
+    path: models::LaxSlug,
+    data: DynAsyncReader,
+  ) -> Result<models::CompressionStatus, crate::WriteToStoreError> {
+    // fetch the store
+    let store = self
+      .fetch_store_by_id(store_id)
+      .await
+      .map_err(crate::WriteToStoreError::FetchError)?
+      .ok_or_else(|| crate::WriteToStoreError::StoreNotFound(store_id))?;
+
+    // count the uncompressed size
+    let (data, uncompressed_counter) = CountedAsyncReader::new(data);
+    let data = Box::new(data);
+
+    // check what compression algorithm is configured in the store
+    let algorithm = store.compression_config.algorithm();
+
+    // adapt the reader to compress the data if needed
+    let data: Box<dyn stream_tools::AsyncRead + Unpin + Send> = match algorithm
+    {
+      Some(algorithm) => Box::new(crunch::adapt_compress(algorithm, data)),
+      None => data,
+    };
+
+    let (data, compressed_counter) = CountedAsyncReader::new(data);
+
+    // get the user storage client
+    let client = self
+      .user_storage_repo
+      .connect_to_user_storage(store.credentials.clone())
+      .await
+      .map_err(crate::WriteToStoreError::StorageConnectionError)?;
+
+    // write the data to the store
+    let path = PathBuf::from_str(path.as_ref()).unwrap();
+    let _ = client
+      .write(&path, Box::new(data))
+      .await
+      .map_err(crate::WriteToStoreError::StorageWriteError)?;
+
+    // get the sizes
+    let uncompressed_file_size = uncompressed_counter.current_size().await;
+    let compressed_file_size = compressed_counter.current_size().await;
+
+    // return the compression status
+    let c_status = match algorithm {
+      Some(algorithm) => models::CompressionStatus::Compressed {
+        compressed_size: models::FileSize::new(compressed_file_size),
+        uncompressed_size: models::FileSize::new(uncompressed_file_size),
+        algorithm,
+      },
+      None => models::CompressionStatus::Uncompressed {
+        size: models::FileSize::new(uncompressed_file_size),
+      },
+    };
+
+    Ok(c_status)
   }
 }
 
@@ -130,12 +196,6 @@ where
       .find_entry_by_id_and_path(cache_id, path)
       .await
   }
-  async fn create_entry(
-    &self,
-    entry_cr: EntryCreateRequest,
-  ) -> Result<Entry, repos::CreateModelError> {
-    self.entry_repo.create_model(entry_cr).await
-  }
   async fn verify_token_id_and_secret(
     &self,
     id: TokenRecordId,
@@ -154,86 +214,100 @@ where
     Ok(token)
   }
 
-  async fn write_to_store(
+  async fn create_entry(
     &self,
-    store_id: StoreRecordId,
-    path: models::LaxSlug,
+    owning_cache: CacheRecordId,
+    path: LaxSlug,
     data: DynAsyncReader,
-  ) -> Result<models::CompressionStatus, crate::WriteToStoreError> {
-    // fetch the store
-    let store = self
-      .store_repo
-      .fetch_model_by_id(store_id)
+  ) -> Result<Entry, CreateEntryError> {
+    // check if the entry already exists
+    let existing_entry = self
+      .find_entry_by_id_and_path(owning_cache, path.clone())
       .await
-      .map_err(crate::WriteToStoreError::FetchError)?
-      .ok_or_else(|| crate::WriteToStoreError::StoreNotFound(store_id))?;
+      .map_err(CreateEntryError::FetchModelByIndexError)?;
+    if existing_entry.is_some() {
+      return Err(CreateEntryError::EntryAlreadyExists);
+    }
 
-    // count the uncompressed size
-    let (data, uncompressed_counter) =
-      stream_tools::CountedAsyncReader::new(data);
-    let data = Box::new(data);
+    let cache = self
+      .fetch_cache_by_id(owning_cache)
+      .await
+      .map_err(CreateEntryError::FetchModelError)?
+      .ok_or(CreateEntryError::CacheNotFound(owning_cache))?;
+
+    let c_status = self.write_to_store(cache.store, path.clone(), data).await?;
+
+    let entry_cr = EntryCreateRequest {
+      path,
+      c_status,
+      cache: owning_cache,
+      org: cache.org,
+    };
+
+    let entry = self
+      .entry_repo
+      .create_model(entry_cr)
+      .await
+      .map_err(CreateEntryError::CreateError)?;
+
+    Ok(entry)
+  }
+  async fn read_from_entry(
+    &self,
+    entry_id: EntryRecordId,
+  ) -> Result<DynAsyncReader, ReadFromEntryError> {
+    let entry = self
+      .fetch_entry_by_id(entry_id)
+      .await
+      .map_err(ReadFromEntryError::FetchModelError)?
+      .ok_or_else(|| ReadFromEntryError::EntryNotFound(entry_id))?;
+
+    let cache = self
+      .fetch_cache_by_id(entry.cache)
+      .await
+      .map_err(ReadFromEntryError::FetchModelError)?
+      .ok_or_else(|| {
+        ReadFromEntryError::DataIntegrityError(miette::miette!(
+          "entry references non-existent cache: {}",
+          entry.cache
+        ))
+      })?;
+
+    let store = self
+      .fetch_store_by_id(cache.store)
+      .await
+      .map_err(ReadFromEntryError::FetchModelError)?
+      .ok_or_else(|| {
+        ReadFromEntryError::DataIntegrityError(miette::miette!(
+          "cache references non-existent store: {}",
+          cache.store
+        ))
+      })?;
 
     // check what compression algorithm is configured in the store
-    let algorithm = store.compression_config.algorithm();
+    let algorithm = entry.c_status.algorithm();
 
-    // adapt the reader to compress the data if needed
-    let data: Box<dyn stream_tools::AsyncRead + Unpin + Send> = match algorithm
-    {
-      Some(algorithm) => Box::new(crunch::adapt_compress(algorithm, data)),
-      None => data,
-    };
-
+    // get the user storage client
     let client = self
       .user_storage_repo
       .connect_to_user_storage(store.credentials.clone())
       .await
-      .map_err(crate::WriteToStoreError::StorageConnectionError)?;
+      .map_err(ReadFromEntryError::StorageConnectionError)?;
 
-    let path = PathBuf::from_str(path.as_ref()).unwrap();
-    let compressed_file_size = client
-      .write(&path, data)
-      .await
-      .map_err(crate::WriteToStoreError::StorageWriteError)?;
-
-    let uncompressed_file_size = uncompressed_counter.current_size().await;
-
-    let c_status = match algorithm {
-      Some(algorithm) => models::CompressionStatus::Compressed {
-        compressed_size: compressed_file_size,
-        uncompressed_size: models::FileSize::new(uncompressed_file_size),
-        algorithm,
-      },
-      None => models::CompressionStatus::Uncompressed {
-        size: models::FileSize::new(uncompressed_file_size),
-      },
-    };
-
-    Ok(c_status)
-  }
-
-  async fn read_from_store(
-    &self,
-    store_id: StoreRecordId,
-    path: models::LaxSlug,
-  ) -> Result<DynAsyncReader, crate::ReadFromStoreError> {
-    let store = self
-      .store_repo
-      .fetch_model_by_id(store_id)
-      .await
-      .map_err(crate::ReadFromStoreError::FetchError)?
-      .ok_or_else(|| crate::ReadFromStoreError::StoreNotFound(store_id))?;
-
-    let client = self
-      .user_storage_repo
-      .connect_to_user_storage(store.credentials.clone())
-      .await
-      .map_err(crate::ReadFromStoreError::StorageConnectionError)?;
-
-    let path = PathBuf::from_str(path.as_ref()).unwrap();
+    let path = PathBuf::from_str(entry.path.as_ref()).unwrap();
     let reader = client
       .read(&path)
       .await
-      .map_err(crate::ReadFromStoreError::StorageReadError)?;
+      .map_err(ReadFromEntryError::StorageReadError)?;
+
+    // adapt the reader to decompress the data if needed
+    let reader: Box<dyn stream_tools::AsyncRead + Unpin + Send> =
+      match algorithm {
+        Some(algorithm) => {
+          Box::new(crunch::adapt_decompress(algorithm, reader))
+        }
+        None => Box::new(reader),
+      };
 
     Ok(reader)
   }
