@@ -69,7 +69,7 @@ commands, which you can explore with the `menu` command.
 
 This project is licensed under the GNU GPL-3.0 license. 
 
-- See the [LICENSE](./LICENSE) file for the full AGPL text.
+- See the [LICENSE](./LICENSE) file for the full GNU GPL-3.0 license text.
 
 As of this moment, this workspace is not published on [crates.io](https://crates.io) so the cargo license metadata is not populated. This has no bearing on the licensure of the code.
 
