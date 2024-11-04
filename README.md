@@ -59,9 +59,11 @@ commands, which you can explore with the `menu` command.
 
 **Miscellaneous:**
 - `art` - macro-based ascii art.
+- `crunch` - stream-based compression.
 - `mollusk` - interfaces for HTTP errors, public and private.
 - `names` - name generator.
 - `nasty` - nix daemon interactions.
+- `stream-tools` - stream tools.
 
 ## License
 
