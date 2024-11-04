@@ -1,5 +1,5 @@
 use prime_domain::{
-  models::{self, CompressionStatus, LaxSlug, StrictSlug},
+  models::{self, LaxSlug, StrictSlug},
   DynPrimeDomainService,
 };
 use serde::{Deserialize, Serialize};

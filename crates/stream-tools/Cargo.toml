@@ -2,7 +2,7 @@
 name = "stream-tools"
 version = "0.1.0"
 edition = "2021"
-publish = true
+publish = false
 
 [dependencies]
 tokio = { workspace = true, features = [ "rt", "io-util" ] }
