@@ -78,11 +78,8 @@ impl StorageClient for LocalStorageClient {
     let file = tokio::fs::File::create(&target_path).await?;
     let mut writer = BufWriter::new(file);
 
-    let mut file_size: u64 = 0;
-    let file_size_ref = &mut file_size;
-
     // modify the reader to capture the file size
-    let mut reader = CountedAsyncReader::new(&mut reader, file_size_ref);
+    let (mut reader, counter) = CountedAsyncReader::new(&mut reader);
 
     // Copy data from the reader to the writer
     tokio::io::copy(&mut reader, &mut writer).await?;
@@ -90,7 +87,9 @@ impl StorageClient for LocalStorageClient {
     // Ensure all data is flushed to the file
     writer.flush().await?;
 
-    Ok(models::FileSize::new(file_size))
+    let file_size = models::FileSize::new(counter.current_size().await);
+
+    Ok(file_size)
   }
 }
 

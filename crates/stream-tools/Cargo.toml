@@ -5,7 +5,7 @@ edition = "2021"
 publish = true
 
 [dependencies]
-tokio = { workspace = true }
+tokio = { workspace = true, features = [ "rt", "io-util" ] }
 
 [lints]
 workspace = true

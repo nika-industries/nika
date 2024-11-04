@@ -97,7 +97,7 @@ pub trait PrimeDomainService: Hexagonal {
     store_id: StoreRecordId,
     path: models::LaxSlug,
     data: DynAsyncReader,
-  ) -> Result<models::FileSize, WriteToStoreError>;
+  ) -> Result<models::CompressionStatus, WriteToStoreError>;
   /// Read from store contents.
   async fn read_from_store(
     &self,

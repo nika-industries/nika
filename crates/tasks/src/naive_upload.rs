@@ -1,5 +1,5 @@
 use prime_domain::{
-  models::{self, LaxSlug, StrictSlug},
+  models::{self, CompressionStatus, LaxSlug, StrictSlug},
   DynPrimeDomainService,
 };
 use serde::{Deserialize, Serialize};
@@ -41,17 +41,17 @@ impl rope::Task for NaiveUploadTask {
       .read_from_temp_storage(self.temp_storage_path.clone())
       .await
       .expect("failed to read from temp storage");
-    let file_size = prime_domain_service
+    let c_status = prime_domain_service
       .write_to_store(cache.store, self.path.clone(), temp_reader)
       .await
       .expect("failed to write to store");
 
     // create an Entry
     let entry_cr = models::EntryCreateRequest {
-      path:  models::LaxSlug::new(self.path.to_string().to_string()),
-      size:  file_size,
+      path: models::LaxSlug::new(self.path.to_string().to_string()),
+      c_status,
       cache: cache.id,
-      org:   cache.org,
+      org: cache.org,
     };
 
     prime_domain_service

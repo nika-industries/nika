@@ -159,13 +159,29 @@ where
     store_id: StoreRecordId,
     path: models::LaxSlug,
     data: DynAsyncReader,
-  ) -> Result<models::FileSize, crate::WriteToStoreError> {
+  ) -> Result<models::CompressionStatus, crate::WriteToStoreError> {
+    // fetch the store
     let store = self
       .store_repo
       .fetch_model_by_id(store_id)
       .await
       .map_err(crate::WriteToStoreError::FetchError)?
       .ok_or_else(|| crate::WriteToStoreError::StoreNotFound(store_id))?;
+
+    // count the uncompressed size
+    let (data, uncompressed_counter) =
+      stream_tools::CountedAsyncReader::new(data);
+    let data = Box::new(data);
+
+    // check what compression algorithm is configured in the store
+    let algorithm = store.compression_config.algorithm();
+
+    // adapt the reader to compress the data if needed
+    let data: Box<dyn stream_tools::AsyncRead + Unpin + Send> = match algorithm
+    {
+      Some(algorithm) => Box::new(crunch::adapt_compress(algorithm, data)),
+      None => data,
+    };
 
     let client = self
       .user_storage_repo
@@ -174,12 +190,25 @@ where
       .map_err(crate::WriteToStoreError::StorageConnectionError)?;
 
     let path = PathBuf::from_str(path.as_ref()).unwrap();
-    let file_size = client
+    let compressed_file_size = client
       .write(&path, data)
       .await
       .map_err(crate::WriteToStoreError::StorageWriteError)?;
 
-    Ok(file_size)
+    let uncompressed_file_size = uncompressed_counter.current_size().await;
+
+    let c_status = match algorithm {
+      Some(algorithm) => models::CompressionStatus::Compressed {
+        compressed_size: compressed_file_size,
+        uncompressed_size: models::FileSize::new(uncompressed_file_size),
+        algorithm,
+      },
+      None => models::CompressionStatus::Uncompressed {
+        size: models::FileSize::new(uncompressed_file_size),
+      },
+    };
+
+    Ok(c_status)
   }
 
   async fn read_from_store(

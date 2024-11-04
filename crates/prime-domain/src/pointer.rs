@@ -88,7 +88,7 @@ where
     store_id: StoreRecordId,
     path: models::LaxSlug,
     data: DynAsyncReader,
-  ) -> Result<models::FileSize, WriteToStoreError> {
+  ) -> Result<models::CompressionStatus, WriteToStoreError> {
     self.deref().write_to_store(store_id, path, data).await
   }
   async fn read_from_store(
