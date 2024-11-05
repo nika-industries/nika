@@ -9,7 +9,6 @@ hex = { path = "../hex" }
 crunch = { path = "../crunch" }
 repos = { path = "../repos" }
 models = { path = "../models" }
-stream-tools = { path = "../stream-tools" }
 
 async-trait.workspace = true
 miette.workspace = true

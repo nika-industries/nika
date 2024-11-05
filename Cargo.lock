@@ -2831,7 +2831,6 @@ dependencies = [
  "miette",
  "models",
  "repos",
- "stream-tools",
  "thiserror",
  "tracing",
 ]

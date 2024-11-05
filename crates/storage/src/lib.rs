@@ -67,9 +67,9 @@ pub enum WriteError {
 /// The main storage trait. Allows reading to or writing from a stream of bytes.
 #[async_trait::async_trait]
 pub trait StorageClient: Hexagonal {
-  /// Reads a file. Returns a [`DynAsyncReader`].
+  /// Reads a file. Returns a [`CompUnawareAReader`].
   async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError>;
-  /// Writes a file. Consumes a [`DynAsyncReader`].
+  /// Writes a file. Consumes a [`CompUnawareAReader`].
   async fn write(
     &self,
     path: &Path,
