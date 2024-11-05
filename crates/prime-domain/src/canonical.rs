@@ -104,7 +104,7 @@ where
     // write the data to the store
     let path = PathBuf::from_str(path.as_ref()).unwrap();
     let _ = client
-      .write(&path, data)
+      .write(&path, data.forget_algorithm())
       .await
       .map_err(crate::WriteToStoreError::StorageWriteError)?;
 
@@ -296,7 +296,7 @@ where
       .await
       .map_err(ReadFromEntryError::StorageReadError)?;
 
-    let reader = reader.set_algorithm(algorithm);
+    let reader = reader.assign_algorithm(algorithm);
 
     Ok(reader)
   }
@@ -305,7 +305,11 @@ where
     &self,
     path: models::TempStoragePath,
   ) -> Result<CompAwareAReader, StorageReadError> {
-    self.temp_storage_repo.read(path).await
+    self
+      .temp_storage_repo
+      .read(path)
+      .await
+      .map(|r| r.assign_algorithm(None))
   }
   async fn write_to_temp_storage(
     &self,
@@ -313,7 +317,7 @@ where
   ) -> Result<models::TempStoragePath, StorageWriteError> {
     self
       .temp_storage_repo
-      .store(data.adapt_compression_to(None))
+      .store(data.adapt_compression_to(None).forget_algorithm())
       .await
   }
 }

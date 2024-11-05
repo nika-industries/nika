@@ -13,7 +13,7 @@ use stream_tools::CountedAsyncReader;
 use tokio::sync::Mutex;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-use super::{CompAwareAReader, ReadError, StorageClient};
+use super::{CompUnawareAReader, ReadError, StorageClient};
 use crate::WriteError;
 
 pub struct S3CompatStorageClient {
@@ -75,7 +75,7 @@ impl StorageClient for S3CompatStorageClient {
   async fn read(
     &self,
     input_path: &Path,
-  ) -> Result<CompAwareAReader, ReadError> {
+  ) -> Result<CompUnawareAReader, ReadError> {
     let input_path_string = input_path.to_str().unwrap().to_string();
     let path = object_store::path::Path::parse(input_path_string.clone())
       .map_err(|_| ReadError::InvalidPath(input_path_string))?;
@@ -96,17 +96,16 @@ impl StorageClient for S3CompatStorageClient {
       })
       .into_async_read();
 
-    Ok(CompAwareAReader::new(
-      Box::new(futures::io::BufReader::new(stream).compat()),
-      None,
-    ))
+    Ok(CompUnawareAReader::new(Box::new(
+      futures::io::BufReader::new(stream).compat(),
+    )))
   }
 
   #[tracing::instrument(skip(self, reader))]
   async fn write(
     &self,
     input_path: &Path,
-    mut reader: CompAwareAReader,
+    mut reader: CompUnawareAReader,
   ) -> Result<models::FileSize, WriteError> {
     // sanitize the destination path
     let input_path_string = input_path.to_str().unwrap().to_string();

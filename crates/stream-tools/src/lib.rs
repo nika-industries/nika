@@ -91,6 +91,11 @@ impl CompAwareAReader {
       counter,
     )
   }
+
+  /// Forgets the compression algorithm used.
+  pub fn forget_algorithm(self) -> CompUnawareAReader {
+    CompUnawareAReader::new(self.stream)
+  }
 }
 
 impl AsyncRead for CompAwareAReader {
@@ -101,6 +106,36 @@ impl AsyncRead for CompAwareAReader {
   ) -> Poll<tokio::io::Result<()>> {
     let this = Pin::into_inner(self);
     let pinned = std::pin::pin!(&mut this.stream);
+    pinned.poll_read(cx, buf)
+  }
+}
+
+/// A stream that is unaware of the compression algorithm used.
+pub struct CompUnawareAReader(Box<dyn AsyncRead + Send + Unpin + 'static>);
+
+impl CompUnawareAReader {
+  /// Create a new `CompUnawareAReader`.
+  pub fn new(stream: Box<dyn AsyncRead + Send + Unpin + 'static>) -> Self {
+    Self(stream)
+  }
+
+  /// Assigns a compression algorithm to the reader.
+  pub fn assign_algorithm(
+    self,
+    algorithm: Option<dvf::CompressionAlgorithm>,
+  ) -> CompAwareAReader {
+    CompAwareAReader::new(self.0, algorithm)
+  }
+}
+
+impl AsyncRead for CompUnawareAReader {
+  fn poll_read(
+    self: Pin<&mut Self>,
+    cx: &mut Context<'_>,
+    buf: &mut tokio::io::ReadBuf<'_>,
+  ) -> Poll<tokio::io::Result<()>> {
+    let this = Pin::into_inner(self);
+    let pinned = std::pin::pin!(&mut this.0);
     pinned.poll_read(cx, buf)
   }
 }
