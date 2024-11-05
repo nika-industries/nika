@@ -16,12 +16,12 @@ pub use self::{
 };
 
 /// A stream that is aware of the compression algorithm used.
-pub struct CompAwareStream {
+pub struct CompAwareAReader {
   stream:    Box<dyn AsyncRead + Send + Unpin + 'static>,
   algorithm: Option<dvf::CompressionAlgorithm>,
 }
 
-impl CompAwareStream {
+impl CompAwareAReader {
   /// Create a new `CompAwareStream`.
   pub fn new(
     stream: Box<dyn AsyncRead + Send + Unpin + 'static>,
@@ -69,7 +69,7 @@ impl CompAwareStream {
   }
 }
 
-impl AsyncRead for CompAwareStream {
+impl AsyncRead for CompAwareAReader {
   fn poll_read(
     self: Pin<&mut Self>,
     cx: &mut Context<'_>,
