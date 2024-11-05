@@ -1,3 +1,5 @@
+//! Defines an `AsyncReadJumper`, to apply sync `Read` adapters to `AsyncRead`
+
 use std::{
   io::{self, Read, Result},
   pin::Pin,
@@ -11,7 +13,7 @@ use tokio::{
 };
 
 /// Inner adapter that implements `Read` and receives data from an `AsyncRead`.
-struct AsyncToSyncRead {
+pub struct AsyncToSyncRead {
   receiver: Receiver<Vec<u8>>,
   buffer:   Vec<u8>,
 }
@@ -77,6 +79,25 @@ impl<R: Read + Unpin> AsyncRead for AsyncReadJumper<R> {
 
 /// Function to create a channel-based adapter and apply an additional `Read`
 /// adapter.
+///
+/// This is the primary way we use [`Read`] adapters on [`AsyncRead`] streams.
+/// This is useful for compression adapters, for example.
+///
+/// It works by creating a blocking task that reads data from the [`AsyncRead`]
+/// stream and sends it to a channel. The data is consumed by
+/// [`AsyncToSyncRead`] which uses it to provide a sync [`Read`] impl, which can
+/// be passed by value into the adapter function. The result is then wrapped in
+/// an [`AsyncReadJumper`] and returned.
+///
+/// There's two inefficiencies here:
+/// 1. There's nothing special about [`AsyncReadJumper`]; it just wraps a
+///    [`Read`] implementer, so it polls blindly.
+/// 2. The data is first read before it's needed. The blocking task loads the
+///    data into a buffer, but this happens before its requested by the outer
+///    [`AsyncRead`] implementer.
+///
+/// It would be better to have [`AsyncReadJumper`] be the one to read from the
+/// source and feed it into the channel.
 pub fn wrap_with_read_jump<R, F>(
   mut reader: R,
   adapter_fn: F,

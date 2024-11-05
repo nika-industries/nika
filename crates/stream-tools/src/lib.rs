@@ -1,7 +1,7 @@
 //! Various stream tools.
 
 mod counted_async_reader;
-mod read_jump;
+pub mod read_jump;
 
 pub use tokio::io::AsyncRead;
 
