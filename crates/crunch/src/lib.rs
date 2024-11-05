@@ -2,35 +2,39 @@
 //! **C**ompresses **R**eally **U**nbelievably **N**icely, **C**reates
 //! **H**appiness.
 
-mod algorithm_to_adapter;
+use dvf::CompressionAlgorithm;
+use stream_tools::CompAwareAReader;
 
-use models::CompressionAlgorithm;
-use stream_tools::{wrap_with_read_jump, AsyncRead, DynAsyncReader};
-
-// use self::algorithm_to_adapter::AlgorithmToAdapter;
-
-/// Adapts a reader to compress its output, while capturing the uncompressed and
-/// compressed sizes.
-pub fn adapt_compress(
-  algorithm: CompressionAlgorithm,
-  reader: DynAsyncReader,
-) -> impl AsyncRead + Send + Unpin {
-  match algorithm {
-    CompressionAlgorithm::Snappy => wrap_with_read_jump(reader, |s| {
-      Box::new(snap::read::FrameEncoder::new(s))
-    }),
-  }
+/// Trait for adapting compression algorithms.
+pub trait AdaptCompression {
+  /// Adapts the compression algorithm of the item to another algorithm.
+  fn adapt_compression_to(
+    self,
+    algorithm: Option<CompressionAlgorithm>,
+  ) -> Self;
 }
 
-/// Adapts a reader to decompress its output, while capturing the decompressed
-/// size.
-pub fn adapt_decompress(
-  algorithm: CompressionAlgorithm,
-  reader: DynAsyncReader,
-) -> impl AsyncRead + Send + Unpin {
-  match algorithm {
-    CompressionAlgorithm::Snappy => wrap_with_read_jump(reader, |s| {
-      Box::new(snap::read::FrameDecoder::new(s))
-    }),
+impl AdaptCompression for CompAwareAReader {
+  fn adapt_compression_to(
+    self,
+    desired_algo: Option<CompressionAlgorithm>,
+  ) -> Self {
+    let current_algo = self.algorithm();
+
+    match (current_algo, desired_algo) {
+      (
+        Some(CompressionAlgorithm::Snappy),
+        Some(CompressionAlgorithm::Snappy),
+      ) => self,
+      (Some(CompressionAlgorithm::Snappy), None) => self
+        .map_stream_read_adapted(|s| {
+          Box::new(snap::read::FrameEncoder::new(s))
+        }),
+      (None, Some(CompressionAlgorithm::Snappy)) => self
+        .map_stream_read_adapted(|s| {
+          Box::new(snap::read::FrameDecoder::new(s))
+        }),
+      (None, None) => self,
+    }
   }
 }
