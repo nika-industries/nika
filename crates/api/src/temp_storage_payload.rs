@@ -7,7 +7,8 @@ use axum::{
   response::Response,
 };
 use prime_domain::{
-  models::TempStoragePath, DynPrimeDomainService, PrimeDomainService,
+  models::TempStoragePath, repos::CompAwareAReader, DynPrimeDomainService,
+  PrimeDomainService,
 };
 use tokio_stream::StreamExt;
 
@@ -59,8 +60,9 @@ impl TempStoragePayload {
       }),
     ));
 
+    let data = CompAwareAReader::new(body_stream, None);
     let path = temp_storage_service
-      .write_to_temp_storage(body_stream)
+      .write_to_temp_storage(data)
       .await
       .map_err(TempStoragePayloadError::WriteError)?;
 

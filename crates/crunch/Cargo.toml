@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-models = { path = "../models" }
+dvf = { path = "../dvf" }
 stream-tools = { path = "../stream-tools" }
 
 snap = { version = "1.1" }

@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-  CacheRecordId, CompressionStatus, LaxSlug, Model, OrgRecordId, RecordId,
-};
+use crate::{CacheRecordId, LaxSlug, Model, OrgRecordId, RecordId};
 
 /// The [`Entry`] table name.
 pub const ENTRY_TABLE_NAME: &str = "entry";
@@ -18,7 +16,7 @@ pub struct Entry {
   /// The entry's path.
   pub path:     LaxSlug,
   /// The entry's compression status.
-  pub c_status: CompressionStatus,
+  pub c_status: dvf::CompressionStatus,
   /// The entry's cache.
   pub cache:    CacheRecordId,
   /// The [`Org`](crate::Org) the store belongs to.
@@ -43,7 +41,7 @@ pub struct EntryCreateRequest {
   /// The entry's path.
   pub path:     LaxSlug,
   /// The entry's compression status.
-  pub c_status: CompressionStatus,
+  pub c_status: dvf::CompressionStatus,
   /// The entry's cache.
   pub cache:    CacheRecordId,
   /// The [`Org`](crate::Org) the store belongs to.

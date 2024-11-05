@@ -7,7 +7,7 @@ pub mod temp;
 use std::path::{Path, PathBuf};
 
 use hex::Hexagonal;
-pub use stream_tools::DynAsyncReader;
+pub use stream_tools::{CompAwareAReader, CompUnawareAReader};
 
 use self::{local::LocalStorageClient, s3_compat::S3CompatStorageClient};
 
@@ -67,13 +67,13 @@ pub enum WriteError {
 /// The main storage trait. Allows reading to or writing from a stream of bytes.
 #[async_trait::async_trait]
 pub trait StorageClient: Hexagonal {
-  /// Reads a file. Returns a [`DynAsyncReader`].
-  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError>;
-  /// Writes a file. Consumes a [`DynAsyncReader`].
+  /// Reads a file. Returns a [`CompUnawareAReader`].
+  async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError>;
+  /// Writes a file. Consumes a [`CompUnawareAReader`].
   async fn write(
     &self,
     path: &Path,
-    reader: DynAsyncReader,
+    reader: CompUnawareAReader,
   ) -> Result<models::FileSize, WriteError>;
 }
 
@@ -83,13 +83,13 @@ where
   T: std::ops::Deref<Target = I> + Send + Sync + 'static,
   I: StorageClient + ?Sized,
 {
-  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError> {
+  async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError> {
     self.deref().read(path).await
   }
   async fn write(
     &self,
     path: &Path,
-    reader: DynAsyncReader,
+    reader: CompUnawareAReader,
   ) -> Result<models::FileSize, WriteError> {
     self.deref().write(path, reader).await
   }

@@ -961,7 +961,7 @@ checksum = "22ec99545bb0ed0ea7bb9b8e1e9122ea386ff8a48c0922e43f36d45ab09e0e80"
 name = "crunch"
 version = "0.1.0"
 dependencies = [
- "models",
+ "dvf",
  "snap",
  "stream-tools",
 ]
@@ -2831,7 +2831,6 @@ dependencies = [
  "miette",
  "models",
  "repos",
- "stream-tools",
  "thiserror",
  "tracing",
 ]
@@ -3980,6 +3979,7 @@ dependencies = [
 name = "stream-tools"
 version = "0.1.0"
 dependencies = [
+ "dvf",
  "tokio",
 ]
 

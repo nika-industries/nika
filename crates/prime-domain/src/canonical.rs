@@ -1,5 +1,6 @@
 use std::{path::PathBuf, str::FromStr};
 
+use crunch::AdaptCompression;
 pub use hex;
 use hex::health;
 use miette::Result;
@@ -11,10 +12,9 @@ use models::{
 pub use repos::{self, StorageReadError, StorageWriteError};
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
-  CacheRepository, DynAsyncReader, EntryRepository, StoreRepository,
+  CacheRepository, CompAwareAReader, EntryRepository, StoreRepository,
   TempStorageRepository, TokenRepository, UserStorageClient,
 };
-use stream_tools::CountedAsyncReader;
 use tracing::instrument;
 
 use crate::{
@@ -73,7 +73,7 @@ where
     &self,
     store_id: StoreRecordId,
     path: models::LaxSlug,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<models::CompressionStatus, crate::WriteToStoreError> {
     // fetch the store
     let store = self
@@ -83,20 +83,16 @@ where
       .ok_or_else(|| crate::WriteToStoreError::StoreNotFound(store_id))?;
 
     // count the uncompressed size
-    let (data, uncompressed_counter) = CountedAsyncReader::new(data);
-    let data = Box::new(data);
+    let (data, uncompressed_counter) = data.counter();
 
     // check what compression algorithm is configured in the store
     let algorithm = store.compression_config.algorithm();
 
     // adapt the reader to compress the data if needed
-    let data: Box<dyn stream_tools::AsyncRead + Unpin + Send> = match algorithm
-    {
-      Some(algorithm) => Box::new(crunch::adapt_compress(algorithm, data)),
-      None => data,
-    };
+    let data = data.adapt_compression_to(algorithm);
 
-    let (data, compressed_counter) = CountedAsyncReader::new(data);
+    // count the compressed size
+    let (data, compressed_counter) = data.counter();
 
     // get the user storage client
     let client = self
@@ -108,7 +104,7 @@ where
     // write the data to the store
     let path = PathBuf::from_str(path.as_ref()).unwrap();
     let _ = client
-      .write(&path, Box::new(data))
+      .write(&path, data.forget_algorithm())
       .await
       .map_err(crate::WriteToStoreError::StorageWriteError)?;
 
@@ -218,7 +214,7 @@ where
     &self,
     owning_cache: CacheRecordId,
     path: LaxSlug,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<Entry, CreateEntryError> {
     // check if the entry already exists
     let existing_entry = self
@@ -255,7 +251,7 @@ where
   async fn read_from_entry(
     &self,
     entry_id: EntryRecordId,
-  ) -> Result<DynAsyncReader, ReadFromEntryError> {
+  ) -> Result<CompAwareAReader, ReadFromEntryError> {
     let entry = self
       .fetch_entry_by_id(entry_id)
       .await
@@ -300,14 +296,7 @@ where
       .await
       .map_err(ReadFromEntryError::StorageReadError)?;
 
-    // adapt the reader to decompress the data if needed
-    let reader: Box<dyn stream_tools::AsyncRead + Unpin + Send> =
-      match algorithm {
-        Some(algorithm) => {
-          Box::new(crunch::adapt_decompress(algorithm, reader))
-        }
-        None => Box::new(reader),
-      };
+    let reader = reader.assign_algorithm(algorithm);
 
     Ok(reader)
   }
@@ -315,14 +304,21 @@ where
   async fn read_from_temp_storage(
     &self,
     path: models::TempStoragePath,
-  ) -> Result<DynAsyncReader, StorageReadError> {
-    self.temp_storage_repo.read(path).await
+  ) -> Result<CompAwareAReader, StorageReadError> {
+    self
+      .temp_storage_repo
+      .read(path)
+      .await
+      .map(|r| r.assign_algorithm(None))
   }
   async fn write_to_temp_storage(
     &self,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<models::TempStoragePath, StorageWriteError> {
-    self.temp_storage_repo.store(data).await
+    self
+      .temp_storage_repo
+      .store(data.adapt_compression_to(None).forget_algorithm())
+      .await
   }
 }
 

@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-  compression::CompressionConfig, Model, OrgRecordId, RecordId,
-  StorageCredentials,
-};
+use crate::{Model, OrgRecordId, RecordId, StorageCredentials};
 
 /// The [`Store`] table name.
 pub const STORE_TABLE_NAME: &str = "store";
@@ -21,7 +18,7 @@ pub struct Store {
   /// The store's credentials.
   pub credentials:        StorageCredentials,
   /// The store's compression configuration.
-  pub compression_config: CompressionConfig,
+  pub compression_config: dvf::CompressionConfig,
   /// The [`Org`](crate::Org) the store belongs to.
   pub org:                OrgRecordId,
 }
@@ -44,7 +41,7 @@ pub struct StoreCreateRequest {
   /// The store's credentials.
   pub config:             StorageCredentials,
   /// The store's compression configuration.
-  pub compression_config: CompressionConfig,
+  pub compression_config: dvf::CompressionConfig,
   /// The [`Org`](crate::Org) the store belongs to.
   pub org:                OrgRecordId,
 }
