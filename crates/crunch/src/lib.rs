@@ -28,11 +28,11 @@ impl AdaptCompression for CompAwareAReader {
       ) => self,
       (Some(CompressionAlgorithm::Snappy), None) => self
         .map_stream_read_adapted(|s| {
-          Box::new(snap::read::FrameEncoder::new(s))
+          Box::new(snap::read::FrameDecoder::new(s))
         }),
       (None, Some(CompressionAlgorithm::Snappy)) => self
         .map_stream_read_adapted(|s| {
-          Box::new(snap::read::FrameDecoder::new(s))
+          Box::new(snap::read::FrameEncoder::new(s))
         }),
       (None, None) => self,
     }

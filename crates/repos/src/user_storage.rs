@@ -1,7 +1,9 @@
 use std::path::Path;
 
 use hex::{health, Hexagonal};
-use storage::{DynAsyncReader, ReadError, StorageClientGenerator, WriteError};
+use storage::{
+  CompAwareAReader, ReadError, StorageClientGenerator, WriteError,
+};
 
 /// The definition for the user storage service.
 #[async_trait::async_trait]
@@ -21,12 +23,12 @@ pub trait UserStorageRepository: Hexagonal {
 #[async_trait::async_trait]
 pub trait UserStorageClient: Hexagonal {
   /// Reads a file. Returns a [`DynAsyncReader`].
-  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError>;
+  async fn read(&self, path: &Path) -> Result<CompAwareAReader, ReadError>;
   /// Writes a file. Consumes a [`DynAsyncReader`].
   async fn write(
     &self,
     path: &Path,
-    reader: DynAsyncReader,
+    reader: CompAwareAReader,
   ) -> Result<models::FileSize, WriteError>;
 }
 
@@ -36,13 +38,13 @@ where
   T: std::ops::Deref<Target = I> + Send + Sync + 'static,
   I: UserStorageClient + ?Sized,
 {
-  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError> {
+  async fn read(&self, path: &Path) -> Result<CompAwareAReader, ReadError> {
     self.deref().read(path).await
   }
   async fn write(
     &self,
     path: &Path,
-    reader: DynAsyncReader,
+    reader: CompAwareAReader,
   ) -> Result<models::FileSize, WriteError> {
     self.deref().write(path, reader).await
   }
@@ -65,13 +67,13 @@ impl health::HealthReporter for UserStorageClientCanonical {
 
 #[async_trait::async_trait]
 impl UserStorageClient for UserStorageClientCanonical {
-  async fn read(&self, path: &Path) -> Result<DynAsyncReader, ReadError> {
+  async fn read(&self, path: &Path) -> Result<CompAwareAReader, ReadError> {
     self.0.read(path).await
   }
   async fn write(
     &self,
     path: &Path,
-    reader: DynAsyncReader,
+    reader: CompAwareAReader,
   ) -> Result<models::FileSize, WriteError> {
     self.0.write(path, reader).await
   }

@@ -5,7 +5,7 @@ use models::{
 };
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
-  Cache, DynAsyncReader, Entry, StorageReadError, StorageWriteError, Store,
+  Cache, CompAwareAReader, Entry, StorageReadError, StorageWriteError, Store,
   Token,
 };
 
@@ -82,26 +82,26 @@ where
     &self,
     owning_cache: CacheRecordId,
     path: LaxSlug,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<Entry, CreateEntryError> {
     self.deref().create_entry(owning_cache, path, data).await
   }
   async fn read_from_entry(
     &self,
     entry_id: EntryRecordId,
-  ) -> Result<DynAsyncReader, ReadFromEntryError> {
+  ) -> Result<CompAwareAReader, ReadFromEntryError> {
     self.deref().read_from_entry(entry_id).await
   }
 
   async fn read_from_temp_storage(
     &self,
     path: models::TempStoragePath,
-  ) -> Result<DynAsyncReader, StorageReadError> {
+  ) -> Result<CompAwareAReader, StorageReadError> {
     self.deref().read_from_temp_storage(path).await
   }
   async fn write_to_temp_storage(
     &self,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<models::TempStoragePath, StorageWriteError> {
     self.deref().write_to_temp_storage(data).await
   }

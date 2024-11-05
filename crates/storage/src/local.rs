@@ -6,7 +6,7 @@ use models::LocalStorageCredentials;
 use stream_tools::CountedAsyncReader;
 use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
 
-use super::{DynAsyncReader, ReadError, StorageClient};
+use super::{CompAwareAReader, ReadError, StorageClient};
 use crate::WriteError;
 
 pub struct LocalStorageClient(PathBuf);
@@ -35,7 +35,10 @@ impl health::HealthReporter for LocalStorageClient {
 #[async_trait::async_trait]
 impl StorageClient for LocalStorageClient {
   #[tracing::instrument(skip(self))]
-  async fn read(&self, input_path: &Path) -> Result<DynAsyncReader, ReadError> {
+  async fn read(
+    &self,
+    input_path: &Path,
+  ) -> Result<CompAwareAReader, ReadError> {
     let path = self.0.as_path().join(input_path);
 
     // make sure it exists
@@ -58,14 +61,14 @@ impl StorageClient for LocalStorageClient {
 
     let file = tokio::fs::File::open(&path).await?;
 
-    Ok(Box::new(BufReader::new(file)))
+    Ok(CompAwareAReader::new(Box::new(BufReader::new(file)), None))
   }
 
   #[tracing::instrument(skip(self, reader))]
   async fn write(
     &self,
     path: &Path,
-    mut reader: DynAsyncReader,
+    mut reader: CompAwareAReader,
   ) -> Result<models::FileSize, WriteError> {
     let target_path = self.0.as_path().join(path);
 

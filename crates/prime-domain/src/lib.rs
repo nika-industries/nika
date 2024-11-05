@@ -28,7 +28,7 @@ pub use repos::{
 };
 use repos::{
   db::{FetchModelByIndexError, FetchModelError},
-  DynAsyncReader,
+  CompAwareAReader,
 };
 
 pub use self::canonical::*;
@@ -91,23 +91,23 @@ pub trait PrimeDomainService: Hexagonal {
     &self,
     owning_cache: CacheRecordId,
     path: LaxSlug,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<Entry, CreateEntryError>;
   /// Reads data from an [`Entry`].
   async fn read_from_entry(
     &self,
     entry_id: EntryRecordId,
-  ) -> Result<DynAsyncReader, ReadFromEntryError>;
+  ) -> Result<CompAwareAReader, ReadFromEntryError>;
 
   /// Read data from the temp storage.
   async fn read_from_temp_storage(
     &self,
     path: models::TempStoragePath,
-  ) -> Result<DynAsyncReader, StorageReadError>;
+  ) -> Result<CompAwareAReader, StorageReadError>;
   /// Store data in the temp storage.
   async fn write_to_temp_storage(
     &self,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<models::TempStoragePath, StorageWriteError>;
 }
 

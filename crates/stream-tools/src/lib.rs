@@ -11,6 +11,7 @@ use std::{
 
 pub use tokio::io::AsyncRead;
 
+use self::counted_async_reader::Counter;
 pub use self::{
   counted_async_reader::CountedAsyncReader, read_jump::wrap_with_read_jump,
 };
@@ -33,6 +34,17 @@ impl CompAwareAReader {
   /// Get the compression algorithm used.
   pub fn algorithm(&self) -> Option<dvf::CompressionAlgorithm> {
     self.algorithm
+  }
+
+  /// Set the compression algorithm used.
+  pub fn set_algorithm(
+    self,
+    algorithm: Option<dvf::CompressionAlgorithm>,
+  ) -> Self {
+    Self {
+      stream: self.stream,
+      algorithm,
+    }
   }
 
   /// Get the inner stream and the compression algorithm used.
@@ -66,6 +78,18 @@ impl CompAwareAReader {
     ) -> Box<dyn Read + Send + Unpin + 'static>,
   {
     self.map_stream(|s| Box::new(wrap_with_read_jump(s, f)))
+  }
+
+  /// Start counting the bytes read from the stream.
+  pub fn counter(self) -> (Self, Counter) {
+    let (stream, counter) = CountedAsyncReader::new(self.stream);
+    (
+      Self {
+        stream:    Box::new(stream),
+        algorithm: self.algorithm,
+      },
+      counter,
+    )
   }
 }
 

@@ -7,7 +7,7 @@ use hex::{
 use models::TempStoragePath;
 use storage::temp::TempStorageCreds;
 pub use storage::{
-  DynAsyncReader, ReadError as StorageReadError, StorageClientGenerator,
+  CompAwareAReader, ReadError as StorageReadError, StorageClientGenerator,
   WriteError as StorageWriteError,
 };
 
@@ -20,11 +20,11 @@ pub trait TempStorageRepository: Hexagonal {
   async fn read(
     &self,
     path: TempStoragePath,
-  ) -> Result<DynAsyncReader, StorageReadError>;
+  ) -> Result<CompAwareAReader, StorageReadError>;
   /// Store data in the storage.
   async fn store(
     &self,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<TempStoragePath, StorageWriteError>;
 }
 
@@ -37,12 +37,12 @@ where
   async fn read(
     &self,
     path: TempStoragePath,
-  ) -> Result<DynAsyncReader, StorageReadError> {
+  ) -> Result<CompAwareAReader, StorageReadError> {
     self.deref().read(path).await
   }
   async fn store(
     &self,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<TempStoragePath, StorageWriteError> {
     self.deref().store(data).await
   }
@@ -82,14 +82,14 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
   async fn read(
     &self,
     path: TempStoragePath,
-  ) -> Result<DynAsyncReader, StorageReadError> {
+  ) -> Result<CompAwareAReader, StorageReadError> {
     self.client.read(path.as_ref()).await
   }
 
   #[tracing::instrument(skip(self, data))]
   async fn store(
     &self,
-    data: DynAsyncReader,
+    data: CompAwareAReader,
   ) -> Result<TempStoragePath, StorageWriteError> {
     let path = TempStoragePath::new_random();
     self.client.write(path.as_ref(), data).await?;
@@ -129,16 +129,16 @@ mod mock {
     async fn read(
       &self,
       path: TempStoragePath,
-    ) -> Result<DynAsyncReader, StorageReadError> {
+    ) -> Result<CompAwareAReader, StorageReadError> {
       let path = self.fs_root.join(path.as_ref());
       let file = tokio::fs::File::open(path).await?;
-      Ok(Box::new(file))
+      Ok(CompAwareAReader::new(Box::new(file), None))
     }
 
     #[tracing::instrument(skip(self, data))]
     async fn store(
       &self,
-      mut data: DynAsyncReader,
+      mut data: CompAwareAReader,
     ) -> Result<TempStoragePath, StorageWriteError> {
       // create fs_root if it doesn't exist
       tokio::fs::create_dir_all(&self.fs_root).await?;
