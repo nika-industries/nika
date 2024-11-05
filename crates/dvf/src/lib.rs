@@ -9,6 +9,7 @@
 //! all business logic, e.g. returning a [`FileSize`] from the
 //! `storage::StorageClient::write()` method instead of a `u64`.
 
+mod compression;
 mod creds;
 mod files;
 mod names;
@@ -16,4 +17,4 @@ mod secrets;
 
 pub use slugger;
 
-pub use self::{creds::*, files::*, names::*, secrets::*};
+pub use self::{compression::*, creds::*, files::*, names::*, secrets::*};

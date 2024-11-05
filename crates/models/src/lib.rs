@@ -13,7 +13,6 @@
 //! [`dvf`], or [`ulid`].
 
 mod cache;
-mod compression;
 mod entry;
 mod org;
 mod perms;
@@ -30,8 +29,8 @@ pub use slugger::*;
 pub use ulid::Ulid;
 
 pub use self::{
-  cache::*, compression::*, entry::*, org::*, perms::*, record_id::RecordId,
-  store::*, token::*, user::*,
+  cache::*, entry::*, org::*, perms::*, record_id::RecordId, store::*,
+  token::*, user::*,
 };
 
 type SlugFieldGetter<T> = fn(&T) -> EitherSlug;

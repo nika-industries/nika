@@ -1,5 +1,6 @@
-use dvf::FileSize;
 use serde::{Deserialize, Serialize};
+
+use crate::FileSize;
 
 /// Represents the compression status of a file.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
