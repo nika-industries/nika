@@ -3980,6 +3980,7 @@ dependencies = [
 name = "stream-tools"
 version = "0.1.0"
 dependencies = [
+ "dvf",
  "tokio",
 ]
 
