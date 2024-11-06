@@ -33,7 +33,7 @@
   
   tikv1 = {
     imports = [ (assign-static 13) self.nixosModules.tikv ];
-    virtualisation.memorySize = 4096;
+    virtualisation.memorySize = 2048;
     services.tikv = {
       enable = true;
       addr = "0.0.0.0:20160";
@@ -46,7 +46,7 @@
   };
   tikv2 = {
     imports = [ (assign-static 14) self.nixosModules.tikv ];
-    virtualisation.memorySize = 4096;
+    virtualisation.memorySize = 2048;
     services.tikv = {
       enable = true;
       addr = "0.0.0.0:20160";
@@ -59,7 +59,7 @@
   };
   tikv3 = {
     imports = [ (assign-static 15) self.nixosModules.tikv ];
-    virtualisation.memorySize = 4096;
+    virtualisation.memorySize = 2048;
     services.tikv = {
       enable = true;
       addr = "0.0.0.0:20160";
