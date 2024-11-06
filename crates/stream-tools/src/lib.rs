@@ -126,6 +126,12 @@ impl CompUnawareAReader {
   ) -> CompAwareAReader {
     CompAwareAReader::new(self.0, algorithm)
   }
+
+  /// Start counting the bytes read from the stream.
+  pub fn counter(self) -> (Self, Counter) {
+    let (stream, counter) = CountedAsyncReader::new(self.0);
+    (Self(Box::new(stream)), counter)
+  }
 }
 
 impl AsyncRead for CompUnawareAReader {

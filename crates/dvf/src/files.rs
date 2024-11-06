@@ -3,23 +3,26 @@ use std::{fmt, path::PathBuf, str::FromStr};
 use serde::{Deserialize, Serialize};
 
 /// A path in temp storage.
-#[nutype::nutype(derive(
-  Debug,
-  Clone,
-  Serialize,
-  Deserialize,
-  PartialEq,
-  Eq,
-  Hash,
-  AsRef,
-))]
-pub struct TempStoragePath(PathBuf);
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct TempStoragePath {
+  path: PathBuf,
+  size: FileSize,
+}
 
 impl TempStoragePath {
   /// Creates a new temporary storage path.
-  pub fn new_random() -> Self {
-    Self::new(PathBuf::from_str(&ulid::Ulid::new().to_string()).unwrap())
+  pub fn new_random(size: FileSize) -> Self {
+    Self {
+      path: PathBuf::from_str(&ulid::Ulid::new().to_string()).unwrap(),
+      size,
+    }
   }
+  /// Returns the path.
+  pub fn path(&self) -> &PathBuf { &self.path }
+  /// Returns the size.
+  pub fn size(&self) -> &FileSize { &self.size }
+  /// Sets the size.
+  pub fn set_size(&mut self, size: FileSize) { self.size = size; }
 }
 
 /// An entity's visibility.

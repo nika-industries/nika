@@ -83,7 +83,7 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
     &self,
     path: TempStoragePath,
   ) -> Result<CompUnawareAReader, StorageReadError> {
-    self.client.read(path.as_ref()).await
+    self.client.read(path.path()).await
   }
 
   #[tracing::instrument(skip(self, data))]
@@ -91,8 +91,10 @@ impl TempStorageRepository for TempStorageRepositoryCanonical {
     &self,
     data: CompUnawareAReader,
   ) -> Result<TempStoragePath, StorageWriteError> {
-    let path = TempStoragePath::new_random();
-    self.client.write(path.as_ref(), data).await?;
+    let mut path = TempStoragePath::new_random(models::FileSize::new(0));
+    let (data, counter) = data.counter();
+    self.client.write(path.path(), data).await?;
+    path.set_size(models::FileSize::new(counter.current_size().await));
     Ok(path)
   }
 }
@@ -130,7 +132,7 @@ mod mock {
       &self,
       path: TempStoragePath,
     ) -> Result<CompUnawareAReader, StorageReadError> {
-      let path = self.fs_root.join(path.as_ref());
+      let path = self.fs_root.join(path.path());
       let file = tokio::fs::File::open(path).await?;
       Ok(CompUnawareAReader::new(Box::new(file)))
     }
@@ -138,15 +140,18 @@ mod mock {
     #[tracing::instrument(skip(self, data))]
     async fn store(
       &self,
-      mut data: CompUnawareAReader,
+      data: CompUnawareAReader,
     ) -> Result<TempStoragePath, StorageWriteError> {
       // create fs_root if it doesn't exist
       tokio::fs::create_dir_all(&self.fs_root).await?;
 
-      let path = TempStoragePath::new_random();
-      let real_path = self.fs_root.join(path.as_ref());
+      let mut path = TempStoragePath::new_random(models::FileSize::new(0));
+      let real_path = self.fs_root.join(path.path());
+
+      let (mut data, counter) = data.counter();
       let mut file = tokio::fs::File::create(real_path).await?;
       tokio::io::copy(&mut data, &mut file).await?;
+      path.set_size(models::FileSize::new(counter.current_size().await));
       Ok(path)
     }
   }
