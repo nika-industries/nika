@@ -2,7 +2,7 @@
   description = "Provides basic Rust toolchain support.";
 
   inputs = {
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-parts.url = "https://flakehub.com/f/hercules-ci/flake-parts/0.1.tar.gz";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     wrangler = {
       url = "github:ulrikstrid/nix-wrangler";
