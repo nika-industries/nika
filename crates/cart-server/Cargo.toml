@@ -17,7 +17,7 @@ tokio = { workspace = true, features = [ "full" ] }
 tower = { workspace = true, features = [ "full" ] }
 tower-http = { workspace = true, features = [ "full" ] }
 
-miette = { workspace = true, features = [ "fancy" ] }
+miette = { workspace = true, features = [ "fancy-no-syscall" ] }
 tracing-subscriber.workspace = true
 
 [lints]

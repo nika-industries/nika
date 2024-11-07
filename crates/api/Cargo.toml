@@ -18,7 +18,7 @@ serde_json.workspace = true
 cfg-if.workspace = true
 clap.workspace = true
 thiserror.workspace = true
-miette = { workspace = true, features = [ "fancy" ] }
+miette = { workspace = true, features = [ "fancy-no-syscall" ] }
 
 axum = { workspace = true, features = [ "macros" ] }
 tokio = { workspace = true, features = [ "full" ] }
