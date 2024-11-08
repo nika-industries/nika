@@ -1006,6 +1006,7 @@ dependencies = [
  "hex",
  "kv",
  "miette",
+ "model",
  "models",
  "thiserror",
  "tokio",

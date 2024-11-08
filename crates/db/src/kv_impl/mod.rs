@@ -32,14 +32,14 @@ static INDEX_NS_SEGMENT: LazyLock<StrictSlug> =
 static MODEL_NS_SEGMENT: LazyLock<StrictSlug> =
   LazyLock::new(|| StrictSlug::new("model".to_string()));
 
-fn model_base_key<M: models::Model>(id: &models::RecordId<M>) -> Key {
-  let id_ulid: models::Ulid = (*id).into();
+fn model_base_key<M: model::Model>(id: &model::RecordId<M>) -> Key {
+  let id_ulid: model::Ulid = (*id).into();
   Key::new_lazy(&MODEL_NS_SEGMENT)
     .with(StrictSlug::new(M::TABLE_NAME.to_string()))
     .with(StrictSlug::new(id_ulid.to_string()))
 }
 
-fn index_base_key<M: models::Model>(index_name: &str) -> Key {
+fn index_base_key<M: model::Model>(index_name: &str) -> Key {
   Key::new_lazy(&INDEX_NS_SEGMENT)
     .with(StrictSlug::new(M::TABLE_NAME.to_string()))
     .with(StrictSlug::new(index_name))
@@ -48,7 +48,7 @@ fn index_base_key<M: models::Model>(index_name: &str) -> Key {
 #[async_trait::async_trait]
 impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
   #[instrument(skip(self, model), fields(id = model.id().to_string(), table = M::TABLE_NAME))]
-  async fn create_model<M: models::Model>(
+  async fn create_model<M: model::Model>(
     &self,
     model: M,
   ) -> Result<M, CreateModelError> {
@@ -60,7 +60,7 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
 
     // calculate the key for the model
     let model_key = model_base_key::<M>(&model.id());
-    let id_ulid: models::Ulid = model.id().into();
+    let id_ulid: model::Ulid = model.id().into();
 
     // serialize the model into bytes
     let model_value = kv::value::Value::serialize(&model)
@@ -144,9 +144,9 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
   }
 
   #[instrument(skip(self), fields(table = M::TABLE_NAME))]
-  async fn fetch_model_by_id<M: models::Model>(
+  async fn fetch_model_by_id<M: model::Model>(
     &self,
-    id: models::RecordId<M>,
+    id: model::RecordId<M>,
   ) -> Result<Option<M>, FetchModelError> {
     tracing::info!("fetching model with id");
 
@@ -176,7 +176,7 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
   }
 
   #[instrument(skip(self), fields(table = M::TABLE_NAME))]
-  async fn fetch_model_by_index<M: models::Model>(
+  async fn fetch_model_by_index<M: model::Model>(
     &self,
     index_name: String,
     index_value: EitherSlug,
@@ -213,7 +213,7 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
       .map_err(FetchModelByIndexError::RetryableTransaction)?;
 
     let id = id_value
-      .map(kv::value::Value::deserialize::<models::RecordId<M>>)
+      .map(kv::value::Value::deserialize::<model::RecordId<M>>)
       .transpose()
       .into_diagnostic()
       .context("failed to deserialize id")
@@ -242,9 +242,9 @@ impl<KV: KvTransactional> DatabaseAdapter for KvDatabaseAdapter<KV> {
   }
 
   #[instrument(skip(self), fields(table = M::TABLE_NAME))]
-  async fn enumerate_models<M: models::Model>(&self) -> Result<Vec<M>> {
-    let first_key = model_base_key::<M>(&models::RecordId::<M>::MIN());
-    let last_key = model_base_key::<M>(&models::RecordId::<M>::MAX());
+  async fn enumerate_models<M: model::Model>(&self) -> Result<Vec<M>> {
+    let first_key = model_base_key::<M>(&model::RecordId::<M>::MIN());
+    let last_key = model_base_key::<M>(&model::RecordId::<M>::MAX());
 
     let txn = self
       .0

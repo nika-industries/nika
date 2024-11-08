@@ -30,8 +30,11 @@
 
 mod adapter;
 mod kv_impl;
+#[cfg(feature = "migrate")]
 mod migrate;
 
 pub use kv;
 
-pub use self::{adapter::*, kv_impl::KvDatabaseAdapter, migrate::Migratable};
+#[cfg(feature = "migrate")]
+pub use self::migrate::Migratable;
+pub use self::{adapter::*, kv_impl::KvDatabaseAdapter};

@@ -10,13 +10,18 @@ workspace = true
 [dependencies]
 hex = { path = "../hex" }
 kv = { path = "../kv", features = [ "tikv" ] }
-models = { path = "../models" }
+model = { path = "../model" }
+models = { path = "../models", optional = true }
 
 async-trait.workspace = true
 miette.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = [ "rt" ] }
+
+[features]
+default = [ ]
+migrate = [ "dep:models" ]
 
 [dev-dependencies]
 tokio = { workspace = true, features = [ "full" ] }

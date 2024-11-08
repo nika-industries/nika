@@ -7,6 +7,7 @@
 use std::fmt::Debug;
 
 use dvf::slugger::EitherSlug;
+pub use dvf::{RecordId, Ulid};
 use serde::{de::DeserializeOwned, Serialize};
 
 /// A function that returns a slug field value.
