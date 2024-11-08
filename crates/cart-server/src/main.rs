@@ -37,7 +37,7 @@ async fn main() -> miette::Result<()> {
   let token_repo =
     prime_domain::repos::TokenRepositoryCanonical::new(kv_db_adapter.clone());
   let temp_storage_repo = prime_domain::repos::TempStorageRepositoryMock::new(
-    std::path::PathBuf::from("/tmp/nika-temp-storage"),
+    std::path::PathBuf::from("/tmp/rambit-temp-storage"),
   );
   let user_storage_repo =
     prime_domain::repos::UserStorageRepositoryCanonical::new();

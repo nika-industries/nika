@@ -1,4 +1,4 @@
-//! HTTP server for the Nika API.
+//! HTTP server for the Rambit API.
 //!
 //! The API server itself runs on Axum, and serves to run tasks from the `tasks`
 //! crate in response to HTTP requests. It also serves as the platform threshold
@@ -100,7 +100,7 @@ async fn naive_upload(
 }
 
 async fn dummy_root_handler() -> impl IntoResponse {
-  "You've reached the root endpoint of the Nika API binary.\nYou probably \
+  "You've reached the root endpoint of the Rambit API binary.\nYou probably \
    meant to go somewhere else."
 }
 
@@ -143,7 +143,7 @@ impl AppState {
       .mock_temp_storage
     {
       Box::new(prime_domain::repos::TempStorageRepositoryMock::new(
-        std::path::PathBuf::from("/tmp/nika-temp-storage"),
+        std::path::PathBuf::from("/tmp/rambit-temp-storage"),
       ))
     } else {
       let temp_storage_creds = prime_domain::TempStorageCreds::new_from_env()?;

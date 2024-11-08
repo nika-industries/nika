@@ -1,4 +1,4 @@
-//! CLI for the Nika project.
+//! CLI for the Rambit project.
 
 mod nar;
 
@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
 
-/// CLI for the Nika project.
+/// Parsed CLI args.
 #[derive(Parser, Debug)]
 struct Cli {
   #[command(subcommand)]

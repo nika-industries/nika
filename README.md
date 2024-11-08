@@ -1,6 +1,6 @@
-# nika
+# rambit
 
-Welcome to the `nika` monorepo. Feel free to look around.
+Welcome to the `rambit` monorepo. Feel free to look around.
 
 - See [PROJECTS](./PROJECTS.md) for project goals and objectives.
 - See the [ROADMAP](./ROADMAP.md) for (old) project direction and status.

@@ -8,7 +8,7 @@
 //! data model. It provides the table name, unique indices, and the ID of the
 //! model.
 //!
-//! This crate is a very common dependency for the Nika workspace, and is
+//! This crate is a very common dependency for the Rambit workspace, and is
 //! generally also the intended access point for depending on [`slugger`],
 //! [`dvf`], or [`ulid`].
 
