@@ -2419,10 +2419,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "model"
+version = "0.1.0"
+dependencies = [
+ "dvf",
+ "serde",
+]
+
+[[package]]
 name = "models"
 version = "0.1.0"
 dependencies = [
  "dvf",
+ "model",
  "serde",
  "ulid",
 ]

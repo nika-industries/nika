@@ -1,14 +1,12 @@
 [package]
-name = "models"
+name = "model"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
 dvf = { path = "../dvf" }
-model = { path = "../model" }
 
-ulid.workspace = true
 serde.workspace = true
 
 [lints]
