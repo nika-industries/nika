@@ -53,6 +53,7 @@ commands, which you can explore with the `menu` command.
 
 **Data:**
 - `dvf` - usage-specific newtypes used in models.
+- `model` - domain model interface
 - `models` - primary db model types.
 - `slugger` - slug types.
 - `starc` - smart pointer for static, owned, or ref-counted data.

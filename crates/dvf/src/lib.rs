@@ -13,8 +13,11 @@ mod compression;
 mod creds;
 mod files;
 mod names;
+mod record_id;
 mod secrets;
 
 pub use slugger;
 
-pub use self::{compression::*, creds::*, files::*, names::*, secrets::*};
+pub use self::{
+  compression::*, creds::*, files::*, names::*, record_id::*, secrets::*,
+};

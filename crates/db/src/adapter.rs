@@ -8,26 +8,26 @@ use miette::Result;
 #[async_trait::async_trait]
 pub trait DatabaseAdapter: Hexagonal {
   /// Creates a new model.
-  async fn create_model<M: models::Model>(
+  async fn create_model<M: model::Model>(
     &self,
     model: M,
   ) -> Result<M, CreateModelError>;
   /// Fetches a model by its ID.
-  async fn fetch_model_by_id<M: models::Model>(
+  async fn fetch_model_by_id<M: model::Model>(
     &self,
-    id: models::RecordId<M>,
+    id: model::RecordId<M>,
   ) -> Result<Option<M>, FetchModelError>;
   /// Fetches a model by an index.
   ///
   /// Must be a valid index, defined in the model's
-  /// [`UNIQUE_INDICES`](models::Model::UNIQUE_INDICES) constant.
-  async fn fetch_model_by_index<M: models::Model>(
+  /// [`UNIQUE_INDICES`](model::Model::UNIQUE_INDICES) constant.
+  async fn fetch_model_by_index<M: model::Model>(
     &self,
     index_name: String,
     index_value: EitherSlug,
   ) -> Result<Option<M>, FetchModelByIndexError>;
   /// Produces a list of all model IDs.
-  async fn enumerate_models<M: models::Model>(&self) -> Result<Vec<M>>;
+  async fn enumerate_models<M: model::Model>(&self) -> Result<Vec<M>>;
 }
 
 // impl for Arc
@@ -37,21 +37,21 @@ impl<
     I: DatabaseAdapter,
   > DatabaseAdapter for T
 {
-  async fn create_model<M: models::Model>(
+  async fn create_model<M: model::Model>(
     &self,
     model: M,
   ) -> Result<M, CreateModelError> {
     (**self).create_model(model).await
   }
 
-  async fn fetch_model_by_id<M: models::Model>(
+  async fn fetch_model_by_id<M: model::Model>(
     &self,
-    id: models::RecordId<M>,
+    id: model::RecordId<M>,
   ) -> Result<Option<M>, FetchModelError> {
     (**self).fetch_model_by_id(id).await
   }
 
-  async fn fetch_model_by_index<M: models::Model>(
+  async fn fetch_model_by_index<M: model::Model>(
     &self,
     index_name: String,
     index_value: EitherSlug,
@@ -59,7 +59,7 @@ impl<
     (**self).fetch_model_by_index(index_name, index_value).await
   }
 
-  async fn enumerate_models<M: models::Model>(&self) -> Result<Vec<M>> {
+  async fn enumerate_models<M: model::Model>(&self) -> Result<Vec<M>> {
     (**self).enumerate_models().await
   }
 }
@@ -78,7 +78,7 @@ pub enum CreateModelError {
   ///
   /// This is a constraint violation, and should be handled by the caller. It
   /// means that one of the indices, listed in the model's
-  /// [`UNIQUE_INDICES`](models::Model::UNIQUE_INDICES) constant, already
+  /// [`UNIQUE_INDICES`](model::Model::UNIQUE_INDICES) constant, already
   /// exists in the database.
   #[error("index {index_name:?} with value \"{index_value}\" already exists")]
   IndexAlreadyExists {
@@ -140,7 +140,7 @@ pub enum FetchModelByIndexError {
   /// The index does not exist.
   ///
   /// This is a usage bug. We should only be fetching by indices that are
-  /// defined in the model's [`UNIQUE_INDICES`](models::Model::UNIQUE_INDICES)
+  /// defined in the model's [`UNIQUE_INDICES`](model::Model::UNIQUE_INDICES)
   /// constant.
   #[error("index {index_name:?} does not exist")]
   IndexDoesNotExistOnModel {

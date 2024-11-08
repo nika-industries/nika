@@ -23,7 +23,7 @@ pub trait StorageClientGenerator {
   ) -> impl std::future::Future<Output = miette::Result<DynStorageClient>> + Send;
 }
 
-impl StorageClientGenerator for models::StorageCredentials {
+impl StorageClientGenerator for dvf::StorageCredentials {
   async fn client(&self) -> miette::Result<DynStorageClient> {
     match self {
       Self::Local(local_storage_creds) => Ok(Box::new(
@@ -74,7 +74,7 @@ pub trait StorageClient: Hexagonal {
     &self,
     path: &Path,
     reader: CompUnawareAReader,
-  ) -> Result<models::FileSize, WriteError>;
+  ) -> Result<dvf::FileSize, WriteError>;
 }
 
 #[async_trait::async_trait]
@@ -90,7 +90,7 @@ where
     &self,
     path: &Path,
     reader: CompUnawareAReader,
-  ) -> Result<models::FileSize, WriteError> {
+  ) -> Result<dvf::FileSize, WriteError> {
     self.deref().write(path, reader).await
   }
 }
