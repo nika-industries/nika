@@ -8,8 +8,8 @@ publish = false
 workspace = true
 
 [dependencies]
+dvf = { path = "../dvf" }
 hex = { path = "../hex" }
-models = { path = "../models" }
 stream-tools = { path = "../stream-tools" }
 
 async-trait.workspace = true

@@ -3948,10 +3948,10 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes-stream",
+ "dvf",
  "futures",
  "hex",
  "miette",
- "models",
  "object_store",
  "serde",
  "stream-tools",

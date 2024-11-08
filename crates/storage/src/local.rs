@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
+use dvf::LocalStorageCredentials;
 use hex::health;
 use miette::{Context, IntoDiagnostic};
-use models::LocalStorageCredentials;
 use stream_tools::CountedAsyncReader;
 use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
 
@@ -69,7 +69,7 @@ impl StorageClient for LocalStorageClient {
     &self,
     path: &Path,
     mut reader: CompUnawareAReader,
-  ) -> Result<models::FileSize, WriteError> {
+  ) -> Result<dvf::FileSize, WriteError> {
     let target_path = self.0.as_path().join(path);
 
     // Ensure the directory structure exists
@@ -90,7 +90,7 @@ impl StorageClient for LocalStorageClient {
     // Ensure all data is flushed to the file
     writer.flush().await?;
 
-    let file_size = models::FileSize::new(counter.current_size().await);
+    let file_size = dvf::FileSize::new(counter.current_size().await);
 
     Ok(file_size)
   }

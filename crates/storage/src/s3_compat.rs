@@ -1,10 +1,10 @@
 use std::{path::Path, sync::Arc};
 
 use bytes_stream::BytesStream;
+use dvf::R2StorageCredentials;
 use futures::{StreamExt, TryFutureExt, TryStreamExt};
 use hex::health;
 use miette::{Context, IntoDiagnostic, Report};
-use models::R2StorageCredentials;
 use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
   Error as ObjectStoreError, ObjectStore, PutPayload,
@@ -106,7 +106,7 @@ impl StorageClient for S3CompatStorageClient {
     &self,
     input_path: &Path,
     mut reader: CompUnawareAReader,
-  ) -> Result<models::FileSize, WriteError> {
+  ) -> Result<dvf::FileSize, WriteError> {
     // sanitize the destination path
     let input_path_string = input_path.to_str().unwrap().to_string();
     let path = object_store::path::Path::parse(input_path_string.clone())
@@ -176,7 +176,7 @@ impl StorageClient for S3CompatStorageClient {
 
     tracing::info!("finishing multipart");
 
-    let file_size = models::FileSize::new(counter.current_size().await);
+    let file_size = dvf::FileSize::new(counter.current_size().await);
 
     Ok(file_size)
   }

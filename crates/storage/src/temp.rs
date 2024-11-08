@@ -65,8 +65,8 @@ impl TempStorageCreds {
 
   /// Converts the temporary storage credentials to a
   /// [`models::StorageCredentials`].
-  pub fn as_creds(&self) -> models::StorageCredentials {
-    models::StorageCredentials::R2(models::R2StorageCredentials::Default {
+  pub fn as_creds(&self) -> dvf::StorageCredentials {
+    dvf::StorageCredentials::R2(dvf::R2StorageCredentials::Default {
       access_key:        self.access_key.clone(),
       secret_access_key: self.secret_access_key.clone(),
       endpoint:          self.endpoint.clone(),
