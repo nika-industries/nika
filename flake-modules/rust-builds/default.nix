@@ -30,7 +30,7 @@ localFlake: { inputs, ... }: {
       inherit src;
       strictDeps = true;
 
-      pname = "nika";
+      pname = "rambit";
       version = "0.1";
       doCheck = false;
 

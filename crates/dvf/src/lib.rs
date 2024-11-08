@@ -1,7 +1,7 @@
 //! **D**ata **V**alidation **F**undamentals.
 //!
 //! This crate provides the fundamental types used for data validation all over
-//! Nika. Types from this crate are meant to be used in the domain layer, and
+//! Rambit. Types from this crate are meant to be used in the domain layer, and
 //! should replace all bare or primitive types used in domain models, e.g.
 //! [`EntityName`] over `String`.
 //!

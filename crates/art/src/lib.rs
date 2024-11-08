@@ -54,8 +54,9 @@ pub fn ascii_art(input: TokenStream) -> TokenStream {
 
   // Convert to ASCII art
   let config = artem::config::ConfigBuilder::new()
-    .target_size(NonZeroU32::new(60).unwrap())
-    .characters("8Ybd'. ".to_string())
+    .target_size(NonZeroU32::new(80).unwrap())
+    // .characters("█▓▒░ ".to_string())
+    .characters("%0Oo. ".to_string())
     .build();
   let ascii_art = artem::convert(image, &config);
 

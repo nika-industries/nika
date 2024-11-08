@@ -44,7 +44,7 @@ localFlake: { ... }: {
         yarn # for populating local style node_modules
       ];
 
-      motd = "\n  Welcome to the {2}nika{reset} dev shell. Run {1}menu{reset} for commands.\n";
+      motd = "\n  Welcome to the {2}rambit{reset} dev shell. Run {1}menu{reset} for commands.\n";
 
       commands = let
         import-commands-module = path: (import path) (ps // { inherit bin-hl; });
