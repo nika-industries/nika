@@ -5,7 +5,7 @@ use leptos::{either::Either, prelude::*};
 use crate::{fetchers::*, utils::*};
 
 #[component]
-fn Entry(#[prop(into)] entry: MaybeSignal<models::Entry>) -> impl IntoView {
+fn Entry(#[prop(into)] entry: Signal<models::Entry>) -> impl IntoView {
   let entry = Signal::derive(move || entry.get());
 
   let entry_id = Signal::derive(move || entry.with(|e| e.id));

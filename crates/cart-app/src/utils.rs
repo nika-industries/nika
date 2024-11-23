@@ -95,7 +95,7 @@ pub fn PropList(children: Children) -> impl IntoView {
 
 #[component]
 pub fn Link(
-  #[prop(into)] href: MaybeSignal<String>,
+  #[prop(into)] href: Signal<String>,
   children: Children,
 ) -> impl IntoView {
   view! {
@@ -107,7 +107,7 @@ pub fn Link(
 
 #[component]
 pub fn TitleLink(
-  #[prop(into)] href: MaybeSignal<String>,
+  #[prop(into)] href: Signal<String>,
   #[prop(default = 1)] level: i32,
   children: Children,
 ) -> impl IntoView {
@@ -168,16 +168,14 @@ pub fn PageWrapper(children: Children) -> impl IntoView {
 macro_rules! id_component_and_link {
   ($component:ident, $component_link:ident, $component_title_link:ident, $record:ty, $route:expr) => {
     #[component]
-    pub fn $component(#[prop(into)] id: MaybeSignal<$record>) -> impl IntoView {
+    pub fn $component(#[prop(into)] id: Signal<$record>) -> impl IntoView {
       view! {
         { move || id().to_string() }
       }
     }
 
     #[component]
-    pub fn $component_link(
-      #[prop(into)] id: MaybeSignal<$record>,
-    ) -> impl IntoView {
+    pub fn $component_link(#[prop(into)] id: Signal<$record>) -> impl IntoView {
       let id = Signal::derive(id);
       let id_url =
         Signal::derive(move || format!("/model/{}/{}", $route, id()));
@@ -191,7 +189,7 @@ macro_rules! id_component_and_link {
 
     #[component]
     pub fn $component_title_link(
-      #[prop(into)] id: MaybeSignal<$record>,
+      #[prop(into)] id: Signal<$record>,
       #[prop(default = 2)] level: i32,
     ) -> impl IntoView {
       let id = Signal::derive(id);
@@ -238,7 +236,7 @@ id_component_and_link!(
 
 #[component]
 pub fn Visibility(
-  #[prop(into)] vis: MaybeSignal<models::Visibility>,
+  #[prop(into)] vis: Signal<models::Visibility>,
 ) -> impl IntoView {
   view! {
     { move || vis().to_string() }
@@ -247,7 +245,7 @@ pub fn Visibility(
 
 #[component]
 pub fn EntityName(
-  #[prop(into)] name: MaybeSignal<models::EntityName>,
+  #[prop(into)] name: Signal<models::EntityName>,
 ) -> impl IntoView {
   view! {
     { move || name().to_string() }
@@ -256,7 +254,7 @@ pub fn EntityName(
 
 #[component]
 pub fn EntityNickname(
-  #[prop(into)] nickname: MaybeSignal<models::EntityNickname>,
+  #[prop(into)] nickname: Signal<models::EntityNickname>,
 ) -> impl IntoView {
   view! {
     { move || nickname().to_string() }

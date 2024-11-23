@@ -5,9 +5,7 @@ use leptos::{either::Either, prelude::*};
 use crate::{fetchers::*, utils::*};
 
 #[component]
-fn Token(#[prop(into)] token: MaybeSignal<models::Token>) -> impl IntoView {
-  let token = Signal::derive(move || token.get());
-
+fn Token(#[prop(into)] token: Signal<models::Token>) -> impl IntoView {
   let token_id = Signal::derive(move || token.with(|t| t.id));
 
   let token_nickname =

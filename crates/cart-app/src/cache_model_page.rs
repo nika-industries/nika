@@ -5,7 +5,7 @@ use leptos::{either::Either, prelude::*};
 use crate::{fetchers::*, utils::*};
 
 #[component]
-fn Cache(#[prop(into)] cache: MaybeSignal<models::Cache>) -> impl IntoView {
+fn Cache(#[prop(into)] cache: Signal<models::Cache>) -> impl IntoView {
   let cache = Signal::derive(move || cache.get());
 
   let cache_id = Signal::derive(move || cache.with(|c| c.id));
