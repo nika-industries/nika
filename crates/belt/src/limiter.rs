@@ -6,7 +6,7 @@ use std::{
 };
 
 use bytes::Bytes;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use pin_project::pin_project;
 
 /// A stream wrapper that limits the size of chunks passing through.
