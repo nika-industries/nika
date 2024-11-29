@@ -1,7 +1,7 @@
 //! Provides `Belt`, a byte streaming container.
 
+mod bottleneck;
 mod counter;
-mod limiter;
 mod source;
 
 use std::{
@@ -20,15 +20,15 @@ use futures::{Stream, StreamExt};
 use tokio::{io::AsyncBufRead, sync::mpsc};
 
 pub use self::counter::Counter;
-use self::{limiter::Limiter, source::BytesSource};
+use self::{bottleneck::Bottleneck, source::BytesSource};
 
 #[derive(Debug)]
-enum MaybeLimitedSource {
-  Unlimited(BytesSource),
-  Limited(Limiter<BytesSource>),
+enum MaybeBottleneckSource {
+  Unmodified(BytesSource),
+  Bottlenecked(Bottleneck<BytesSource>),
 }
 
-impl Stream for MaybeLimitedSource {
+impl Stream for MaybeBottleneckSource {
   type Item = Result<Bytes>;
 
   fn poll_next(
@@ -36,8 +36,8 @@ impl Stream for MaybeLimitedSource {
     cx: &mut Context<'_>,
   ) -> Poll<Option<Self::Item>> {
     match &mut *self {
-      Self::Unlimited(source) => source.poll_next_unpin(cx),
-      Self::Limited(limited) => limited.poll_next_unpin(cx),
+      Self::Unmodified(source) => source.poll_next_unpin(cx),
+      Self::Bottlenecked(bottleneck) => bottleneck.poll_next_unpin(cx),
     }
   }
 }
@@ -45,7 +45,7 @@ impl Stream for MaybeLimitedSource {
 /// A byte stream container.
 #[derive(Debug)]
 pub struct Belt {
-  inner: MaybeLimitedSource,
+  inner: MaybeBottleneckSource,
   count: Arc<AtomicU64>,
 }
 
@@ -53,15 +53,16 @@ impl Belt {
   /// Create a new Belt from an existing `mpsc::Receiver<Bytes>`
   pub fn from_channel(
     receiver: mpsc::Receiver<Result<Bytes>>,
-    limit: Option<NonZeroUsize>,
+    max_chunk_size: Option<NonZeroUsize>,
   ) -> Self {
     Self {
-      inner: match limit {
-        Some(limit) => MaybeLimitedSource::Limited(Limiter::new(
-          limit,
-          BytesSource::Channel(receiver),
-        )),
-        None => MaybeLimitedSource::Unlimited(BytesSource::Channel(receiver)),
+      inner: match max_chunk_size {
+        Some(max_chunk_size) => MaybeBottleneckSource::Bottlenecked(
+          Bottleneck::new(max_chunk_size, BytesSource::Channel(receiver)),
+        ),
+        None => {
+          MaybeBottleneckSource::Unmodified(BytesSource::Channel(receiver))
+        }
       },
       count: Arc::new(AtomicU64::new(0)),
     }
@@ -70,17 +71,19 @@ impl Belt {
   /// Create a new Belt from an existing `impl Stream<Item = Bytes>`
   pub fn from_stream(
     stream: impl Stream<Item = Result<Bytes>> + Send + Unpin + 'static,
-    limit: Option<NonZeroUsize>,
+    max_chunk_size: Option<NonZeroUsize>,
   ) -> Self {
     Self {
-      inner: match limit {
-        Some(limit) => MaybeLimitedSource::Limited(Limiter::new(
-          limit,
-          BytesSource::Erased(Box::new(stream)),
-        )),
-        None => {
-          MaybeLimitedSource::Unlimited(BytesSource::Erased(Box::new(stream)))
+      inner: match max_chunk_size {
+        Some(max_chunk_size) => {
+          MaybeBottleneckSource::Bottlenecked(Bottleneck::new(
+            max_chunk_size,
+            BytesSource::Erased(Box::new(stream)),
+          ))
         }
+        None => MaybeBottleneckSource::Unmodified(BytesSource::Erased(
+          Box::new(stream),
+        )),
       },
       count: Arc::new(AtomicU64::new(0)),
     }
@@ -89,17 +92,19 @@ impl Belt {
   /// Create a new Belt from an existing `impl AsyncBufRead`
   pub fn from_async_read(
     reader: impl AsyncBufRead + Send + Unpin + 'static,
-    limit: Option<NonZeroUsize>,
+    max_chunk_size: Option<NonZeroUsize>,
   ) -> Self {
     Self {
-      inner: match limit {
-        Some(limit) => MaybeLimitedSource::Limited(Limiter::new(
-          limit,
-          BytesSource::AsyncBufRead(tokio_util::io::ReaderStream::new(
-            Box::new(reader),
-          )),
-        )),
-        None => MaybeLimitedSource::Unlimited(BytesSource::AsyncBufRead(
+      inner: match max_chunk_size {
+        Some(max_chunk_size) => {
+          MaybeBottleneckSource::Bottlenecked(Bottleneck::new(
+            max_chunk_size,
+            BytesSource::AsyncBufRead(tokio_util::io::ReaderStream::new(
+              Box::new(reader),
+            )),
+          ))
+        }
+        None => MaybeBottleneckSource::Unmodified(BytesSource::AsyncBufRead(
           tokio_util::io::ReaderStream::new(Box::new(reader)),
         )),
       },
@@ -110,10 +115,10 @@ impl Belt {
   /// Create a channel pair with a default buffer size
   pub fn new_channel(
     buffer_size: usize,
-    limit: Option<NonZeroUsize>,
+    max_chunk_size: Option<NonZeroUsize>,
   ) -> (mpsc::Sender<Result<Bytes>>, Self) {
     let (tx, rx) = mpsc::channel(buffer_size);
-    (tx, Self::from_channel(rx, limit))
+    (tx, Self::from_channel(rx, max_chunk_size))
   }
 
   /// Get a tracking counter for the total number of bytes read from this

@@ -11,18 +11,18 @@ use pin_project::pin_project;
 
 /// A stream wrapper that limits the size of chunks passing through.
 #[pin_project]
-pub struct Limiter<S> {
+pub struct Bottleneck<S> {
   chunk_size: NonZeroUsize,
   #[pin]
   stream:     S,
   buffer:     Option<Bytes>,
 }
 
-impl<S> Limiter<S>
+impl<S> Bottleneck<S>
 where
   S: Stream<Item = io::Result<Bytes>>,
 {
-  /// Create a new `Limiter` wrapping the given stream with a maximum chunk
+  /// Create a new [`Bottleneck`] wrapping the given stream with a maximum chunk
   /// size.
   pub fn new(chunk_size: NonZeroUsize, stream: S) -> Self {
     Self {
@@ -33,9 +33,9 @@ where
   }
 }
 
-impl<S> fmt::Debug for Limiter<S> {
+impl<S> fmt::Debug for Bottleneck<S> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("Limiter")
+    f.debug_struct("Bottleneck")
       .field("chunk_size", &self.chunk_size)
       .field("stream", &"...")
       .field("buffer", &self.buffer)
@@ -43,7 +43,7 @@ impl<S> fmt::Debug for Limiter<S> {
   }
 }
 
-impl<S> Stream for Limiter<S>
+impl<S> Stream for Bottleneck<S>
 where
   S: Stream<Item = io::Result<Bytes>>,
 {
@@ -94,7 +94,7 @@ mod tests {
   use super::*;
 
   #[tokio::test]
-  async fn test_limiter_basic() {
+  async fn test_bottlneck_basic() {
     // Input stream with arbitrary byte chunks
     let input_chunks = vec![
       Ok(Bytes::from_static(b"hello")),
@@ -103,27 +103,33 @@ mod tests {
     ];
     let stream = stream::iter(input_chunks);
 
-    // Create a Limiter with a chunk size of 5
+    // Create a Bottleneck with a chunk size of 5
     let chunk_size = NonZeroUsize::new(5).unwrap();
-    let mut limiter = Limiter::new(chunk_size, stream);
+    let mut bottleneck = Bottleneck::new(chunk_size, stream);
 
     // Validate output
-    assert_eq!(limiter.next().await.unwrap().unwrap(), Bytes::from("hello"));
-    assert_eq!(limiter.next().await.unwrap().unwrap(), Bytes::from("world"));
-    assert_eq!(limiter.next().await.unwrap().unwrap(), Bytes::from("!"));
-    assert!(limiter.next().await.is_none());
+    assert_eq!(
+      bottleneck.next().await.unwrap().unwrap(),
+      Bytes::from("hello")
+    );
+    assert_eq!(
+      bottleneck.next().await.unwrap().unwrap(),
+      Bytes::from("world")
+    );
+    assert_eq!(bottleneck.next().await.unwrap().unwrap(), Bytes::from("!"));
+    assert!(bottleneck.next().await.is_none());
   }
 
   #[tokio::test]
-  async fn test_limiter_split_large_chunks() {
+  async fn test_bottleneck_split_large_chunks() {
     // Input stream with large chunks
     let input_chunks =
       vec![Ok(Bytes::from_static(b"abcdefghijklmnopqrstuvwxyz"))];
     let stream = stream::iter(input_chunks);
 
-    // Create a Limiter with a chunk size of 5
+    // Create a Bottleneck with a chunk size of 5
     let chunk_size = NonZeroUsize::new(5).unwrap();
-    let mut limiter = Limiter::new(chunk_size, stream);
+    let mut bottleneck = Bottleneck::new(chunk_size, stream);
 
     // Validate that large chunks are split correctly
     let expected_chunks = vec![
@@ -136,28 +142,28 @@ mod tests {
     ];
 
     for expected in expected_chunks {
-      assert_eq!(limiter.next().await.unwrap().unwrap(), expected);
+      assert_eq!(bottleneck.next().await.unwrap().unwrap(), expected);
     }
 
-    assert!(limiter.next().await.is_none());
+    assert!(bottleneck.next().await.is_none());
   }
 
   #[tokio::test]
-  async fn test_limiter_empty_input() {
+  async fn test_bottleneck_empty_input() {
     // Input stream with no chunks
     let input_chunks: Vec<io::Result<Bytes>> = vec![];
     let stream = stream::iter(input_chunks);
 
-    // Create a Limiter with any chunk size
+    // Create a Bottleneck with any chunk size
     let chunk_size = NonZeroUsize::new(5).unwrap();
-    let mut limiter = Limiter::new(chunk_size, stream);
+    let mut bottleneck = Bottleneck::new(chunk_size, stream);
 
     // Validate that no chunks are emitted
-    assert!(limiter.next().await.is_none());
+    assert!(bottleneck.next().await.is_none());
   }
 
   #[tokio::test]
-  async fn test_limiter_error_propagation() {
+  async fn test_bottleneck_error_propagation() {
     // Input stream with an error
     let input_chunks = vec![
       Ok(Bytes::from_static(b"hello")),
@@ -166,22 +172,28 @@ mod tests {
     ];
     let stream = stream::iter(input_chunks);
 
-    // Create a Limiter with a chunk size of 5
+    // Create a Bottleneck with a chunk size of 5
     let chunk_size = NonZeroUsize::new(5).unwrap();
-    let mut limiter = Limiter::new(chunk_size, stream);
+    let mut bottleneck = Bottleneck::new(chunk_size, stream);
 
     // Validate output up to the error
-    assert_eq!(limiter.next().await.unwrap().unwrap(), Bytes::from("hello"));
-    match limiter.next().await {
+    assert_eq!(
+      bottleneck.next().await.unwrap().unwrap(),
+      Bytes::from("hello")
+    );
+    match bottleneck.next().await {
       Some(Err(e)) => assert_eq!(e.kind(), io::ErrorKind::Other),
       _ => panic!("Expected error"),
     }
-    assert_eq!(limiter.next().await.unwrap().unwrap(), Bytes::from("world"));
-    assert!(limiter.next().await.is_none());
+    assert_eq!(
+      bottleneck.next().await.unwrap().unwrap(),
+      Bytes::from("world")
+    );
+    assert!(bottleneck.next().await.is_none());
   }
 
   #[tokio::test]
-  async fn test_limiter_chunk_boundary() {
+  async fn test_bottleneck_chunk_boundary() {
     // Input stream with chunks matching the limit boundary
     let input_chunks = vec![
       Ok(Bytes::from_static(b"12345")),
@@ -189,13 +201,19 @@ mod tests {
     ];
     let stream = stream::iter(input_chunks);
 
-    // Create a Limiter with a chunk size of 5
+    // Create a Bottleneck with a chunk size of 5
     let chunk_size = NonZeroUsize::new(5).unwrap();
-    let mut limiter = Limiter::new(chunk_size, stream);
+    let mut bottleneck = Bottleneck::new(chunk_size, stream);
 
     // Validate that chunks are passed through without modification
-    assert_eq!(limiter.next().await.unwrap().unwrap(), Bytes::from("12345"));
-    assert_eq!(limiter.next().await.unwrap().unwrap(), Bytes::from("67890"));
-    assert!(limiter.next().await.is_none());
+    assert_eq!(
+      bottleneck.next().await.unwrap().unwrap(),
+      Bytes::from("12345")
+    );
+    assert_eq!(
+      bottleneck.next().await.unwrap().unwrap(),
+      Bytes::from("67890")
+    );
+    assert!(bottleneck.next().await.is_none());
   }
 }
