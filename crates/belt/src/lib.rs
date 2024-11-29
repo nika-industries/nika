@@ -1,9 +1,10 @@
 //! Provides `Belt`, a byte streaming container.
 
+mod counter;
 mod limiter;
+mod source;
 
 use std::{
-  fmt,
   io::Result,
   num::NonZeroUsize,
   pin::Pin,
@@ -18,7 +19,8 @@ use bytes::Bytes;
 use futures::{Stream, StreamExt};
 use tokio::{io::AsyncBufRead, sync::mpsc};
 
-use self::limiter::Limiter;
+pub use self::counter::Counter;
+use self::{limiter::Limiter, source::BytesSource};
 
 #[derive(Debug)]
 enum MaybeLimitedSource {
@@ -38,48 +40,6 @@ impl Stream for MaybeLimitedSource {
       Self::Limited(limited) => limited.poll_next_unpin(cx),
     }
   }
-}
-
-enum BytesSource {
-  Channel(mpsc::Receiver<Result<Bytes>>),
-  Erased(Box<dyn Stream<Item = Result<Bytes>> + Send + Unpin>),
-  AsyncBufRead(
-    tokio_util::io::ReaderStream<Box<dyn AsyncBufRead + Send + Unpin>>,
-  ),
-}
-
-impl futures::Stream for BytesSource {
-  type Item = Result<Bytes>;
-
-  fn poll_next(
-    mut self: Pin<&mut Self>,
-    cx: &mut Context<'_>,
-  ) -> Poll<Option<Self::Item>> {
-    match &mut *self {
-      Self::Channel(rx) => rx.poll_recv(cx),
-      Self::Erased(stream) => Pin::new(stream).poll_next(cx),
-      Self::AsyncBufRead(reader) => Pin::new(reader).poll_next(cx),
-    }
-  }
-}
-
-impl fmt::Debug for BytesSource {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::Channel(c) => f.debug_tuple("Channel").field(c).finish(),
-      Self::Erased(_) => f.debug_tuple("Erased").finish(),
-      Self::AsyncBufRead(_) => f.debug_tuple("AsyncBufRead").finish(),
-    }
-  }
-}
-
-/// A tracking counter for the total number of bytes read from a [`Belt`].
-#[derive(Debug)]
-pub struct Counter(Arc<AtomicU64>);
-
-impl Counter {
-  /// Get the current count of bytes read.
-  pub fn current(&self) -> u64 { self.0.load(Ordering::Acquire) }
 }
 
 /// A byte stream container.
@@ -158,7 +118,7 @@ impl Belt {
 
   /// Get a tracking counter for the total number of bytes read from this
   /// [`Belt`].
-  pub fn counter(&self) -> Counter { Counter(self.count.clone()) }
+  pub fn counter(&self) -> Counter { Counter::new(self.count.clone()) }
 
   /// Convert this Belt into an [`AsyncBufRead`](tokio::io::AsyncBufRead)
   /// implementer.
