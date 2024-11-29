@@ -7,6 +7,10 @@ use std::{
   io::Result,
   num::NonZeroUsize,
   pin::Pin,
+  sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
+  },
   task::{Context, Poll},
 };
 
@@ -64,10 +68,20 @@ impl fmt::Debug for BeltSource {
   }
 }
 
+/// A tracking counter for the total number of bytes read from a [`Belt`].
+#[derive(Debug)]
+pub struct Counter(Arc<AtomicU64>);
+
+impl Counter {
+  /// Get the current count of bytes read.
+  pub fn current(&self) -> u64 { self.0.load(Ordering::Acquire) }
+}
+
 /// A byte stream container.
 #[derive(Debug)]
 pub struct Belt {
   inner: MaybeLimitedBeltSource,
+  count: Arc<AtomicU64>,
 }
 
 impl Belt {
@@ -86,14 +100,15 @@ impl Belt {
           MaybeLimitedBeltSource::Unlimited(BeltSource::Channel(receiver))
         }
       },
+      count: Arc::new(AtomicU64::new(0)),
     }
   }
 
-  /// Create a new Belt from an existing `Stream<Item = Bytes>`
-  pub fn from_stream<S>(stream: S, limit: Option<NonZeroUsize>) -> Self
-  where
-    S: Stream<Item = Result<Bytes>> + Send + Sync + Unpin + 'static,
-  {
+  /// Create a new Belt from an existing `impl Stream<Item = Bytes>`
+  pub fn from_stream(
+    stream: impl Stream<Item = Result<Bytes>> + Send + Sync + Unpin + 'static,
+    limit: Option<NonZeroUsize>,
+  ) -> Self {
     Self {
       inner: match limit {
         Some(limit) => MaybeLimitedBeltSource::Limited(Limiter::new(
@@ -104,11 +119,12 @@ impl Belt {
           Box::new(stream),
         )),
       },
+      count: Arc::new(AtomicU64::new(0)),
     }
   }
 
   /// Create a channel pair with a default buffer size
-  pub fn channel(
+  pub fn new_channel(
     buffer_size: usize,
     limit: Option<NonZeroUsize>,
   ) -> (mpsc::Sender<Result<Bytes>>, Self) {
@@ -116,7 +132,11 @@ impl Belt {
     (tx, Self::from_channel(rx, limit))
   }
 
-  /// Convert this Belt into an [`AsyncRead`] stream
+  /// Get a tracking counter for the total number of bytes read from this
+  /// [`Belt`].
+  pub fn counter(&self) -> Counter { Counter(self.count.clone()) }
+
+  /// Convert this Belt into an [`AsyncRead`](tokio::io::AsyncRead) stream
   pub fn to_async_read(self) -> tokio_util::io::StreamReader<Self, Bytes> {
     tokio_util::io::StreamReader::new(self)
   }
@@ -129,7 +149,13 @@ impl Stream for Belt {
     mut self: Pin<&mut Self>,
     cx: &mut Context<'_>,
   ) -> Poll<Option<Self::Item>> {
-    self.inner.poll_next_unpin(cx)
+    let poll_result = self.inner.poll_next_unpin(cx);
+
+    if let Poll::Ready(Some(Ok(bytes))) = &poll_result {
+      self.count.fetch_add(bytes.len() as u64, Ordering::Release);
+    }
+
+    poll_result
   }
 }
 
@@ -142,7 +168,8 @@ mod tests {
 
   #[tokio::test]
   async fn test_belt_channel() {
-    let (tx, mut stream) = Belt::channel(10, None);
+    let (tx, mut belt) = Belt::new_channel(10, None);
+    let counter = belt.counter();
 
     tx.send(Ok(Bytes::from("hello"))).await.unwrap();
     tx.send(Ok(Bytes::from(" world"))).await.unwrap();
@@ -150,13 +177,14 @@ mod tests {
     drop(tx); // Close the channel
 
     assert_eq!(
-      stream.next().await.transpose().unwrap(),
+      belt.next().await.transpose().unwrap(),
       Some(Bytes::from("hello"))
     );
     assert_eq!(
-      stream.next().await.transpose().unwrap(),
+      belt.next().await.transpose().unwrap(),
       Some(Bytes::from(" world"))
     );
+    assert_eq!(counter.current(), 11);
   }
 
   #[tokio::test]
@@ -166,6 +194,7 @@ mod tests {
       Ok(Bytes::from(" world")),
     ]);
     let belt = Belt::from_stream(stream, None);
+    let counter = belt.counter();
 
     let mut belt = belt;
     assert_eq!(
@@ -176,6 +205,7 @@ mod tests {
       belt.next().await.transpose().unwrap(),
       Some(Bytes::from(" world"))
     );
+    assert_eq!(counter.current(), 11);
   }
 
   #[tokio::test]
@@ -185,33 +215,20 @@ mod tests {
       Ok(Bytes::from(" world")),
     ]);
     let belt = Belt::from_stream(stream, None);
+    let counter = belt.counter();
 
     let mut reader = belt.to_async_read();
     let mut buf = Vec::new();
     reader.read_to_end(&mut buf).await.unwrap();
 
     assert_eq!(buf, b"hello world");
-  }
-
-  #[tokio::test]
-  async fn test_belt_to_async_read_channel() {
-    let (tx, stream) = Belt::channel(10, None);
-
-    tx.send(Ok(Bytes::from("hello"))).await.unwrap();
-    tx.send(Ok(Bytes::from(" world"))).await.unwrap();
-
-    drop(tx); // Close the channel
-
-    let mut reader = stream.to_async_read();
-    let mut buf = Vec::new();
-    reader.read_to_end(&mut buf).await.unwrap();
-
-    assert_eq!(buf, b"hello world");
+    assert_eq!(counter.current(), 11);
   }
 
   #[tokio::test]
   async fn test_belt_to_async_read_channel_error() {
-    let (tx, stream) = Belt::channel(10, None);
+    let (tx, belt) = Belt::new_channel(10, None);
+    let counter = belt.counter();
 
     tx.send(Ok(Bytes::from("hello"))).await.unwrap();
     tx.send(Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no")))
@@ -220,27 +237,36 @@ mod tests {
 
     drop(tx); // Close the channel
 
-    let mut reader = stream.to_async_read();
+    let mut reader = belt.to_async_read();
     let mut buf = Vec::new();
     let err = reader.read_to_end(&mut buf).await.unwrap_err();
 
-    assert_eq!(err.to_string(), "oh no");
     assert_eq!(buf, b"hello");
+    assert_eq!(err.to_string(), "oh no");
+    assert_eq!(counter.current(), 5);
   }
 
   #[tokio::test]
   async fn test_belt_to_async_read_channel_partial() {
-    let (tx, stream) = Belt::channel(10, None);
+    let (tx, belt) = Belt::new_channel(10, None);
+    let counter = belt.counter();
 
-    tx.send(Ok(Bytes::from("hello"))).await.unwrap();
-    tx.send(Ok(Bytes::from(" world"))).await.unwrap();
+    tx.send(Ok(Bytes::from("hello world"))).await.unwrap();
 
     drop(tx); // Close the channel
 
-    let mut reader = stream.to_async_read();
+    let mut reader = belt.to_async_read();
     let mut buf = [0; 5];
     reader.read_exact(&mut buf).await.unwrap();
 
     assert_eq!(&buf, b"hello");
+    // the whole bytes object was consumed
+    assert_eq!(counter.current(), 11);
+
+    let (mut belt, buf) = reader.into_inner_with_chunk();
+    // there are no chunks left
+    assert_eq!(belt.next().await.transpose().unwrap(), None);
+    // the bytes that weren't read from the StreamReader
+    assert_eq!(buf, Some(Bytes::from_static(b" world")));
   }
 }
