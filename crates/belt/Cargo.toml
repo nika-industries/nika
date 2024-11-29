@@ -6,7 +6,9 @@ edition = "2021"
 [dependencies]
 bytes.workspace = true
 futures.workspace = true
+pin-project.workspace = true
 tokio = { workspace = true, features = ["bytes", "sync"] }
+tokio-util = { workspace = true, features = ["io"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
