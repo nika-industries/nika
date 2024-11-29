@@ -16,17 +16,17 @@ use std::{
 
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
-use tokio::sync::mpsc;
+use tokio::{io::AsyncBufRead, sync::mpsc};
 
 use self::limiter::Limiter;
 
 #[derive(Debug)]
-enum MaybeLimitedBeltSource {
-  Unlimited(BeltSource),
-  Limited(Limiter<BeltSource>),
+enum MaybeLimitedSource {
+  Unlimited(BytesSource),
+  Limited(Limiter<BytesSource>),
 }
 
-impl Stream for MaybeLimitedBeltSource {
+impl Stream for MaybeLimitedSource {
   type Item = Result<Bytes>;
 
   fn poll_next(
@@ -40,12 +40,15 @@ impl Stream for MaybeLimitedBeltSource {
   }
 }
 
-enum BeltSource {
+enum BytesSource {
   Channel(mpsc::Receiver<Result<Bytes>>),
-  Erased(Box<dyn Stream<Item = Result<Bytes>> + Send + Sync + Unpin>),
+  Erased(Box<dyn Stream<Item = Result<Bytes>> + Send + Unpin>),
+  AsyncBufRead(
+    tokio_util::io::ReaderStream<Box<dyn AsyncBufRead + Send + Unpin>>,
+  ),
 }
 
-impl futures::Stream for BeltSource {
+impl futures::Stream for BytesSource {
   type Item = Result<Bytes>;
 
   fn poll_next(
@@ -55,15 +58,17 @@ impl futures::Stream for BeltSource {
     match &mut *self {
       Self::Channel(rx) => rx.poll_recv(cx),
       Self::Erased(stream) => Pin::new(stream).poll_next(cx),
+      Self::AsyncBufRead(reader) => Pin::new(reader).poll_next(cx),
     }
   }
 }
 
-impl fmt::Debug for BeltSource {
+impl fmt::Debug for BytesSource {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Channel(c) => f.debug_tuple("Channel").field(c).finish(),
       Self::Erased(_) => f.debug_tuple("Erased").finish(),
+      Self::AsyncBufRead(_) => f.debug_tuple("AsyncBufRead").finish(),
     }
   }
 }
@@ -80,7 +85,7 @@ impl Counter {
 /// A byte stream container.
 #[derive(Debug)]
 pub struct Belt {
-  inner: MaybeLimitedBeltSource,
+  inner: MaybeLimitedSource,
   count: Arc<AtomicU64>,
 }
 
@@ -92,13 +97,11 @@ impl Belt {
   ) -> Self {
     Self {
       inner: match limit {
-        Some(limit) => MaybeLimitedBeltSource::Limited(Limiter::new(
+        Some(limit) => MaybeLimitedSource::Limited(Limiter::new(
           limit,
-          BeltSource::Channel(receiver),
+          BytesSource::Channel(receiver),
         )),
-        None => {
-          MaybeLimitedBeltSource::Unlimited(BeltSource::Channel(receiver))
-        }
+        None => MaybeLimitedSource::Unlimited(BytesSource::Channel(receiver)),
       },
       count: Arc::new(AtomicU64::new(0)),
     }
@@ -106,17 +109,38 @@ impl Belt {
 
   /// Create a new Belt from an existing `impl Stream<Item = Bytes>`
   pub fn from_stream(
-    stream: impl Stream<Item = Result<Bytes>> + Send + Sync + Unpin + 'static,
+    stream: impl Stream<Item = Result<Bytes>> + Send + Unpin + 'static,
     limit: Option<NonZeroUsize>,
   ) -> Self {
     Self {
       inner: match limit {
-        Some(limit) => MaybeLimitedBeltSource::Limited(Limiter::new(
+        Some(limit) => MaybeLimitedSource::Limited(Limiter::new(
           limit,
-          BeltSource::Erased(Box::new(stream)),
+          BytesSource::Erased(Box::new(stream)),
         )),
-        None => MaybeLimitedBeltSource::Unlimited(BeltSource::Erased(
-          Box::new(stream),
+        None => {
+          MaybeLimitedSource::Unlimited(BytesSource::Erased(Box::new(stream)))
+        }
+      },
+      count: Arc::new(AtomicU64::new(0)),
+    }
+  }
+
+  /// Create a new Belt from an existing `impl AsyncBufRead`
+  pub fn from_async_read(
+    reader: impl AsyncBufRead + Send + Unpin + 'static,
+    limit: Option<NonZeroUsize>,
+  ) -> Self {
+    Self {
+      inner: match limit {
+        Some(limit) => MaybeLimitedSource::Limited(Limiter::new(
+          limit,
+          BytesSource::AsyncBufRead(tokio_util::io::ReaderStream::new(
+            Box::new(reader),
+          )),
+        )),
+        None => MaybeLimitedSource::Unlimited(BytesSource::AsyncBufRead(
+          tokio_util::io::ReaderStream::new(Box::new(reader)),
         )),
       },
       count: Arc::new(AtomicU64::new(0)),
@@ -136,8 +160,9 @@ impl Belt {
   /// [`Belt`].
   pub fn counter(&self) -> Counter { Counter(self.count.clone()) }
 
-  /// Convert this Belt into an [`AsyncRead`](tokio::io::AsyncRead) stream
-  pub fn to_async_read(self) -> tokio_util::io::StreamReader<Self, Bytes> {
+  /// Convert this Belt into an [`AsyncBufRead`](tokio::io::AsyncBufRead)
+  /// implementer.
+  pub fn to_async_buf_read(self) -> tokio_util::io::StreamReader<Self, Bytes> {
     tokio_util::io::StreamReader::new(self)
   }
 }
@@ -167,7 +192,7 @@ mod tests {
   use super::*;
 
   #[tokio::test]
-  async fn test_belt_channel() {
+  async fn test_belt_from_channel() {
     let (tx, mut belt) = Belt::new_channel(10, None);
     let counter = belt.counter();
 
@@ -188,7 +213,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_belt_erased() {
+  async fn test_belt_from_stream() {
     let stream = futures::stream::iter(vec![
       Ok(Bytes::from("hello")),
       Ok(Bytes::from(" world")),
@@ -209,6 +234,27 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_belt_from_async_read() {
+    let reader = std::io::Cursor::new(b"hello world");
+    let mut belt = Belt::from_async_read(reader, Some(5.try_into().unwrap()));
+    let counter = belt.counter();
+
+    assert_eq!(
+      belt.next().await.transpose().unwrap(),
+      Some(Bytes::from("hello"))
+    );
+    assert_eq!(
+      belt.next().await.transpose().unwrap(),
+      Some(Bytes::from(" worl"))
+    );
+    assert_eq!(
+      belt.next().await.transpose().unwrap(),
+      Some(Bytes::from("d"))
+    );
+    assert_eq!(counter.current(), 11);
+  }
+
+  #[tokio::test]
   async fn test_belt_to_async_read() {
     let stream = futures::stream::iter(vec![
       Ok(Bytes::from("hello")),
@@ -217,7 +263,7 @@ mod tests {
     let belt = Belt::from_stream(stream, None);
     let counter = belt.counter();
 
-    let mut reader = belt.to_async_read();
+    let mut reader = belt.to_async_buf_read();
     let mut buf = Vec::new();
     reader.read_to_end(&mut buf).await.unwrap();
 
@@ -226,7 +272,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_belt_to_async_read_channel_error() {
+  async fn test_belt_to_async_read_error() {
     let (tx, belt) = Belt::new_channel(10, None);
     let counter = belt.counter();
 
@@ -237,7 +283,7 @@ mod tests {
 
     drop(tx); // Close the channel
 
-    let mut reader = belt.to_async_read();
+    let mut reader = belt.to_async_buf_read();
     let mut buf = Vec::new();
     let err = reader.read_to_end(&mut buf).await.unwrap_err();
 
@@ -255,7 +301,7 @@ mod tests {
 
     drop(tx); // Close the channel
 
-    let mut reader = belt.to_async_read();
+    let mut reader = belt.to_async_buf_read();
     let mut buf = [0; 5];
     reader.read_exact(&mut buf).await.unwrap();
 
