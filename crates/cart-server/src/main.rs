@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use axum::{extract::FromRef, Router};
 use cart_app::*;
-use leptos::prelude::*;
+use leptos::{logging::log, prelude::*};
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use prime_domain::DynPrimeDomainService;
 
@@ -70,7 +70,6 @@ async fn main() -> miette::Result<()> {
       },
     )
     .fallback(leptos_axum::file_and_error_handler(shell))
-    .layer(tower_http::compression::CompressionLayer::new())
     .with_state(leptos_options);
 
   log!("listening on http://{}", &addr);

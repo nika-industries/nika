@@ -27,7 +27,11 @@ use self::{
   token_model_page::{TokenModelListPage, TokenModelSinglePage},
 };
 
-pub(crate) fn fallback() -> impl IntoView {}
+pub(crate) fn fallback() -> impl IntoView {
+  view! {
+    <p>"Loading..."</p>
+  }
+}
 
 /// Builds the HTML shell for the application.
 pub fn shell(options: LeptosOptions) -> impl IntoView {
@@ -37,8 +41,9 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
       <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="description" content="Cartographer - An internal tool for exploring data within Rambit."/>
         <AutoReload options=options.clone() />
-        <HydrationScripts options/>
+        <HydrationScripts options islands=true/>
         <MetaTags/>
       </head>
       <body>

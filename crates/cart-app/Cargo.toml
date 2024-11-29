@@ -13,12 +13,14 @@ leptos_axum = { workspace = true, optional = true }
 prime-domain = { path = "../prime-domain", optional = true }
 models = { path = "../models" }
 
+tokio = { workspace = true, features = ["full"], optional = true }
+
 [features]
 default = []
 hydrate = ["leptos/hydrate"]
 ssr = [
   "leptos/ssr", "leptos_meta/ssr", "leptos_router/ssr",
-  "dep:leptos_axum", "dep:prime-domain"
+  "dep:leptos_axum", "dep:prime-domain", "dep:tokio"
 ]
 
 [lints]

@@ -38,13 +38,13 @@ clap = { version = "4.5", features = [ "derive" ] }
 nutype = { version = "0.5" }
 
 # leptos-specific
-leptos = { version = "0.7.0-rc0", default-features = false, features = ["nightly", "experimental-islands"] }
-leptos_axum = { version = "0.7.0-rc0", features = ["tracing"] }
-leptos_meta = { version = "0.7.0-rc0", features = ["tracing"] }
-leptos_router = { version = "0.7.0-rc0", features = ["nightly", "tracing"] }
+leptos = { version = "0.7.0-rc2", features = [ "tracing", "nightly", "islands" ] }
+leptos_axum = { version = "0.7.0-rc2", features = ["tracing"] }
+leptos_meta = { version = "0.7.0-rc2", features = ["tracing"] }
+leptos_router = { version = "0.7.0-rc2", features = ["nightly", "tracing"] }
 tower = { version = "0.5", features = ["full"] }
 tower-http = { version = "0.6", features = ["full"] }
-wasm-bindgen = "=0.2.93"
+wasm-bindgen = "=0.2.95"
 
 # tracing
 tracing = { version = "0.1" }
