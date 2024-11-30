@@ -17,7 +17,10 @@ use db::{FetchModelByIndexError, FetchModelError};
 use hex::Hexagonal;
 use miette::Result;
 use models::EitherSlug;
-pub use storage::temp::{TempStorageCreds, TempStorageCredsError};
+pub use storage::{
+  belt,
+  temp::{TempStorageCreds, TempStorageCredsError},
+};
 
 pub use self::{
   cache::*, entry::*, store::*, temp_storage::*, token::*, user_storage::*,

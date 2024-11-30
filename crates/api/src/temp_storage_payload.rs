@@ -7,8 +7,9 @@ use axum::{
   response::Response,
 };
 use prime_domain::{
-  models::TempStoragePath, repos::CompAwareAReader, DynPrimeDomainService,
-  PrimeDomainService,
+  models::TempStoragePath,
+  repos::belt::{self, Belt},
+  DynPrimeDomainService, PrimeDomainService,
 };
 use tokio_stream::StreamExt;
 
@@ -54,13 +55,12 @@ impl TempStoragePayload {
   ) -> Result<TempStoragePath, TempStoragePayloadError> {
     let TempStoragePayload(body, temp_storage_service) = self;
 
-    let body_stream = Box::new(tokio_util::io::StreamReader::new(
-      body.into_data_stream().map(|result| {
-        result.map_err(|err| io::Error::new(io::ErrorKind::Other, err))
+    let data = Belt::from_stream(
+      body.into_data_stream().map(|res| {
+        res.map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
       }),
-    ));
-
-    let data = CompAwareAReader::new(body_stream, None);
+      Some(belt::DEFAULT_CHUNK_SIZE),
+    );
     let path = temp_storage_service
       .write_to_temp_storage(data)
       .await

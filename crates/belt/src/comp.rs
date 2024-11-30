@@ -9,8 +9,10 @@ use crate::Belt;
 
 type ArBelt = StreamReader<Belt, Bytes>;
 
+/// The compression algorithms supported by Belt.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CompressionAlgorithm {
+  /// The Zstandard compression algorithm.
   Zstd,
 }
 

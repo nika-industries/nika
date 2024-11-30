@@ -4,9 +4,9 @@ use models::{
   TokenRecordId,
 };
 use repos::{
+  belt::Belt,
   db::{FetchModelByIndexError, FetchModelError},
-  Cache, CompAwareAReader, Entry, StorageReadError, StorageWriteError, Store,
-  Token,
+  Cache, Entry, StorageReadError, StorageWriteError, Store, Token,
 };
 
 use crate::{
@@ -82,26 +82,26 @@ where
     &self,
     owning_cache: CacheRecordId,
     path: LaxSlug,
-    data: CompAwareAReader,
+    data: Belt,
   ) -> Result<Entry, CreateEntryError> {
     self.deref().create_entry(owning_cache, path, data).await
   }
   async fn read_from_entry(
     &self,
     entry_id: EntryRecordId,
-  ) -> Result<CompAwareAReader, ReadFromEntryError> {
+  ) -> Result<Belt, ReadFromEntryError> {
     self.deref().read_from_entry(entry_id).await
   }
 
   async fn read_from_temp_storage(
     &self,
     path: models::TempStoragePath,
-  ) -> Result<CompAwareAReader, StorageReadError> {
+  ) -> Result<Belt, StorageReadError> {
     self.deref().read_from_temp_storage(path).await
   }
   async fn write_to_temp_storage(
     &self,
-    data: CompAwareAReader,
+    data: Belt,
   ) -> Result<models::TempStoragePath, StorageWriteError> {
     self.deref().write_to_temp_storage(data).await
   }

@@ -50,6 +50,6 @@ impl CompressionConfig {
 /// Represents a compression algorithm.
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum CompressionAlgorithm {
-  /// The snappy compression algorithm.
-  Snappy,
+  /// The Zstandard compression algorithm.
+  Zstd,
 }

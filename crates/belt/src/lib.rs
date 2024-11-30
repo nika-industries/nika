@@ -5,6 +5,11 @@ mod comp;
 mod counter;
 mod source;
 
+/// A good default chunk size for [`Belt`]s. Not used anywhere in the library,
+/// just for reference.
+pub const DEFAULT_CHUNK_SIZE: NonZeroUsize =
+  NonZeroUsize::new(32 * 1024).expect("DEFAULT_CHUNK_SIZE is zero");
+
 use std::{
   io::Result,
   num::NonZeroUsize,
@@ -17,13 +22,12 @@ use std::{
 };
 
 use bytes::Bytes;
-use comp::CompressionAlgorithm;
 use futures::{Stream, StreamExt};
 use tokio::{io::AsyncBufRead, sync::mpsc};
 use tokio_util::io::ReaderStream;
 
-pub use self::counter::Counter;
 use self::{bottleneck::Bottleneck, source::BytesSource};
+pub use self::{comp::CompressionAlgorithm, counter::Counter};
 
 #[derive(Debug)]
 enum MaybeBottleneckSource {
@@ -96,7 +100,7 @@ impl Belt {
   }
 
   /// Create a new [`Belt`] from an existing `impl `[`AsyncBufRead`].
-  pub fn from_async_read(
+  pub fn from_async_buf_read(
     reader: impl AsyncBufRead + Send + Unpin + 'static,
     max_chunk_size: Option<NonZeroUsize>,
   ) -> Self {
@@ -117,6 +121,14 @@ impl Belt {
       count:         Arc::new(AtomicU64::new(0)),
       declared_comp: None,
     }
+  }
+
+  /// Create a new [`Belt`] from an existing `impl `[`tokio::io::AsyncRead`].
+  pub fn from_async_read(
+    reader: impl tokio::io::AsyncRead + Send + Unpin + 'static,
+    max_chunk_size: Option<NonZeroUsize>,
+  ) -> Self {
+    Self::from_async_buf_read(tokio::io::BufReader::new(reader), max_chunk_size)
   }
 
   /// Create a new [`Belt`] from a new channel pair with a default buffer size.
@@ -171,9 +183,11 @@ impl Belt {
   }
 
   /// Set the declared compression algorithm for this [`Belt`].
-  pub fn set_declared_comp(mut self, algo: CompressionAlgorithm) -> Self {
-    self.declared_comp = Some(algo);
-    self
+  pub fn set_declared_comp(self, algo: Option<CompressionAlgorithm>) -> Self {
+    Self {
+      declared_comp: algo,
+      ..self
+    }
   }
 
   /// Get a tracking counter for the total number of bytes read from this
@@ -255,7 +269,8 @@ mod tests {
   #[tokio::test]
   async fn test_belt_from_async_read() {
     let reader = std::io::Cursor::new(b"hello world");
-    let mut belt = Belt::from_async_read(reader, Some(5.try_into().unwrap()));
+    let mut belt =
+      Belt::from_async_buf_read(reader, Some(5.try_into().unwrap()));
     let counter = belt.counter();
 
     assert_eq!(

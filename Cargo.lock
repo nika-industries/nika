@@ -960,15 +960,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22ec99545bb0ed0ea7bb9b8e1e9122ea386ff8a48c0922e43f36d45ab09e0e80"
 
 [[package]]
-name = "crunch"
-version = "0.1.0"
-dependencies = [
- "dvf",
- "snap",
- "stream-tools",
-]
-
-[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2843,7 +2834,6 @@ name = "prime-domain"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "crunch",
  "hex",
  "miette",
  "models",
@@ -3932,12 +3922,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "snap"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b6b67fb9a61334225b5b790716f609cd58395f895b3fe8b328786812a40bc3b"
-
-[[package]]
 name = "socket2"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3965,6 +3949,7 @@ name = "storage"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "belt",
  "bytes-stream",
  "dvf",
  "futures",
@@ -3972,20 +3957,11 @@ dependencies = [
  "miette",
  "object_store",
  "serde",
- "stream-tools",
  "temp-dir",
  "thiserror 1.0.64",
  "tokio",
  "tokio-util",
  "tracing",
-]
-
-[[package]]
-name = "stream-tools"
-version = "0.1.0"
-dependencies = [
- "dvf",
- "tokio",
 ]
 
 [[package]]

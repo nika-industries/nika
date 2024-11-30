@@ -6,8 +6,9 @@ pub mod temp;
 
 use std::path::{Path, PathBuf};
 
+pub use belt;
+use belt::Belt;
 use hex::Hexagonal;
-pub use stream_tools::{CompAwareAReader, CompUnawareAReader};
 
 use self::{local::LocalStorageClient, s3_compat::S3CompatStorageClient};
 
@@ -67,13 +68,13 @@ pub enum WriteError {
 /// The main storage trait. Allows reading to or writing from a stream of bytes.
 #[async_trait::async_trait]
 pub trait StorageClient: Hexagonal {
-  /// Reads a file. Returns a [`CompUnawareAReader`].
-  async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError>;
+  /// Reads a file. Returns a [`Belt`].
+  async fn read(&self, path: &Path) -> Result<Belt, ReadError>;
   /// Writes a file. Consumes a [`CompUnawareAReader`].
   async fn write(
     &self,
     path: &Path,
-    reader: CompUnawareAReader,
+    data: Belt,
   ) -> Result<dvf::FileSize, WriteError>;
 }
 
@@ -83,14 +84,14 @@ where
   T: std::ops::Deref<Target = I> + Send + Sync + 'static,
   I: StorageClient + ?Sized,
 {
-  async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError> {
+  async fn read(&self, path: &Path) -> Result<Belt, ReadError> {
     self.deref().read(path).await
   }
   async fn write(
     &self,
     path: &Path,
-    reader: CompUnawareAReader,
+    data: Belt,
   ) -> Result<dvf::FileSize, WriteError> {
-    self.deref().write(path, reader).await
+    self.deref().write(path, data).await
   }
 }

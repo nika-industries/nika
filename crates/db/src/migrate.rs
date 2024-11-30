@@ -40,7 +40,7 @@ impl<T: DatabaseAdapter> Migratable for T {
         PathBuf::from_str("/tmp/local-store").unwrap(),
       )),
       compression_config: models::CompressionConfig::new(Some(
-        models::CompressionAlgorithm::Snappy,
+        models::CompressionAlgorithm::Zstd,
       )),
       org:                org.id,
     };

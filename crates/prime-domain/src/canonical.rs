@@ -1,6 +1,5 @@
 use std::{path::PathBuf, str::FromStr};
 
-use crunch::AdaptCompression;
 pub use hex;
 use hex::health;
 use miette::Result;
@@ -11,11 +10,19 @@ use models::{
 };
 pub use repos::{self, StorageReadError, StorageWriteError};
 use repos::{
+  belt::{self, Belt},
   db::{FetchModelByIndexError, FetchModelError},
-  CacheRepository, CompAwareAReader, EntryRepository, StoreRepository,
-  TempStorageRepository, TokenRepository, UserStorageClient,
+  CacheRepository, EntryRepository, StoreRepository, TempStorageRepository,
+  TokenRepository, UserStorageClient,
 };
 use tracing::instrument;
+
+fn dvf_comp_to_belt_comp(
+  comp: Option<models::CompressionAlgorithm>,
+) -> Option<belt::CompressionAlgorithm> {
+  comp
+    .map(|models::CompressionAlgorithm::Zstd| belt::CompressionAlgorithm::Zstd)
+}
 
 use crate::{
   CreateEntryError, PrimeDomainService, ReadFromEntryError, TokenVerifyError,
@@ -73,7 +80,7 @@ where
     &self,
     store_id: StoreRecordId,
     path: models::LaxSlug,
-    data: CompAwareAReader,
+    data: Belt,
   ) -> Result<models::CompressionStatus, crate::WriteToStoreError> {
     // fetch the store
     let store = self
@@ -83,16 +90,21 @@ where
       .ok_or_else(|| crate::WriteToStoreError::StoreNotFound(store_id))?;
 
     // count the uncompressed size
-    let (data, uncompressed_counter) = data.counter();
+    let uncompressed_counter = data.counter();
 
     // check what compression algorithm is configured in the store
     let algorithm = store.compression_config.algorithm();
 
-    // adapt the reader to compress the data if needed
-    let data = data.adapt_compression_to(algorithm);
+    // adapt to compress the data if needed
+    let data = match algorithm {
+      Some(models::CompressionAlgorithm::Zstd) => {
+        data.adapt_to_comp(belt::CompressionAlgorithm::Zstd)
+      }
+      None => data,
+    };
 
     // count the compressed size
-    let (data, compressed_counter) = data.counter();
+    let compressed_counter = data.counter();
 
     // get the user storage client
     let client = self
@@ -104,13 +116,13 @@ where
     // write the data to the store
     let path = PathBuf::from_str(path.as_ref()).unwrap();
     let _ = client
-      .write(&path, data.forget_algorithm())
+      .write(&path, data)
       .await
       .map_err(crate::WriteToStoreError::StorageWriteError)?;
 
     // get the sizes
-    let uncompressed_file_size = uncompressed_counter.current_size().await;
-    let compressed_file_size = compressed_counter.current_size().await;
+    let uncompressed_file_size = uncompressed_counter.current();
+    let compressed_file_size = compressed_counter.current();
 
     // return the compression status
     let c_status = match algorithm {
@@ -214,7 +226,7 @@ where
     &self,
     owning_cache: CacheRecordId,
     path: LaxSlug,
-    data: CompAwareAReader,
+    data: Belt,
   ) -> Result<Entry, CreateEntryError> {
     // check if the entry already exists
     let existing_entry = self
@@ -251,7 +263,7 @@ where
   async fn read_from_entry(
     &self,
     entry_id: EntryRecordId,
-  ) -> Result<CompAwareAReader, ReadFromEntryError> {
+  ) -> Result<Belt, ReadFromEntryError> {
     let entry = self
       .fetch_entry_by_id(entry_id)
       .await
@@ -296,7 +308,7 @@ where
       .await
       .map_err(ReadFromEntryError::StorageReadError)?;
 
-    let reader = reader.assign_algorithm(algorithm);
+    let reader = reader.set_declared_comp(dvf_comp_to_belt_comp(algorithm));
 
     Ok(reader)
   }
@@ -304,21 +316,14 @@ where
   async fn read_from_temp_storage(
     &self,
     path: models::TempStoragePath,
-  ) -> Result<CompAwareAReader, StorageReadError> {
-    self
-      .temp_storage_repo
-      .read(path)
-      .await
-      .map(|r| r.assign_algorithm(None))
+  ) -> Result<Belt, StorageReadError> {
+    self.temp_storage_repo.read(path).await
   }
   async fn write_to_temp_storage(
     &self,
-    data: CompAwareAReader,
+    data: Belt,
   ) -> Result<models::TempStoragePath, StorageWriteError> {
-    self
-      .temp_storage_repo
-      .store(data.adapt_compression_to(None).forget_algorithm())
-      .await
+    self.temp_storage_repo.store(data).await
   }
 }
 
