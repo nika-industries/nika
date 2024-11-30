@@ -70,7 +70,7 @@ pub enum WriteError {
 pub trait StorageClient: Hexagonal {
   /// Reads a file. Returns a [`Belt`].
   async fn read(&self, path: &Path) -> Result<Belt, ReadError>;
-  /// Writes a file. Consumes a [`CompUnawareAReader`].
+  /// Writes a file. Consumes a [`Belt`].
   async fn write(
     &self,
     path: &Path,
