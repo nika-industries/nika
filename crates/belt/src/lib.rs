@@ -125,8 +125,7 @@ impl Belt {
   /// [`Belt`].
   pub fn counter(&self) -> Counter { Counter::new(self.count.clone()) }
 
-  /// Convert this Belt into an [`AsyncBufRead`](tokio::io::AsyncBufRead)
-  /// implementer.
+  /// Convert this Belt into an [`AsyncBufRead`] implementer.
   pub fn to_async_buf_read(self) -> tokio_util::io::StreamReader<Self, Bytes> {
     tokio_util::io::StreamReader::new(self)
   }

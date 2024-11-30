@@ -3,7 +3,8 @@ use std::sync::{
   Arc,
 };
 
-/// A tracking counter for the total number of bytes read from a [`Belt`].
+/// A tracking counter for the total number of bytes read from a
+/// [`Belt`](crate::Belt).
 #[derive(Debug)]
 pub struct Counter(Arc<AtomicU64>);
 
