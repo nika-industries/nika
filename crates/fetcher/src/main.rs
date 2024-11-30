@@ -88,8 +88,7 @@ async fn fetch_path_from_client(
   // the error type here is `Infalliable`
   let path = PathBuf::from_str(&path).unwrap();
 
-  let reader = client.read(&path).await?;
-  let stream = tokio_util::io::ReaderStream::new(reader);
+  let stream = client.read(&path).await?;
 
   tracing::info!("fetching path");
   Ok(Body::from_stream(stream).into_response())

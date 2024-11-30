@@ -27,8 +27,8 @@ pub use repos::{
   TempStorageCredsError,
 };
 use repos::{
+  belt::Belt,
   db::{FetchModelByIndexError, FetchModelError},
-  CompAwareAReader,
 };
 
 pub use self::canonical::*;
@@ -91,23 +91,23 @@ pub trait PrimeDomainService: Hexagonal {
     &self,
     owning_cache: CacheRecordId,
     path: LaxSlug,
-    data: CompAwareAReader,
+    data: Belt,
   ) -> Result<Entry, CreateEntryError>;
   /// Reads data from an [`Entry`].
   async fn read_from_entry(
     &self,
     entry_id: EntryRecordId,
-  ) -> Result<CompAwareAReader, ReadFromEntryError>;
+  ) -> Result<Belt, ReadFromEntryError>;
 
   /// Read data from the temp storage.
   async fn read_from_temp_storage(
     &self,
     path: models::TempStoragePath,
-  ) -> Result<CompAwareAReader, StorageReadError>;
+  ) -> Result<Belt, StorageReadError>;
   /// Store data in the temp storage.
   async fn write_to_temp_storage(
     &self,
-    data: CompAwareAReader,
+    data: Belt,
   ) -> Result<models::TempStoragePath, StorageWriteError>;
 }
 

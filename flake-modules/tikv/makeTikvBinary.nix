@@ -12,9 +12,9 @@
     x86_64-linux = "sha256-CovqGP4nciRWfB+mGQcCP+VBkVOmC6hzRXO2gvXylpc=";
   };
 
-  full-archive = pkgs.fetchzip {
+  full-archive = builtins.fetchTarball {
     url = url;
-    hash = hashes.${system};
+    sha256 = hashes.${system};
   };
 in pkgs.stdenv.mkDerivation {
   inherit pname version;

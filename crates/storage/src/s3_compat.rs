@@ -1,5 +1,6 @@
 use std::{path::Path, sync::Arc};
 
+use belt::Belt;
 use bytes_stream::BytesStream;
 use dvf::R2StorageCredentials;
 use futures::{StreamExt, TryFutureExt, TryStreamExt};
@@ -9,11 +10,9 @@ use object_store::{
   aws::{AmazonS3, AmazonS3Builder},
   Error as ObjectStoreError, ObjectStore, PutPayload,
 };
-use stream_tools::CountedAsyncReader;
 use tokio::sync::Mutex;
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-use super::{CompUnawareAReader, ReadError, StorageClient};
+use super::{ReadError, StorageClient};
 use crate::WriteError;
 
 pub struct S3CompatStorageClient {
@@ -72,10 +71,7 @@ impl health::HealthReporter for S3CompatStorageClient {
 #[async_trait::async_trait]
 impl StorageClient for S3CompatStorageClient {
   #[tracing::instrument(skip(self))]
-  async fn read(
-    &self,
-    input_path: &Path,
-  ) -> Result<CompUnawareAReader, ReadError> {
+  async fn read(&self, input_path: &Path) -> Result<Belt, ReadError> {
     let input_path_string = input_path.to_str().unwrap().to_string();
     let path = object_store::path::Path::parse(input_path_string.clone())
       .map_err(|_| ReadError::InvalidPath(input_path_string))?;
@@ -88,40 +84,33 @@ impl StorageClient for S3CompatStorageClient {
       }
     })?;
 
-    let stream = get_result
-      .into_stream()
-      .map_err(|e| {
+    let data = Belt::from_stream(
+      get_result.into_stream().map_err(|e| {
         tracing::error!("error while streaming from R2 store: {e:?}");
         futures::io::Error::from(e)
-      })
-      .into_async_read();
+      }),
+      Some(belt::DEFAULT_CHUNK_SIZE),
+    );
 
-    Ok(CompUnawareAReader::new(Box::new(
-      futures::io::BufReader::new(stream).compat(),
-    )))
+    Ok(data)
   }
 
-  #[tracing::instrument(skip(self, reader))]
+  #[tracing::instrument(skip(self))]
   async fn write(
     &self,
     input_path: &Path,
-    mut reader: CompUnawareAReader,
+    data: Belt,
   ) -> Result<dvf::FileSize, WriteError> {
     // sanitize the destination path
     let input_path_string = input_path.to_str().unwrap().to_string();
     let path = object_store::path::Path::parse(input_path_string.clone())
       .map_err(|_| WriteError::InvalidPath(input_path_string))?;
 
-    // chunk size of 10MB
-    let chunk_size = 10 * 1024 * 1024;
+    let counter = data.counter();
 
-    let (mut reader, counter) = CountedAsyncReader::new(&mut reader);
-
-    // create a stream of bytes chunks from the reader
-    let bytes_chunks = tokio_util::io::ReaderStream::new(
-      tokio::io::BufReader::with_capacity(chunk_size, &mut reader),
-    )
-    .bytes_chunks(chunk_size);
+    // R2 needs chunk sizes of 10MB
+    let required_chunk_size = 10 * 1024 * 1024;
+    let data = data.bytes_chunks(required_chunk_size);
 
     // initiate the multipart with the destination storage
     tracing::info!("starting multipart");
@@ -136,7 +125,7 @@ impl StorageClient for S3CompatStorageClient {
     ));
 
     // create a stream of multipart `put_part` futures, running 3 at a time
-    let part_stream = bytes_chunks
+    let part_stream = data
       .map_err(|e| {
         Report::from_err(e).wrap_err("failed to get bytes chunk from reader")
       })
@@ -176,7 +165,7 @@ impl StorageClient for S3CompatStorageClient {
 
     tracing::info!("finishing multipart");
 
-    let file_size = dvf::FileSize::new(counter.current_size().await);
+    let file_size = dvf::FileSize::new(counter.current());
 
     Ok(file_size)
   }

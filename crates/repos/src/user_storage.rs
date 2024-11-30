@@ -1,9 +1,7 @@
 use std::path::Path;
 
 use hex::{health, Hexagonal};
-use storage::{
-  CompUnawareAReader, ReadError, StorageClientGenerator, WriteError,
-};
+use storage::{belt::Belt, ReadError, StorageClientGenerator, WriteError};
 
 /// The definition for the user storage service.
 #[async_trait::async_trait]
@@ -22,13 +20,13 @@ pub trait UserStorageRepository: Hexagonal {
 /// [`UserStorageRepository`].
 #[async_trait::async_trait]
 pub trait UserStorageClient: Hexagonal {
-  /// Reads a file. Returns a [`CompUnawareAReader`].
-  async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError>;
-  /// Writes a file. Consumes a [`CompUnawareAReader`].
+  /// Reads a file. Returns a [`Belt`].
+  async fn read(&self, path: &Path) -> Result<Belt, ReadError>;
+  /// Writes a file. Consumes a [`Belt`].
   async fn write(
     &self,
     path: &Path,
-    reader: CompUnawareAReader,
+    data: Belt,
   ) -> Result<models::FileSize, WriteError>;
 }
 
@@ -38,15 +36,15 @@ where
   T: std::ops::Deref<Target = I> + Send + Sync + 'static,
   I: UserStorageClient + ?Sized,
 {
-  async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError> {
+  async fn read(&self, path: &Path) -> Result<Belt, ReadError> {
     self.deref().read(path).await
   }
   async fn write(
     &self,
     path: &Path,
-    reader: CompUnawareAReader,
+    data: Belt,
   ) -> Result<models::FileSize, WriteError> {
-    self.deref().write(path, reader).await
+    self.deref().write(path, data).await
   }
 }
 
@@ -67,15 +65,15 @@ impl health::HealthReporter for UserStorageClientCanonical {
 
 #[async_trait::async_trait]
 impl UserStorageClient for UserStorageClientCanonical {
-  async fn read(&self, path: &Path) -> Result<CompUnawareAReader, ReadError> {
+  async fn read(&self, path: &Path) -> Result<Belt, ReadError> {
     self.0.read(path).await
   }
   async fn write(
     &self,
     path: &Path,
-    reader: CompUnawareAReader,
+    data: Belt,
   ) -> Result<models::FileSize, WriteError> {
-    self.0.write(path, reader).await
+    self.0.write(path, data).await
   }
 }
 

@@ -232,9 +232,9 @@ dependencies = [
 
 [[package]]
 name = "async-compression"
-version = "0.4.15"
+version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e26a9844c659a2a293d239c7910b752f8487fe122c6c8bd1659bf85a6507c302"
+checksum = "df895a515f70646414f4b45c0b79082783b80552b373a68283012928df56f522"
 dependencies = [
  "brotli",
  "flate2",
@@ -505,6 +505,18 @@ name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
+name = "belt"
+version = "0.1.0"
+dependencies = [
+ "async-compression",
+ "bytes",
+ "futures",
+ "pin-project",
+ "tokio",
+ "tokio-util",
+]
 
 [[package]]
 name = "bit_field"
@@ -946,15 +958,6 @@ name = "crossbeam-utils"
 version = "0.8.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22ec99545bb0ed0ea7bb9b8e1e9122ea386ff8a48c0922e43f36d45ab09e0e80"
-
-[[package]]
-name = "crunch"
-version = "0.1.0"
-dependencies = [
- "dvf",
- "snap",
- "stream-tools",
-]
 
 [[package]]
 name = "crunchy"
@@ -2831,7 +2834,6 @@ name = "prime-domain"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "crunch",
  "hex",
  "miette",
  "models",
@@ -3920,12 +3922,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "snap"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b6b67fb9a61334225b5b790716f609cd58395f895b3fe8b328786812a40bc3b"
-
-[[package]]
 name = "socket2"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3953,6 +3949,7 @@ name = "storage"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "belt",
  "bytes-stream",
  "dvf",
  "futures",
@@ -3960,20 +3957,11 @@ dependencies = [
  "miette",
  "object_store",
  "serde",
- "stream-tools",
  "temp-dir",
  "thiserror 1.0.64",
  "tokio",
  "tokio-util",
  "tracing",
-]
-
-[[package]]
-name = "stream-tools"
-version = "0.1.0"
-dependencies = [
- "dvf",
- "tokio",
 ]
 
 [[package]]

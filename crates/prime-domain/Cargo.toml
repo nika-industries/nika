@@ -6,7 +6,6 @@ publish = false
 
 [dependencies]
 hex = { path = "../hex" }
-crunch = { path = "../crunch" }
 repos = { path = "../repos" }
 models = { path = "../models" }
 

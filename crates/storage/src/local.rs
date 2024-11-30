@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
 
+use belt::Belt;
 use dvf::LocalStorageCredentials;
 use hex::health;
 use miette::{Context, IntoDiagnostic};
-use stream_tools::CountedAsyncReader;
 use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
 
-use super::{CompUnawareAReader, ReadError, StorageClient};
+use super::{ReadError, StorageClient};
 use crate::WriteError;
 
 pub struct LocalStorageClient(PathBuf);
@@ -35,10 +35,7 @@ impl health::HealthReporter for LocalStorageClient {
 #[async_trait::async_trait]
 impl StorageClient for LocalStorageClient {
   #[tracing::instrument(skip(self))]
-  async fn read(
-    &self,
-    input_path: &Path,
-  ) -> Result<CompUnawareAReader, ReadError> {
+  async fn read(&self, input_path: &Path) -> Result<Belt, ReadError> {
     let path = self.0.as_path().join(input_path);
 
     // make sure it exists
@@ -61,14 +58,17 @@ impl StorageClient for LocalStorageClient {
 
     let file = tokio::fs::File::open(&path).await?;
 
-    Ok(CompUnawareAReader::new(Box::new(BufReader::new(file))))
+    Ok(Belt::from_async_buf_read(
+      BufReader::new(file),
+      Some(belt::DEFAULT_CHUNK_SIZE),
+    ))
   }
 
-  #[tracing::instrument(skip(self, reader))]
+  #[tracing::instrument(skip(self))]
   async fn write(
     &self,
     path: &Path,
-    mut reader: CompUnawareAReader,
+    data: Belt,
   ) -> Result<dvf::FileSize, WriteError> {
     let target_path = self.0.as_path().join(path);
 
@@ -81,16 +81,16 @@ impl StorageClient for LocalStorageClient {
     let file = tokio::fs::File::create(&target_path).await?;
     let mut writer = BufWriter::new(file);
 
-    // modify the reader to capture the file size
-    let (mut reader, counter) = CountedAsyncReader::new(&mut reader);
+    let counter = data.counter();
+    let mut data = data.to_async_buf_read();
 
-    // Copy data from the reader to the writer
-    tokio::io::copy(&mut reader, &mut writer).await?;
+    // Copy data from the input to the writer
+    tokio::io::copy(&mut data, &mut writer).await?;
 
     // Ensure all data is flushed to the file
     writer.flush().await?;
 
-    let file_size = dvf::FileSize::new(counter.current_size().await);
+    let file_size = dvf::FileSize::new(counter.current());
 
     Ok(file_size)
   }
@@ -117,13 +117,17 @@ mod tests {
     ))
     .await
     .unwrap();
-    let mut reader = client
+    let data = client
       .read(&PathBuf::from_str("file1").unwrap())
       .await
       .unwrap();
 
     let mut result = String::new();
-    reader.read_to_string(&mut result).await.unwrap();
+    data
+      .to_async_buf_read()
+      .read_to_string(&mut result)
+      .await
+      .unwrap();
 
     assert_eq!(&result, "abc");
   }
