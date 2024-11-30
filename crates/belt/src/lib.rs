@@ -1,6 +1,7 @@
 //! Provides `Belt`, a byte streaming container.
 
 mod bottleneck;
+mod comp;
 mod counter;
 mod source;
 
@@ -16,8 +17,10 @@ use std::{
 };
 
 use bytes::Bytes;
+use comp::CompressionAlgorithm;
 use futures::{Stream, StreamExt};
 use tokio::{io::AsyncBufRead, sync::mpsc};
+use tokio_util::io::ReaderStream;
 
 pub use self::counter::Counter;
 use self::{bottleneck::Bottleneck, source::BytesSource};
@@ -45,18 +48,19 @@ impl Stream for MaybeBottleneckSource {
 /// A byte stream container.
 #[derive(Debug)]
 pub struct Belt {
-  inner: MaybeBottleneckSource,
-  count: Arc<AtomicU64>,
+  inner:         MaybeBottleneckSource,
+  count:         Arc<AtomicU64>,
+  declared_comp: Option<CompressionAlgorithm>,
 }
 
 impl Belt {
-  /// Create a new Belt from an existing `mpsc::Receiver<Bytes>`
+  /// Create a new [`Belt`] from an existing [`mpsc::Receiver`]`<Bytes>`.
   pub fn from_channel(
     receiver: mpsc::Receiver<Result<Bytes>>,
     max_chunk_size: Option<NonZeroUsize>,
   ) -> Self {
     Self {
-      inner: match max_chunk_size {
+      inner:         match max_chunk_size {
         Some(max_chunk_size) => MaybeBottleneckSource::Bottlenecked(
           Bottleneck::new(max_chunk_size, BytesSource::Channel(receiver)),
         ),
@@ -64,17 +68,18 @@ impl Belt {
           MaybeBottleneckSource::Unmodified(BytesSource::Channel(receiver))
         }
       },
-      count: Arc::new(AtomicU64::new(0)),
+      count:         Arc::new(AtomicU64::new(0)),
+      declared_comp: None,
     }
   }
 
-  /// Create a new Belt from an existing `impl Stream<Item = Bytes>`
+  /// Create a new [`Belt`] from an existing `impl `[`Stream`]`<Item = Bytes>`.
   pub fn from_stream(
     stream: impl Stream<Item = Result<Bytes>> + Send + Unpin + 'static,
     max_chunk_size: Option<NonZeroUsize>,
   ) -> Self {
     Self {
-      inner: match max_chunk_size {
+      inner:         match max_chunk_size {
         Some(max_chunk_size) => {
           MaybeBottleneckSource::Bottlenecked(Bottleneck::new(
             max_chunk_size,
@@ -85,17 +90,18 @@ impl Belt {
           Box::new(stream),
         )),
       },
-      count: Arc::new(AtomicU64::new(0)),
+      count:         Arc::new(AtomicU64::new(0)),
+      declared_comp: None,
     }
   }
 
-  /// Create a new Belt from an existing `impl AsyncBufRead`
+  /// Create a new [`Belt`] from an existing `impl `[`AsyncBufRead`].
   pub fn from_async_read(
     reader: impl AsyncBufRead + Send + Unpin + 'static,
     max_chunk_size: Option<NonZeroUsize>,
   ) -> Self {
     Self {
-      inner: match max_chunk_size {
+      inner:         match max_chunk_size {
         Some(max_chunk_size) => {
           MaybeBottleneckSource::Bottlenecked(Bottleneck::new(
             max_chunk_size,
@@ -108,17 +114,66 @@ impl Belt {
           tokio_util::io::ReaderStream::new(Box::new(reader)),
         )),
       },
-      count: Arc::new(AtomicU64::new(0)),
+      count:         Arc::new(AtomicU64::new(0)),
+      declared_comp: None,
     }
   }
 
-  /// Create a channel pair with a default buffer size
+  /// Create a new [`Belt`] from a new channel pair with a default buffer size.
   pub fn new_channel(
     buffer_size: usize,
     max_chunk_size: Option<NonZeroUsize>,
   ) -> (mpsc::Sender<Result<Bytes>>, Self) {
     let (tx, rx) = mpsc::channel(buffer_size);
     (tx, Self::from_channel(rx, max_chunk_size))
+  }
+
+  /// Adapt this [`Belt`] to compress with the given algorithm.
+  pub fn adapt_to_comp(self, algo: CompressionAlgorithm) -> Self {
+    Self {
+      inner:         MaybeBottleneckSource::Unmodified(
+        BytesSource::CompressionAdapter(Box::new(ReaderStream::new(
+          match algo {
+            CompressionAlgorithm::Zstd => {
+              comp::CompressionAdapter::to_zstd(self)
+            }
+          },
+        ))),
+      ),
+      count:         Arc::new(AtomicU64::new(0)),
+      declared_comp: Some(algo),
+    }
+  }
+
+  /// Adapt this [`Belt`] to decompress with the given algorithm.
+  pub fn adapt_from_comp(self, algo: CompressionAlgorithm) -> Self {
+    Self {
+      inner:         MaybeBottleneckSource::Unmodified(
+        BytesSource::CompressionAdapter(Box::new(ReaderStream::new(
+          match algo {
+            CompressionAlgorithm::Zstd => {
+              comp::CompressionAdapter::from_zstd(self)
+            }
+          },
+        ))),
+      ),
+      count:         Arc::new(AtomicU64::new(0)),
+      declared_comp: None,
+    }
+  }
+
+  /// Adapt this [`Belt`] output uncompressed data.
+  pub fn adapt_to_no_comp(self) -> Self {
+    match self.declared_comp {
+      Some(algo) => self.adapt_from_comp(algo),
+      None => self,
+    }
+  }
+
+  /// Set the declared compression algorithm for this [`Belt`].
+  pub fn set_declared_comp(mut self, algo: CompressionAlgorithm) -> Self {
+    self.declared_comp = Some(algo);
+    self
   }
 
   /// Get a tracking counter for the total number of bytes read from this
