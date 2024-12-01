@@ -4186,7 +4186,7 @@ dependencies = [
 [[package]]
 name = "tikv-client"
 version = "0.3.0"
-source = "git+https://github.com/johnbchron/tikv-client-rust?branch=optional-prometheus#13aafc662549a7e351b62f16e40dfdf83fa6ce20"
+source = "git+https://github.com/johnbchron/tikv-client-rust?branch=crunch-deps#e3fd59170b506e718cefae1c83826068d34dcd7f"
 dependencies = [
  "async-recursion",
  "async-trait",
