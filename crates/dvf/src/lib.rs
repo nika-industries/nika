@@ -11,6 +11,7 @@
 
 mod compression;
 mod creds;
+mod email;
 mod files;
 mod names;
 mod record_id;
@@ -19,5 +20,6 @@ mod secrets;
 pub use slugger;
 
 pub use self::{
-  compression::*, creds::*, files::*, names::*, record_id::*, secrets::*,
+  compression::*, creds::*, email::*, files::*, names::*, record_id::*,
+  secrets::*,
 };

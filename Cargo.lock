@@ -1071,7 +1071,9 @@ checksum = "669a445ee724c5c69b1b06fe0b63e70a1c84bc9bb7d9696cd4f4e3ec45050408"
 name = "dvf"
 version = "0.1.0"
 dependencies = [
+ "email_address",
  "nutype",
+ "regex",
  "serde",
  "slugger",
  "ulid",
@@ -1090,6 +1092,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6e22feb4d5cacf9f2c64902a1c35ef0f2d766e42db316a98b93992bbce669cb"
 dependencies = [
  "pin-project-lite",
+]
+
+[[package]]
+name = "email_address"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e079f19b08ca6239f47f8ba8509c11cf3ea30095831f7fed61441475edd8c449"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
