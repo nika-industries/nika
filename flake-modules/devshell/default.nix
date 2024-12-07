@@ -1,4 +1,4 @@
-localFlake: { ... }: {
+{ ... }: {
   perSystem = ps @ { pkgs, inputs', config, ... }: let
     mkShell = pkgs.devshell.mkShell;
 

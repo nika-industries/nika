@@ -1,4 +1,4 @@
-localFlake: { self, ... } @ moduleTop: {
+{ self, ... } @ moduleTop: {
   perSystem = { pkgs, ... } @ perSystemTop: let
     # prefix for test checks
     test-prefix = "nixvm-test-";

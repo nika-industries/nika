@@ -23,24 +23,34 @@
     imports = let
       inherit (top.flake-parts-lib) importApply;
     in [
-      # configures extra flake outputs
-      (importApply ./flake-modules/flake-outputs { })
-      # configures nixpkgs with overlays
-      (importApply ./flake-modules/nixpkgs { })
-      # kubernetes manifests
-      (importApply ./flake-modules/kubernetes { })
-      # builds tikv packages and images
-      (importApply ./flake-modules/tikv { })
-      # builds workspace rust packages
-      (importApply ./flake-modules/rust-builds { })
-      # defines nixos modules
-      (importApply ./flake-modules/nixos-modules { })
-      # defines e2e tests as nix checks
-      (importApply ./flake-modules/e2e { })
-      # extraneous and miscellaneous tests
-      (importApply ./flake-modules/repo-tests { })
-      # defines devshell
-      (importApply ./flake-modules/devshell { })
+      # # configures extra flake outputs
+      # (importApply ./flake-modules/flake-outputs { })
+      # # configures nixpkgs with overlays
+      # (importApply ./flake-modules/nixpkgs { })
+      # # kubernetes manifests
+      # (importApply ./flake-modules/kubernetes { })
+      # # builds tikv packages and images
+      # (importApply ./flake-modules/tikv { })
+      # # builds workspace rust packages
+      # (importApply ./flake-modules/rust-builds { })
+      # # defines nixos modules
+      # (importApply ./flake-modules/nixos-modules { })
+      # # defines e2e tests as nix checks
+      # (importApply ./flake-modules/e2e { })
+      # # extraneous and miscellaneous tests
+      # (importApply ./flake-modules/repo-tests { })
+      # # defines devshell
+      # (importApply ./flake-modules/devshell { })
+
+      ./flake-modules/flake-outputs
+      ./flake-modules/nixpkgs
+      ./flake-modules/kubernetes
+      ./flake-modules/tikv
+      ./flake-modules/rust-builds
+      ./flake-modules/nixos-modules
+      ./flake-modules/e2e
+      ./flake-modules/repo-tests
+      ./flake-modules/devshell
     ];
   });
 }

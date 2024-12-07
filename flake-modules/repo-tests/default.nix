@@ -1,4 +1,4 @@
-localFlake: { ... }: {
+{ ... }: {
   perSystem = { pkgs, config, ... }: let
     # run `cmp` to compare config.packages.crate-graph-image with ./media/crate-graph.svg
     crate-graph-image-is-updated = pkgs.stdenv.mkDerivation {

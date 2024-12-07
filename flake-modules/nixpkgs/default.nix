@@ -1,4 +1,4 @@
-localFlake: { inputs, ... }: {
+{ inputs, ... }: {
   perSystem = { system, ... }: {
     config._module.args.pkgs = import inputs.nixpkgs {
       inherit system;

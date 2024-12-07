@@ -1,4 +1,4 @@
-localFlake: { ... }: {
+{ ... }: {
   perSystem = { system, pkgs, ... }: let
     makeTikvBinary = (import ./makeTikvBinary.nix) { inherit system pkgs; };
     makeTikvDockerImage = (import ./makeTikvDockerImage.nix) { inherit pkgs; };
