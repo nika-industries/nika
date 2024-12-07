@@ -29,6 +29,11 @@ impl MockStore {
       locks: Mutex::new(HashSet::new()),
     })
   }
+
+  /// Screw with the internal data of the store. This is useful for testing.
+  pub fn screw_with_internal_data(&self) -> &RwLock<HashMap<Key, Value>> {
+    &self.data
+  }
 }
 
 impl KvTransactional for Arc<MockStore> {
