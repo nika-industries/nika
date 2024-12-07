@@ -1,46 +1,35 @@
 //! Key type for use with a store.
 
+mod segment;
+
 use std::{fmt, sync::LazyLock};
 
-use slugger::{EitherSlug, LaxSlug, StrictSlug};
+use slugger::StrictSlug;
 use smallvec::SmallVec;
 use starc::Starc;
 
-/// A segment; either a strict or lax slug.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Segment {
-  /// A strict slug.
-  Strict(Starc<StrictSlug>),
-  /// A lax slug.
-  Lax(Starc<LaxSlug>),
-}
-
-impl From<EitherSlug> for Segment {
-  fn from(slug: EitherSlug) -> Self {
-    match slug {
-      EitherSlug::Strict(slug) => Self::Strict(Starc::new_owned(slug)),
-      EitherSlug::Lax(slug) => Self::Lax(Starc::new_owned(slug)),
-    }
-  }
-}
-
-impl fmt::Display for Segment {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::Strict(slug) => write!(f, "{}", slug),
-      Self::Lax(slug) => write!(f, "{}", slug),
-    }
-  }
-}
+pub use self::segment::Segment;
 
 /// A key for use with a store, consisting of a collection of segments.
 ///
 /// [`Key`] implements [`Display`](fmt::Display), where the key is displayed as
 /// a string with segments separated by colons.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+
 pub struct Key {
   first_segment: Segment,
   segments:      SmallVec<[Segment; 6]>,
+}
+
+use std::hash::{Hash, Hasher};
+
+impl Hash for Key {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.first_segment.hash(state);
+    for segment in self.segments.iter() {
+      segment.hash(state);
+    }
+  }
 }
 
 impl Key {
