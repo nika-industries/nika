@@ -1,4 +1,4 @@
-//! TiKV key-value store implementation.
+//! TiKV key-value store implementation of [`KvTransactional`].
 
 use std::ops::Bound;
 
