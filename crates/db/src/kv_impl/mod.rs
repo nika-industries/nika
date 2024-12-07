@@ -1,15 +1,18 @@
 //! Key-value store implementation.
 
 mod consumptive;
+mod keys;
+#[cfg(test)]
+mod tests;
 
-use std::{ops::Bound, sync::LazyLock};
+use std::ops::Bound;
 
 use hex::health;
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
 
-use self::consumptive::ConsumptiveTransaction;
+use self::{consumptive::ConsumptiveTransaction, keys::*};
 use crate::{
   adapter::{FetchModelByIndexError, FetchModelError},
   CreateModelError, DatabaseAdapter,
@@ -25,24 +28,6 @@ impl<KV: KvTransactional> KvDatabaseAdapter<KV> {
     tracing::info!("creating new `KvDatabaseAdapter` instance");
     Self(kv_store)
   }
-}
-
-static INDEX_NS_SEGMENT: LazyLock<StrictSlug> =
-  LazyLock::new(|| StrictSlug::new("index".to_string()));
-static MODEL_NS_SEGMENT: LazyLock<StrictSlug> =
-  LazyLock::new(|| StrictSlug::new("model".to_string()));
-
-fn model_base_key<M: model::Model>(id: &model::RecordId<M>) -> Key {
-  let id_ulid: model::Ulid = (*id).into();
-  Key::new_lazy(&MODEL_NS_SEGMENT)
-    .with(StrictSlug::new(M::TABLE_NAME.to_string()))
-    .with(StrictSlug::new(id_ulid.to_string()))
-}
-
-fn index_base_key<M: model::Model>(index_name: &str) -> Key {
-  Key::new_lazy(&INDEX_NS_SEGMENT)
-    .with(StrictSlug::new(M::TABLE_NAME.to_string()))
-    .with(StrictSlug::new(index_name))
 }
 
 #[async_trait::async_trait]
@@ -285,229 +270,5 @@ impl<KV: KvTransactional> health::HealthReporter for KvDatabaseAdapter<KV> {
     health::AdditiveComponentHealth::from_futures(Some(self.0.health_report()))
       .await
       .into()
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use kv::mock::MockStore;
-  use model::Model;
-  use serde::{Deserialize, Serialize};
-
-  use super::*;
-
-  type TestModelRecordId = model::RecordId<TestModel>;
-
-  #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-  struct TestModel {
-    id:   TestModelRecordId,
-    name: StrictSlug,
-  }
-
-  impl Model for TestModel {
-    const TABLE_NAME: &'static str = "test_model";
-    const UNIQUE_INDICES: &'static [(&'static str, fn(&Self) -> EitherSlug)] =
-      &[("name", |m| EitherSlug::Strict(m.name.clone()))];
-    fn id(&self) -> TestModelRecordId { self.id }
-  }
-
-  #[tokio::test]
-  async fn test_create_model() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    let created_model = adapter.create_model(model.clone()).await.unwrap();
-    assert_eq!(model, created_model);
-
-    let fetched_model = adapter
-      .fetch_model_by_id::<TestModel>(model.id())
-      .await
-      .unwrap()
-      .unwrap();
-    assert_eq!(model, fetched_model);
-  }
-
-  #[tokio::test]
-  async fn test_fetch_model_by_index() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    adapter.create_model(model.clone()).await.unwrap();
-
-    let fetched_model = adapter
-      .fetch_model_by_index::<TestModel>(
-        "name".to_string(),
-        EitherSlug::Strict(model.name.clone()),
-      )
-      .await
-      .unwrap()
-      .unwrap();
-    assert_eq!(model, fetched_model);
-  }
-
-  #[tokio::test]
-  async fn test_enumerate_models() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model1 = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test1"),
-    };
-    let model2 = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test2"),
-    };
-
-    adapter.create_model(model1.clone()).await.unwrap();
-    adapter.create_model(model2.clone()).await.unwrap();
-
-    let models = adapter.enumerate_models::<TestModel>().await.unwrap();
-    assert_eq!(models.len(), 2);
-    assert!(models.contains(&model1));
-    assert!(models.contains(&model2));
-  }
-
-  #[tokio::test]
-  async fn test_fetch_model_by_id_not_found() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    let fetched_model = adapter
-      .fetch_model_by_id::<TestModel>(model.id())
-      .await
-      .unwrap();
-    assert!(fetched_model.is_none());
-  }
-
-  #[tokio::test]
-  async fn test_fetch_model_by_index_not_found() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    adapter.create_model(model.clone()).await.unwrap();
-
-    let fetched_model = adapter
-      .fetch_model_by_index::<TestModel>(
-        "name".to_string(),
-        EitherSlug::Strict(StrictSlug::new("not_test")),
-      )
-      .await
-      .unwrap();
-    assert!(fetched_model.is_none());
-  }
-
-  #[tokio::test]
-  async fn test_fetch_model_by_index_does_not_exist() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    adapter.create_model(model.clone()).await.unwrap();
-
-    let result = adapter
-      .fetch_model_by_index::<TestModel>(
-        "not_name".to_string(),
-        EitherSlug::Strict(StrictSlug::new("test")),
-      )
-      .await;
-    assert!(matches!(
-      result,
-      Err(FetchModelByIndexError::IndexDoesNotExistOnModel { .. })
-    ));
-  }
-
-  #[tokio::test]
-  async fn test_fetch_model_by_index_malformed() {
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    let store = MockStore::new();
-
-    // manually insert the index for a model that doesn't exist
-    store.screw_with_internal_data().write().await.insert(
-      index_base_key::<TestModel>("name")
-        .with_either(EitherSlug::Strict(StrictSlug::new("not_test"))),
-      kv::value::Value::serialize(&model.id()).unwrap(),
-    );
-
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let result = adapter
-      .fetch_model_by_index::<TestModel>(
-        "name".to_string(),
-        EitherSlug::Strict(StrictSlug::new("not_test")),
-      )
-      .await;
-    assert!(matches!(
-      result,
-      Err(FetchModelByIndexError::IndexMalformed { .. })
-    ));
-  }
-
-  #[tokio::test]
-  async fn test_create_model_already_exists() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    adapter.create_model(model.clone()).await.unwrap();
-
-    let result = adapter.create_model(model.clone()).await;
-    assert!(matches!(result, Err(CreateModelError::ModelAlreadyExists)));
-  }
-
-  #[tokio::test]
-  async fn test_create_model_index_already_exists() {
-    let store = MockStore::new();
-    let adapter = KvDatabaseAdapter::new(store);
-
-    let model = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-    let model2 = TestModel {
-      id:   model::RecordId::new(),
-      name: StrictSlug::new("test"),
-    };
-
-    adapter.create_model(model.clone()).await.unwrap();
-
-    let result = adapter.create_model(model2).await;
-
-    assert!(matches!(
-      result,
-      Err(CreateModelError::IndexAlreadyExists { .. })
-    ));
   }
 }
