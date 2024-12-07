@@ -91,6 +91,18 @@ pub struct OptimisticTransaction {
   write_set: HashMap<Key, Value>,
 }
 
+impl Drop for OptimisticTransaction {
+  fn drop(&mut self) {
+    if !self.read_set.is_empty() || !self.write_set.is_empty() {
+      panic!(
+        "Optimistic transaction dropped without commit or rollback. Read Set: \
+         {:?}, Write Set: {:?}",
+        self.read_set, self.write_set
+      );
+    }
+  }
+}
+
 impl OptimisticTransaction {
   async fn check_conflicts(&self) -> Result<(), TransactionError> {
     for (key, value) in &self.read_set {
@@ -165,11 +177,13 @@ impl KvTransaction for OptimisticTransaction {
     for (key, value) in self.write_set.drain() {
       data.insert(key, value);
     }
+    self.read_set.clear();
     Ok(())
   }
 
   async fn rollback(&mut self) -> KvResult<()> {
-    // No locks or resources to release for optimistic transactions
+    self.read_set.clear();
+    self.write_set.clear();
     Ok(())
   }
 }
@@ -181,8 +195,23 @@ pub struct PessimisticTransaction {
   write_set:   HashMap<Key, Value>,
 }
 
+impl Drop for PessimisticTransaction {
+  fn drop(&mut self) {
+    if !self.locked_keys.is_empty() || !self.write_set.is_empty() {
+      panic!(
+        "Pessimistic transaction dropped without commit or rollback. Keys: \
+         {:?}, Write Set: {:?}",
+        self.locked_keys, self.write_set
+      );
+    }
+  }
+}
+
 impl PessimisticTransaction {
   async fn lock_key(&mut self, key: &Key) -> Result<(), TransactionError> {
+    if self.locked_keys.contains(key) {
+      return Ok(());
+    }
     let mut locks = self.store.locks.lock().await;
     if locks.contains(key) {
       return Err(TransactionError::KeyLocked(key.clone()));
@@ -258,11 +287,15 @@ impl KvTransaction for PessimisticTransaction {
       data.insert(key, value);
     }
     self.unlock_keys().await;
+    self.locked_keys.clear();
+    self.write_set.clear();
     Ok(())
   }
 
   async fn rollback(&mut self) -> KvResult<()> {
     self.unlock_keys().await;
+    self.locked_keys.clear();
+    self.write_set.clear();
     Ok(())
   }
 }
@@ -359,6 +392,8 @@ mod tests {
     // Commit should fail due to conflict
     let commit_result = txn.commit().await;
     assert!(commit_result.is_err());
+
+    txn.rollback().await.unwrap();
   }
 
   #[tokio::test]
@@ -388,6 +423,8 @@ mod tests {
     // Now txn2 should succeed
     let result = txn2.put(&key, Value::from("other_value")).await;
     assert!(result.is_ok());
+
+    txn2.rollback().await.unwrap();
   }
 
   #[tokio::test]
@@ -432,5 +469,7 @@ mod tests {
       .cloned()
       .collect();
     assert_eq!(result_map, expected_map);
+
+    txn.commit().await.unwrap();
   }
 }
