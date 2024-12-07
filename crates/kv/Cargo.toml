@@ -23,9 +23,12 @@ rmp-serde = "1.3.0"
 tracing.workspace = true
 async-trait = "0.1.83"
 
+tokio = { workspace = true, features = [ "sync" ], optional = true }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
 
 [features]
-default = [ "tikv" ]
+default = [ "tikv", "mock" ]
 tikv = [ "dep:tikv-client" ]
+mock = [ "dep:tokio" ]
