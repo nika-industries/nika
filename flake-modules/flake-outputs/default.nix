@@ -1,4 +1,4 @@
-localFlake: { lib, flake-parts-lib, ... }: let
+{ lib, flake-parts-lib, ... }: let
   inherit (lib) mkOption types;
 
   mkFlakeOutput = { name, desc }:

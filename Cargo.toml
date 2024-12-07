@@ -43,8 +43,8 @@ leptos = { version = "0.7.0-rc2", features = [ "tracing", "nightly", "islands" ]
 leptos_axum = { version = "0.7.0-rc2", features = ["tracing"] }
 leptos_meta = { version = "0.7.0-rc2", features = ["tracing"] }
 leptos_router = { version = "0.7.0-rc2", features = ["nightly", "tracing"] }
-tower = { version = "0.5", features = ["full"] }
-tower-http = { version = "0.6", features = ["full"] }
+tower = { version = "0.5", features = [ ] }
+tower-http = { version = "0.6", features = [ ] }
 wasm-bindgen = "=0.2.95"
 
 # tracing

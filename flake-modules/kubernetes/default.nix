@@ -1,4 +1,4 @@
-localFlake: { self, ... } @ moduleTop: {
+{ self, ... } @ moduleTop: {
   perSystem = { pkgs, ... } @ perSystemTop: let
     yaml = (pkgs.formats.yaml { }).generate;
   

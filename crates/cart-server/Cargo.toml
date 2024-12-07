@@ -13,9 +13,9 @@ leptos_axum.workspace = true
 leptos_router.workspace = true
 
 axum = { workspace = true, features = [ "macros", "tracing" ] }
-tokio = { workspace = true, features = [ "full" ] }
-tower = { workspace = true, features = [ "full" ] }
-tower-http = { workspace = true, features = [ "full" ] }
+tokio = { workspace = true, features = [ "rt-multi-thread" ] }
+tower = { workspace = true, features = [ ] }
+tower-http = { workspace = true, features = [ ] }
 
 miette = { workspace = true, features = [ "fancy-no-syscall" ] }
 tracing-subscriber.workspace = true

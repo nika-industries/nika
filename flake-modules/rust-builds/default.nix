@@ -1,4 +1,4 @@
-localFlake: { inputs, ... }: {
+{ inputs, ... }: {
   perSystem = { pkgs, ... }: let
     filter = inputs.nix-filter.lib;
 

@@ -17,6 +17,8 @@
 //! This crate is yet to be hexagonalized.
 
 pub mod key;
+#[cfg(feature = "mock")]
+pub mod mock;
 mod retryable;
 #[cfg(feature = "tikv")]
 pub mod tikv;
