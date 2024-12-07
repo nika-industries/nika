@@ -2,7 +2,11 @@
 
 mod segment;
 
-use std::{fmt, sync::LazyLock};
+use std::{
+  fmt,
+  hash::{Hash, Hasher},
+  sync::LazyLock,
+};
 
 use slugger::StrictSlug;
 use smallvec::SmallVec;
@@ -14,14 +18,17 @@ pub use self::segment::Segment;
 ///
 /// [`Key`] implements [`Display`](fmt::Display), where the key is displayed as
 /// a string with segments separated by colons.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Key {
   first_segment: Segment,
   segments:      SmallVec<[Segment; 6]>,
 }
 
-use std::hash::{Hash, Hasher};
+impl fmt::Debug for Key {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "\"{}\"", self)
+  }
+}
 
 impl Hash for Key {
   fn hash<H: Hasher>(&self, state: &mut H) {
