@@ -1,15 +1,16 @@
 //! Key-value store implementation.
 
 mod consumptive;
+mod keys;
 
-use std::{ops::Bound, sync::LazyLock};
+use std::ops::Bound;
 
 use hex::health;
 use kv::prelude::*;
 use miette::{Context, IntoDiagnostic, Result};
 use tracing::instrument;
 
-use self::consumptive::ConsumptiveTransaction;
+use self::{consumptive::ConsumptiveTransaction, keys::*};
 use crate::{
   adapter::{FetchModelByIndexError, FetchModelError},
   CreateModelError, DatabaseAdapter,
@@ -25,24 +26,6 @@ impl<KV: KvTransactional> KvDatabaseAdapter<KV> {
     tracing::info!("creating new `KvDatabaseAdapter` instance");
     Self(kv_store)
   }
-}
-
-static INDEX_NS_SEGMENT: LazyLock<StrictSlug> =
-  LazyLock::new(|| StrictSlug::new("index".to_string()));
-static MODEL_NS_SEGMENT: LazyLock<StrictSlug> =
-  LazyLock::new(|| StrictSlug::new("model".to_string()));
-
-fn model_base_key<M: model::Model>(id: &model::RecordId<M>) -> Key {
-  let id_ulid: model::Ulid = (*id).into();
-  Key::new_lazy(&MODEL_NS_SEGMENT)
-    .with(StrictSlug::new(M::TABLE_NAME.to_string()))
-    .with(StrictSlug::new(id_ulid.to_string()))
-}
-
-fn index_base_key<M: model::Model>(index_name: &str) -> Key {
-  Key::new_lazy(&INDEX_NS_SEGMENT)
-    .with(StrictSlug::new(M::TABLE_NAME.to_string()))
-    .with(StrictSlug::new(index_name))
 }
 
 #[async_trait::async_trait]
