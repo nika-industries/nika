@@ -26,3 +26,5 @@ migrate = [ "dep:models" ]
 [dev-dependencies]
 tokio = { workspace = true, features = [ "full" ] }
 ulid = { workspace = true }
+serde.workspace = true
+miette = { workspace = true, features = [ "fancy" ] }
