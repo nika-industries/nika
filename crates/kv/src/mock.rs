@@ -16,17 +16,18 @@ use crate::{
 };
 
 /// A mock key-value store.
+#[derive(Clone)]
 pub struct MockStore {
-  data:  RwLock<HashMap<Key, Value>>,
-  locks: Mutex<HashSet<Key>>, // Set of keys currently locked
+  data:  Arc<RwLock<HashMap<Key, Value>>>,
+  locks: Arc<Mutex<HashSet<Key>>>, // Set of keys currently locked
 }
 
 impl MockStore {
   /// Create a new mock store.
   pub fn new() -> Arc<Self> {
     Arc::new(Self {
-      data:  RwLock::new(HashMap::new()),
-      locks: Mutex::new(HashSet::new()),
+      data:  Arc::new(RwLock::new(HashMap::new())),
+      locks: Arc::new(Mutex::new(HashSet::new())),
     })
   }
 
@@ -36,7 +37,7 @@ impl MockStore {
   }
 }
 
-impl KvTransactional for Arc<MockStore> {
+impl KvTransactional for MockStore {
   type OptimisticTransaction = OptimisticTransaction;
   type PessimisticTransaction = PessimisticTransaction;
 
@@ -91,7 +92,7 @@ impl From<TransactionError> for KvError {
 
 /// An optimistic transaction.
 pub struct OptimisticTransaction {
-  store:     Arc<MockStore>,
+  store:     MockStore,
   read_set:  HashMap<Key, Option<Value>>,
   write_set: HashMap<Key, Value>,
 }
@@ -202,7 +203,7 @@ impl KvTransaction for OptimisticTransaction {
 
 /// A pessimistic transaction.
 pub struct PessimisticTransaction {
-  store:       Arc<MockStore>,
+  store:       MockStore,
   locked_keys: HashSet<Key>,
   write_set:   HashMap<Key, Value>,
 }
@@ -319,7 +320,7 @@ impl KvTransaction for PessimisticTransaction {
 
 #[cfg(test)]
 mod tests {
-  use std::{ops::Bound, sync::Arc};
+  use std::ops::Bound;
 
   use slugger::StrictSlug;
 
@@ -327,10 +328,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_optimistic_transaction() {
-    let store = Arc::new(MockStore {
-      data:  RwLock::new(HashMap::new()),
-      locks: Mutex::new(HashSet::new()),
-    });
+    let store = MockStore::new();
 
     let mut txn = store.begin_optimistic_transaction().await.unwrap();
 
@@ -349,10 +347,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_pessimistic_transaction() {
-    let store = Arc::new(MockStore {
-      data:  RwLock::new(HashMap::new()),
-      locks: Mutex::new(HashSet::new()),
-    });
+    let store = MockStore::new();
 
     let mut txn = store.begin_pessimistic_transaction().await.unwrap();
 
@@ -371,10 +366,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_conflict_in_optimistic_transaction() {
-    let store = Arc::new(MockStore {
-      data:  RwLock::new(HashMap::new()),
-      locks: Mutex::new(HashSet::new()),
-    });
+    let store = MockStore::new();
 
     // Insert initial data
     store
@@ -415,10 +407,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_lock_in_pessimistic_transaction() {
-    let store = Arc::new(MockStore {
-      data:  RwLock::new(HashMap::new()),
-      locks: Mutex::new(HashSet::new()),
-    });
+    let store = MockStore::new();
 
     let mut txn1 = store.begin_pessimistic_transaction().await.unwrap();
     let mut txn2 = store.begin_pessimistic_transaction().await.unwrap();
@@ -446,10 +435,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_scan_operation() {
-    let store = Arc::new(MockStore {
-      data:  RwLock::new(HashMap::new()),
-      locks: Mutex::new(HashSet::new()),
-    });
+    let store = MockStore::new();
 
     // Populate store with test data
     let keys_values = vec![

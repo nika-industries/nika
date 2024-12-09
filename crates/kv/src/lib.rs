@@ -25,7 +25,11 @@ pub mod tikv;
 pub mod txn_ext;
 pub mod value;
 
-use std::{future::Future, ops::Bound};
+use std::{
+  future::Future,
+  ops::{Bound, Deref},
+  sync::Arc,
+};
 
 use self::{key::Key, value::Value};
 
@@ -124,4 +128,24 @@ pub trait KvTransactional: hex::Hexagonal {
   fn begin_pessimistic_transaction(
     &self,
   ) -> impl Future<Output = KvResult<Self::PessimisticTransaction>> + Send;
+}
+
+impl<T> KvTransactional for Arc<T>
+where
+  T: KvTransactional + Sized,
+{
+  type OptimisticTransaction = T::OptimisticTransaction;
+  type PessimisticTransaction = T::PessimisticTransaction;
+
+  fn begin_optimistic_transaction(
+    &self,
+  ) -> impl Future<Output = KvResult<Self::OptimisticTransaction>> + Send {
+    self.deref().begin_optimistic_transaction()
+  }
+
+  fn begin_pessimistic_transaction(
+    &self,
+  ) -> impl Future<Output = KvResult<Self::PessimisticTransaction>> + Send {
+    self.deref().begin_pessimistic_transaction()
+  }
 }
