@@ -86,6 +86,11 @@ pub trait KvPrimitive {
     end: Bound<Key>,
     limit: Option<u32>,
   ) -> impl Future<Output = KvResult<Vec<(Key, Value)>>> + Send;
+  /// Delete a key.
+  fn delete(
+    &mut self,
+    key: &Key,
+  ) -> impl Future<Output = KvResult<bool>> + Send;
 }
 
 /// Defines methods on transactions.

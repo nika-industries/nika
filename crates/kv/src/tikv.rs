@@ -92,6 +92,15 @@ impl KvPrimitive for TikvTransaction {
       None => scan_unlimited(self, start, end).await,
     }
   }
+
+  async fn delete(&mut self, key: &Key) -> KvResult<bool> {
+    let exists = self.0.key_exists(key.clone()).await?;
+    if exists {
+      self.0.delete(key.clone()).await?;
+      return Ok(true);
+    }
+    Ok(false)
+  }
 }
 
 impl KvTransaction for TikvTransaction {

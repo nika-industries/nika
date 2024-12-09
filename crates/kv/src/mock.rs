@@ -173,6 +173,13 @@ impl KvPrimitive for OptimisticTransaction {
     }
     Ok(result)
   }
+  async fn delete(&mut self, key: &Key) -> KvResult<bool> {
+    self
+      .read_set
+      .insert(key.clone(), self.store.data.read().await.get(key).cloned());
+    self.write_set.insert(key.clone(), Value::new(vec![]));
+    Ok(true)
+  }
 }
 
 impl KvTransaction for OptimisticTransaction {
@@ -282,6 +289,11 @@ impl KvPrimitive for PessimisticTransaction {
       }
     }
     Ok(result)
+  }
+  async fn delete(&mut self, key: &Key) -> KvResult<bool> {
+    self.lock_key(key).await?;
+    self.write_set.insert(key.clone(), Value::new(vec![]));
+    Ok(true)
   }
 }
 
